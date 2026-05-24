@@ -1002,8 +1002,7 @@ const UnifiedNav = {
     if (badge) badge.style.display = "none";
     const list = document.getElementById("notification-list");
     if (list)
-      list.innerHTML =
-        '<div style="text-align: center; color: rgba(255,255,255,0.4); font-size: 0.8rem; padding: 2rem 0;">No new notifications</div>';
+      list.innerHTML = renderEmptyState('All caught up — no new notifications.', '🔔');
   },
 
   renderStripeHeaderButton(container) {

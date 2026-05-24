@@ -82,7 +82,8 @@
                             <span style="margin-left:auto;font-size:0.75rem;color:var(--text-muted);">Live log</span>
                         </div>
                         <div id="platformFeed">
-                            <div style="padding: 2rem; text-align: center; opacity: 0.5;">
+                            <div class="empty-state">
+                                <i aria-hidden="true">📊</i>
                                 <p>No platform activity recorded.</p>
                             </div>
                         </div>
@@ -94,19 +95,22 @@
                             <span style="font-size:1rem;font-weight:700;color:#fff;">🏢 Recent Groups</span>
                             <button class="btn btn-secondary btn-small" style="margin-left:auto;">View All</button>
                         </div>
-                        <table style="width:100%;border-collapse:collapse;font-size:0.875rem;">
+                        <table class="data-table" style="font-size:0.875rem;">
                             <thead>
-                                <tr style="color:var(--text-muted);text-align:left;">
-                                    <th style="padding:0.5rem 0;font-weight:600;">Group</th>
-                                    <th style="padding:0.5rem 0;font-weight:600;">Plan</th>
-                                    <th style="padding:0.5rem 0;font-weight:600;">Members</th>
-                                    <th style="padding:0.5rem 0;font-weight:600;">Status</th>
+                                <tr>
+                                    <th>Group</th>
+                                    <th>Plan</th>
+                                    <th>Members</th>
+                                    <th>Status</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr style="border-top:1px solid rgba(255,255,255,0.05);">
-                                    <td colspan="4" style="padding: 2.5rem; text-align: center; opacity: 0.5;">
-                                        No organizations registered yet.
+                                <tr>
+                                    <td colspan="4" style="border:none; background:transparent;">
+                                        <div class="empty-state" style="margin:1rem auto;">
+                                            <i aria-hidden="true">🏢</i>
+                                            <p>No organizations registered yet.</p>
+                                        </div>
                                     </td>
                                 </tr>
                             </tbody>

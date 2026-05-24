@@ -143,13 +143,7 @@
       });
 
       if (filtered.length === 0) {
-        container.innerHTML = `
-          <div style="grid-column: 1/-1; padding: 4rem; text-align: center; background: rgba(255,255,255,0.02); border-radius: 20px; border: 1px dashed rgba(255,255,255,0.1);">
-            <div style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;">📺</div>
-            <h3 style="margin: 0; color: #fff;">No sessions found</h3>
-            <p style="color: var(--text-muted); margin-top: 0.5rem;">Try a different category or search term.</p>
-          </div>
-        `;
+        container.innerHTML = renderEmptyState('No sessions found Try a different category or search term.', '📅');
         return;
       }
 

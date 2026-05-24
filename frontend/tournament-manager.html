@@ -907,7 +907,7 @@
             const grid = document.getElementById('teamsGrid');
 
             if (teams.length === 0) {
-                grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-muted); background: rgba(0,0,0,0.2); border-radius: 12px;">No teams registered yet. Teams can register via the public event page.</p>';
+                grid.innerHTML = renderEmptyState('No teams registered yet. Teams can register via the public event page.', '🏆');
                 return;
             }
 
@@ -946,7 +946,7 @@
         function displayGroups(groups, teams) {
             const grid = document.getElementById('groupsGrid');
             if (!groups || groups.length === 0) {
-                grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 3rem;">No groups created yet. Click "Add Group" to begin.</p>';
+                grid.innerHTML = renderEmptyState('No groups created yet. Click "Add Group" to begin.', 'ℹ️');
                 return;
             }
 
@@ -1030,7 +1030,7 @@
             const groupIds = [...new Set(groupTeams.filter(t => t.current_group_id).map(t => t.current_group_id))];
 
             if (groupIds.length === 0) {
-                tableContainer.innerHTML = '<p style="padding: 2rem; color: var(--text-muted); text-align: center;">No teams assigned to groups yet.</p>';
+                tableContainer.innerHTML = renderEmptyState('No teams assigned to groups yet.', '🏆');
                 return;
             }
 
@@ -1067,30 +1067,30 @@
                             <h3 style="margin:0; color: var(--primary); font-size: 1rem;">📊 ${groupName} Standings</h3>
                         </div>
                         <div class="table-responsive">
-                            <table class="data-table" style="width: 100%; border-collapse: collapse;">
-                                <thead style="background: rgba(0,0,0,0.2);">
+                            <table class="data-table">
+                                <thead>
                                     <tr>
-                                        <th style="padding: 1rem; text-align: left; width: 40px;">#</th>
-                                        <th style="padding: 1rem; text-align: left;">Team</th>
-                                        <th style="padding: 1rem; text-align: center;">P</th>
-                                        <th style="padding: 1rem; text-align: center;">W</th>
-                                        <th style="padding: 1rem; text-align: center;">D</th>
-                                        <th style="padding: 1rem; text-align: center;">L</th>
-                                        <th style="padding: 1rem; text-align: center;">GD</th>
-                                        <th style="padding: 1rem; text-align: center; color: var(--primary);">Pts</th>
+                                        <th style="width: 40px;">#</th>
+                                        <th>Team</th>
+                                        <th style="text-align: center;">P</th>
+                                        <th style="text-align: center;">W</th>
+                                        <th style="text-align: center;">D</th>
+                                        <th style="text-align: center;">L</th>
+                                        <th style="text-align: center;">GD</th>
+                                        <th style="text-align: center; color: var(--primary);">Pts</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     ${stats.map((s, idx) => `
-                                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.02);">
-                                            <td data-label="#" style="padding: 0.75rem 1rem; opacity: 0.5;">${idx + 1}</td>
-                                            <td data-label="Team" style="padding: 0.75rem 1rem; font-weight: 700;">${s.team_name}</td>
-                                            <td data-label="P" style="padding: 0.75rem 1rem; text-align: center;">${s.played}</td>
-                                            <td data-label="W" style="padding: 0.75rem 1rem; text-align: center;">${s.won}</td>
-                                            <td data-label="D" style="padding: 0.75rem 1rem; text-align: center;">${s.drawn}</td>
-                                            <td data-label="L" style="padding: 0.75rem 1rem; text-align: center;">${s.lost}</td>
-                                            <td data-label="GD" style="padding: 0.75rem 1rem; text-align: center; color: ${s.gd > 0 ? '#4ade80' : s.gd < 0 ? '#f87171' : 'inherit'}">${s.gd > 0 ? '+' : ''}${s.gd}</td>
-                                            <td data-label="Pts" style="padding: 0.75rem 1rem; text-align: center; font-weight: 800; color: var(--primary);">${s.pts}</td>
+                                        <tr>
+                                            <td data-label="#" style="opacity: 0.5;">${idx + 1}</td>
+                                            <td data-label="Team" style="font-weight: 700;">${s.team_name}</td>
+                                            <td data-label="P" style="text-align: center;">${s.played}</td>
+                                            <td data-label="W" style="text-align: center;">${s.won}</td>
+                                            <td data-label="D" style="text-align: center;">${s.drawn}</td>
+                                            <td data-label="L" style="text-align: center;">${s.lost}</td>
+                                            <td data-label="GD" style="text-align: center; color: ${s.gd > 0 ? '#4ade80' : s.gd < 0 ? '#f87171' : 'inherit'}">${s.gd > 0 ? '+' : ''}${s.gd}</td>
+                                            <td data-label="Pts" style="text-align: center; font-weight: 800; color: var(--primary);">${s.pts}</td>
                                         </tr>
                                     `).join('')}
                                 </tbody>
@@ -1174,7 +1174,7 @@
         function displayPitches(pitches) {
             const grid = document.getElementById('pitchesGrid');
             if (!pitches || pitches.length === 0) {
-                grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-muted); background: rgba(0,0,0,0.1); border-radius: 12px;">No pitches configured yet.</p>';
+                grid.innerHTML = renderEmptyState('No pitches configured yet.', '🏟️');
                 return;
             }
 
@@ -1306,7 +1306,7 @@
                 const grid = document.getElementById('staffGrid');
 
                 if (data.length === 0) {
-                    grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-muted); background: rgba(0,0,0,0.1); border-radius: 12px;">No staff assigned yet.</p>';
+                    grid.innerHTML = renderEmptyState('No staff assigned yet.', '👥');
                 } else {
                     grid.innerHTML = data.map(s => `
                         <div class="card">
@@ -1429,7 +1429,7 @@
             const tbody = document.getElementById('matchesBody');
 
             if (matches.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 2rem;">No matches scheduled. Assign teams to groups and generate fixtures!</td></tr>';
+                tbody.innerHTML = `<tr><td colspan="5" style="border:none; padding:2rem; background:transparent;">${renderEmptyState('No matches scheduled. Assign teams to groups and generate fixtures!', '🏆')}</td></tr>`;
                 return;
             }
 
@@ -1608,7 +1608,7 @@
         function renderBracket(matches, teams) {
             const container = document.getElementById('bracketContainer');
             if (!matches || matches.length === 0) {
-                container.innerHTML = '<p style="padding: 2rem; color: var(--text-muted);">No bracket matches generated yet. Generate fixtures for a knockout stage to see the bracket.</p>';
+                container.innerHTML = renderEmptyState('No bracket matches generated yet. Generate fixtures for a knockout stage to see the bracket.', '⚽');
                 return;
             }
 
@@ -1751,7 +1751,7 @@
             try {
                 const players = teamId ? await apiService.getTeamPlayers(teamId) : [];
                 if (!players || players.length === 0) {
-                    container.innerHTML = `<p style="color:var(--text-muted); padding: 1rem;">No players found ${teamId ? 'for this team' : ' (TBD)'}.</p>`;
+                    container.innerHTML = renderEmptyState(`No players found ${teamId ? 'for this team' : ' (TBD)'}.`, '🏆');
                     return;
                 }
 

@@ -31,9 +31,9 @@
                 <!-- Venue Cards -->
                 <div id="venueGrid" class="dashboard-grid" style="grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem;">
                     <!-- Dynamically loaded venues -->
-                    <div style="grid-column: 1/-1; text-align: center; padding: 4rem; opacity: 0.5;">
-                        <div class="loader" style="margin-bottom: 1rem;"></div>
-                        Loading facilities...
+                    <div style="grid-column: 1/-1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 4rem; gap: 1rem;">
+                        <div class="loader"></div>
+                        <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem;">Loading facilities...</p>
                     </div>
                 </div>
             </div>
@@ -109,12 +109,7 @@
                 const venues = await apiService.get('/api/venues');
                 
                 if (!venues || venues.length === 0) {
-                    container.innerHTML = `
-                        <div style="grid-column: 1/-1; text-align: center; padding: 4rem; background: rgba(255,255,255,0.02); border-radius: 20px; border: 1px dashed rgba(255,255,255,0.1);">
-                            <p style="color: var(--text-muted);">No venues created yet.</p>
-                            <button class="btn btn-secondary btn-small" style="margin-top: 1rem;" onclick="openModal('addVenueModal')">Create Your First Venue</button>
-                        </div>
-                    `;
+                    container.innerHTML = renderEmptyState('️ No venues created yet. Create Your First Venue', '🏟️');
                     return;
                 }
 

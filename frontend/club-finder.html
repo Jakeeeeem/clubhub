@@ -349,7 +349,7 @@
 
             } catch (err) {
                 console.error("Club finder error:", err);
-                grid.innerHTML = '<p class="text-danger center">No groups found. Start by refining your search.</p>';
+                grid.innerHTML = renderEmptyState('No groups found. Start by refining your search.', 'ℹ️');
             }
 
             try {

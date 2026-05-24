@@ -75,7 +75,7 @@ const TacticalBoard = {
         if (!tray) return;
 
         if (players.length === 0) {
-            tray.innerHTML = '<div style="grid-column: span 2; text-align:center; padding:1rem; color:var(--text-muted); font-size:0.75rem;">No players found</div>';
+            tray.innerHTML = renderEmptyState('No players found', '⚽');
             return;
         }
 

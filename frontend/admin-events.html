@@ -194,7 +194,8 @@
                                     updates</span>
                             </div>
                             <div id="activityFeed">
-                                <div style="padding: 2rem; text-align: center; opacity: 0.5;">
+                                <div class="empty-state">
+                                    <i aria-hidden="true">📋</i>
                                     <p>No recent activity.</p>
                                 </div>
                             </div>
@@ -240,24 +241,26 @@
                     </div>
                     <div id="membersListContainer">
                         <div class="table-responsive">
-                            <table style="width:100%; text-align:left; border-collapse:collapse;">
+                            <table class="data-table">
                                 <thead>
-                                    <tr
-                                        style="color:var(--text-muted); font-size:0.75rem; text-transform:uppercase; letter-spacing:1px;">
-                                        <th style="padding:0.75rem 0;">Name</th>
-                                        <th style="padding:0.75rem 0;">Role</th>
-                                        <th style="padding:0.75rem 0;">Squad</th>
-                                        <th style="padding:0.75rem 0;">Status</th>
-                                        <th style="padding:0.75rem 0; text-align:right;">Actions</th>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Role</th>
+                                        <th>Squad</th>
+                                        <th>Status</th>
+                                        <th style="text-align:right;">Actions</th>
                                     </tr>
                                 </thead>
-                                    <tbody style="font-size:0.9rem;">
-                                        <tr style="border-top:1px solid rgba(255,255,255,0.05);">
-                                            <td colspan="5" style="padding: 2.5rem; text-align: center; opacity: 0.5;">
-                                                No members found.
-                                            </td>
-                                        </tr>
-                                    </tbody>
+                                <tbody style="font-size:0.9rem;">
+                                    <tr>
+                                        <td colspan="5" style="border:none; padding:0; background:transparent;">
+                                            <div class="empty-state" style="margin:1rem auto;">
+                                                <i aria-hidden="true">👥</i>
+                                                <p>No members found.</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
                             </table>
                         </div>
                     </div>
@@ -353,8 +356,8 @@
                 </div>
 
                 <div id="adminEventsList" class="dash-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:1.5rem;">
-                    <div style="grid-column:1/-1; padding:4rem; text-align:center; color:var(--text-muted);">
-                        <div style="font-size:3rem; margin-bottom:1rem; opacity:0.3;">🗓️</div>
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <i aria-hidden="true">📅</i>
                         <p>No events scheduled. Create your first event to get started.</p>
                     </div>
                 </div>
@@ -492,7 +495,10 @@
                     <div class="glass-card" style="padding:1.5rem;">
                         <div class="section-title">🔔 Recent Transactions</div>
                         <div id="financeTransactions" style="font-size:0.85rem; color:var(--text-muted);">
-                            No recent transactions found.
+                            <div class="empty-state">
+                                <i aria-hidden="true">💰</i>
+                                <p>No recent transactions found.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -756,7 +762,7 @@
                 document.getElementById('eventCountUpcoming').textContent = upcoming.length;
                 
                 if (eventsToRender.length === 0) {
-                   list.innerHTML = '<div style="grid-column:1/-1; padding:4rem; text-align:center; color:var(--text-muted);"><div style="font-size:3rem; margin-bottom:1rem; opacity:0.3;">🗓️</div><p>No events scheduled. Create your first event to get started.</p></div>';
+                   list.innerHTML = renderEmptyState('No events scheduled. Create your first event to get started.', '📅');
                    return;
                 }
 
@@ -855,7 +861,7 @@
                 remaining.textContent = event.capacity ? (event.capacity - (event.joined_count || 0)) : 'N/A';
 
                 if (!roster || roster.length === 0) {
-                    list.innerHTML = '<p style="text-align:center; color:var(--text-muted); padding:2rem;">No one has replied yet.</p>';
+                    list.innerHTML = renderEmptyState('No one has replied yet.', 'ℹ️');
                     return;
                 }
 

@@ -267,19 +267,19 @@
                         </div>
                     </div>
 
-                    <div class="glass-card" style="padding:0; overflow:hidden; border-radius:24px; border:1px solid rgba(255,255,255,0.05);">
+                    <div class="glass-card" style="padding:0; overflow:hidden;">
                         <div class="table-responsive">
-                            <table style="width:100%; text-align:left; border-collapse:collapse;">
+                            <table class="data-table">
                                 <thead>
-                                    <tr style="color:var(--text-muted); font-size:0.75rem; text-transform:uppercase; letter-spacing:2px; background:rgba(255,255,255,0.03); font-weight:800;">
-                                        <th style="padding:1.75rem 2rem;">Plan Tier</th>
-                                        <th style="padding:1.75rem 2rem;">Pricing Structure</th>
-                                        <th style="padding:1.75rem 2rem;">Enrollment</th>
-                                        <th style="padding:1.75rem 2rem;">Stripe Status</th>
-                                        <th style="padding:1.75rem 2rem; text-align:right;">Operations</th>
+                                    <tr>
+                                        <th>Plan Tier</th>
+                                        <th>Pricing Structure</th>
+                                        <th>Enrollment</th>
+                                        <th>Stripe Status</th>
+                                        <th style="text-align:right;">Operations</th>
                                     </tr>
                                 </thead>
-                                <tbody id="paymentPlansTableBody" style="font-size:1rem;">
+                                <tbody id="paymentPlansTableBody">
                                     <!-- Dynamic rows -->
                                 </tbody>
                             </table>
@@ -352,7 +352,7 @@
                             document.addEventListener('DOMContentLoaded', () => {
                                 const container = document.getElementById('financeTransactions');
                                  else {
-                                    container.innerHTML = '<div style="padding:1rem; text-align:center; color:var(--text-muted); font-size:0.9rem;">No recent transactions.</div>';
+                                    container.innerHTML = renderEmptyState('No recent transactions.', '💰');
                                 }
                             });
                         </script>
@@ -510,7 +510,7 @@
                     let teamsToRender = teams;
 
                     if (!teamsToRender || teamsToRender.length === 0) {
-                        container.innerHTML = '<div style="grid-column:1/-1; padding:3rem; text-align:center; color:var(--text-muted);">No teams created yet.</div>';
+                        container.innerHTML = renderEmptyState('No teams created yet.', '🏆');
                         return;
                     }
                     container.innerHTML = teamsToRender.map(t => `
@@ -636,17 +636,22 @@
             if (!tbody) return;
 
             try {
-                tbody.innerHTML = '<tr><td colspan="5" style="padding:3rem; text-align:center; opacity:0.5;">Loading plans...</td></tr>';
+                tbody.innerHTML = `<tr><td colspan="5" style="padding:0;">
+                    <div style="display:flex;align-items:center;justify-content:center;gap:0.75rem;padding:3rem;">
+                        <div class="loader" style="width:20px;height:20px;"></div>
+                        <span style="color:var(--text-muted);font-size:0.9rem;">Loading plans...</span>
+                    </div>
+                </td></tr>`;
                 
                 const plans = await apiService.getSubscriptionPlans();
                 
                 if (!plans || plans.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" style="padding:3rem; text-align:center; opacity:0.5;">No subscription plans found. Click "Sync from Stripe" to import your existing products.</td></tr>';
+                    tbody.innerHTML = `<tr><td colspan="5" style="border:none; padding:2rem; background:transparent;">${renderEmptyState('No subscription plans found. Click "Sync from Stripe" to import your existing products.', '💰')}</td></tr>`;
                     return;
                 }
 
                 tbody.innerHTML = plans.map(p => `
-                    <tr style="border-top:1px solid rgba(255,255,255,0.05);">
+                    <tr>
                         <td style="padding:1.5rem;">
                             <strong style="display:block; color:#fff; font-size:1.1rem;">${p.name}</strong>
                             <span style="color:var(--text-muted); font-size:0.85rem;">${p.description || 'No description'}</span>
@@ -664,7 +669,12 @@
                 `).join('');
             } catch (err) {
                 console.error("Failed to load plans", err);
-                tbody.innerHTML = '<tr><td colspan="5" style="padding:3rem; text-align:center; color:#f87171;">Failed to load plans. Please check your Stripe connection.</td></tr>';
+                tbody.innerHTML = `<tr><td colspan="5" style="padding:0;">
+                    <div class="empty-state">
+                        <i aria-hidden="true">⚠️</i>
+                        <p>Failed to load plans. Please check your Stripe connection.</p>
+                    </div>
+                </td></tr>`;
             }
         }
 
@@ -720,7 +730,7 @@
             if (!list) return;
             
             if (players.length === 0) {
-                list.innerHTML = '<p style="text-align:center; padding:1rem; opacity:0.5;">No members found.</p>';
+                list.innerHTML = renderEmptyState('No members found.', '👥');
                 return;
             }
             

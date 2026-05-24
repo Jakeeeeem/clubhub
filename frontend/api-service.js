@@ -4,6 +4,40 @@ window.isPlayer = window.isPlayer || false;
 // Provide a true global binding for legacy code that references `isPlayer` unqualified.
 var isPlayer = window.isPlayer;
 
+// Renders a premium empty-state component globally available to all pages.
+// Supports:
+//   renderEmptyState('Message')                     — simple text
+//   renderEmptyState('Message', '🏆')               — with icon
+//   renderEmptyState('Title', 'Subtitle', '🏆')     — title + subtitle + icon
+window.renderEmptyState = function(messageOrTitle, iconOrSubtitle, icon) {
+  let titleHtml = '';
+  let bodyHtml = '';
+  let iconChar = '📄';
+
+  if (icon !== undefined) {
+    // 3-arg: (title, subtitle, icon)
+    iconChar = icon || '📄';
+    titleHtml = `<strong class="empty-title">${messageOrTitle}</strong>`;
+    bodyHtml  = iconOrSubtitle ? `<p>${iconOrSubtitle}</p>` : '';
+  } else if (iconOrSubtitle && typeof iconOrSubtitle === 'string') {
+    // 2-arg: treat second arg as icon if it's a single grapheme emoji, else subtitle
+    const isEmoji = /^\p{Emoji_Presentation}|\p{Extended_Pictographic}/u.test(iconOrSubtitle.trim());
+    if (isEmoji && iconOrSubtitle.trim().length <= 4) {
+      iconChar = iconOrSubtitle;
+      bodyHtml = `<p>${messageOrTitle}</p>`;
+    } else {
+      iconChar = '📄';
+      titleHtml = `<strong class="empty-title">${messageOrTitle}</strong>`;
+      bodyHtml  = `<p>${iconOrSubtitle}</p>`;
+    }
+  } else {
+    bodyHtml = `<p>${messageOrTitle}</p>`;
+  }
+
+  return `<div class="empty-state"><i aria-hidden="true">${iconChar}</i>${titleHtml}${bodyHtml}</div>`;
+};
+
+
 if (typeof ApiService === 'undefined') {
   var ApiService = class {
   // Returns true when in demo mode or no auth token, causing mock data usage

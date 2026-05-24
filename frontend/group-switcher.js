@@ -497,7 +497,7 @@ if (window.__groupSwitcherDefined) {
       if (!this.listContainer) return;
 
       if (this.groups.length === 0) {
-        this.listContainer.innerHTML = `<div style="padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 0.9rem;">No matching organizations.</div>`;
+        this.listContainer.innerHTML = renderEmptyState('No matching organizations.', '⚽');
       } else {
         this.listContainer.innerHTML = this.groups
           .map((group) => this.renderGroupItem(group))

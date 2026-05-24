@@ -293,9 +293,7 @@
                                     updates</span>
                             </div>
                             <div id="activityFeed">
-                                <div style="padding: 2rem; text-align: center; opacity: 0.5;">
-                                    <p>No recent activity.</p>
-                                </div>
+                                <div class="empty-state"><i aria-hidden="true">📋</i><p>No recent activity.</p></div>
                             </div>
                         </div>
 
@@ -341,21 +339,23 @@
                     </div>
                     <div id="membersListContainer">
                         <div class="table-responsive">
-                            <table id="adminMembersTable" style="width:100%; text-align:left; border-collapse:collapse;">
+                            <table id="adminMembersTable" class="data-table">
                                 <thead>
-                                    <tr
-                                        style="color:var(--text-muted); font-size:0.75rem; text-transform:uppercase; letter-spacing:1px;">
-                                        <th style="padding:0.75rem 0.5rem;">Name</th>
-                                        <th style="padding:0.75rem 0.5rem;">Role</th>
-                                        <th style="padding:0.75rem 0.5rem;">Squad</th>
-                                        <th style="padding:0.75rem 0.5rem;">Status</th>
-                                        <th style="padding:0.75rem 0.5rem; text-align:right;">Actions</th>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Role</th>
+                                        <th>Squad</th>
+                                        <th>Status</th>
+                                        <th style="text-align:right;">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody id="membersTableBody" style="font-size:0.9rem;">
-                                    <tr>
-                                        <td colspan="5" style="padding:3rem; text-align:center; color:var(--text-muted);">Loading members...</td>
-                                    </tr>
+                                <tbody id="membersTableBody">
+                                    <tr><td colspan="5" style="padding:0;">
+                                        <div style="display:flex;align-items:center;justify-content:center;gap:0.75rem;padding:2.5rem;">
+                                            <div class="loader" style="width:20px;height:20px;"></div>
+                                            <span style="color:var(--text-muted);font-size:0.9rem;">Loading members...</span>
+                                        </div>
+                                    </td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -533,7 +533,10 @@
                     <div class="glass-card" style="padding:1.5rem;">
                         <div class="section-title">🔔 Recent Transactions</div>
                         <div id="financeTransactions" style="font-size:0.85rem; color:var(--text-muted);">
-                            No recent transactions found.
+                            <div class="empty-state">
+                                <i aria-hidden="true">💰</i>
+                                <p>No recent transactions found.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -836,7 +839,7 @@
                         // Use the unified members list directly from the API
                         const members = membersResp.members;
                         if (members.length === 0) {
-                            tbody.innerHTML = '<tr><td colspan="5" style="padding:2rem; text-align:center; color:var(--text-muted);">No members found.</td></tr>';
+                            tbody.innerHTML = `<tr><td colspan="5" style="border:none; padding:2rem; background:transparent;">${renderEmptyState('No members found.', '👥')}</td></tr>`;
                             return;
                         }
                         await renderMembersTable(members);
@@ -897,7 +900,7 @@
                 console.log('[DEBUG] renderMembersTable - members count:', members.length);
                 
                 if (members.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" style="padding:2rem; text-align:center; color:var(--text-muted);">No members found.</td></tr>';
+                    tbody.innerHTML = `<tr><td colspan="5" style="border:none; padding:2rem; background:transparent;">${renderEmptyState('No members found.', '👥')}</td></tr>`;
                     return;
                 }
 
@@ -1034,7 +1037,7 @@
                     let teamsToRender = teams;
 
                     if (!teamsToRender || teamsToRender.length === 0) {
-                        container.innerHTML = '<div style="grid-column:1/-1; padding:3rem; text-align:center; color:var(--text-muted);">No teams created yet.</div>';
+                        container.innerHTML = renderEmptyState('No teams created yet.', '🏆');
                         return;
                     }
                     container.innerHTML = teamsToRender.map(t => `
@@ -1380,7 +1383,7 @@
                 const requests = await apiService.getPlatformScoutVerifications('pending');
                 loading.style.display = 'none';
                 if (!requests || !requests.length) {
-                    list.innerHTML = '<div style="padding:1rem; color:var(--text-muted);">No pending scout approval requests at this time.</div>';
+                    list.innerHTML = renderEmptyState('No pending scout approval requests at this time.', 'ℹ️');
                     return;
                 }
 
@@ -1454,7 +1457,7 @@
                 const pending = staff.filter(s => !s.club_verified_scout && (s.can_manage_scouting || (s.permissions || []).includes('scouting')));
 
                 if (!pending.length) {
-                    list.innerHTML = '<div style="padding:1rem; color:var(--text-muted);">No pending club scout approvals at this time.</div>';
+                    list.innerHTML = renderEmptyState('No pending club scout approvals at this time.', 'ℹ️');
                     return;
                 }
 

@@ -335,7 +335,7 @@
           <h2 class="neon-text">🔔 Notifications</h2>
           <p style="color: rgba(255,255,255,0.5); margin-bottom: 2rem;">Important alerts and updates from your club, events, and family.</p>
           <div class="glass-card" style="background: hsla(0, 0%, 100%, 0.03);">
-            <p style="margin: 0; opacity: 0.8;">No new notifications yet. Check back after your next team update or event invitation.</p>
+            <div class="empty-state"><i aria-hidden="true">💬</i><p>No new notifications yet. Check back after your next team update or event invitation.</p></div>
           </div>
         </div>
       </div>
@@ -366,7 +366,7 @@
         <div class="glass-panel" style="padding: 2rem;">
           <h2 class="neon-text" style="margin-bottom: 1.5rem;">Group Staff</h2>
           <div class="table-responsive">
-            <table class="modern-table">
+            <table class="data-table">
               <thead>
                 <tr>
                   <th>Staff Name</th>
@@ -459,7 +459,7 @@
         <div class="glass-panel" style="padding: 2rem; margin-bottom: 2rem;">
           <h2 class="neon-text" style="margin-bottom: 1.5rem;">Payment History</h2>
           <div class="table-responsive">
-            <table class="modern-table">
+            <table class="data-table">
               <thead>
                 <tr>
                   <th>Date</th>
@@ -549,7 +549,7 @@
         <div class="card">
           <h3>My Documents</h3>
           <div class="table-responsive">
-            <table class="table">
+            <table class="data-table">
               <thead>
                 <tr>
                   <th>Document Name</th>
@@ -971,7 +971,7 @@
 
         <div style="margin-top: 1.5rem;">
           <label style="color: #888; font-size: 0.8rem;">Bio</label>
-          <p id="cv-bio" style="color: #ddd; line-height: 1.5;">No bio added.</p>
+          <div class="empty-state"><i aria-hidden="true">ℹ️</i><p id="cv-bio" style="color: #ddd; line-height: 1.5; margin: 0;">No bio added.</p></div>
         </div>
       </div>
     </div>
@@ -1293,7 +1293,7 @@
           <div id="drillHistoryList"
             style="display:flex; flex-direction:column; gap:0.75rem; max-height:240px; overflow-y:auto; padding-right:0.5rem;">
             <!-- Populated by training.js -->
-            <p style="color:var(--text-muted); font-size:0.85rem;">No history yet.</p>
+            <div class="empty-state"><i aria-hidden="true">📋</i><p style="margin: 0;">No history yet.</p></div>
           </div>
         </div>
       </div>
@@ -1321,11 +1321,9 @@
           library...</p>
       </div>
 
-      <div id="trainingLibraryEmpty" style="display:none; text-align:center; padding:4rem 2rem;">
-        <div style="font-size:3rem; margin-bottom:1rem;">🎯</div>
-        <h3 style="margin:0;">No Drills Assigned</h3>
-        <p style="color:var(--text-muted); margin-top:0.5rem;">You're all caught up! Check back later for new tasks from
-          your coach.</p>
+      <div id="trainingLibraryEmpty" class="empty-state" style="display:none;">
+        <i aria-hidden="true">🎯</i>
+        <p>No Drills Assigned. You're all caught up! Check back later for new tasks from your coach.</p>
       </div>
     </div>
   </div>

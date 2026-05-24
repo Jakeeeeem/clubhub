@@ -446,13 +446,7 @@ function loadDailyPlanner() {
     .slice(0, 8);
 
   if (upcoming.length === 0) {
-    container.innerHTML = `
-      <div style="padding: 2rem; text-align: center; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px dashed rgba(255,255,255,0.1);">
-        <div style="font-size: 2rem; margin-bottom: 0.5rem; opacity: 0.5;">📅</div>
-        <p style="color: rgba(255,255,255,0.4); margin: 0; font-size: 0.9rem;">No upcoming events scheduled yet.</p>
-        <button class="btn btn-text btn-small" style="margin-top: 1rem; color: var(--primary);" onclick="showPlayerSection('event-finder')">Browse Events</button>
-      </div>
-    `;
+    container.innerHTML = renderEmptyState('No upcoming events scheduled yet. Browse Events', '📅');
     return;
   }
 
@@ -556,7 +550,7 @@ function loadFullSchedule() {
     .sort((a, b) => new Date(a.event_date || a.date || a.start_date) - new Date(b.event_date || b.date || b.start_date));
 
   if (upcoming.length === 0) {
-    container.innerHTML = `<div class="glass-card" style="padding: 2rem; text-align: center; opacity: 0.6;">No upcoming activities scheduled.</div>`;
+    container.innerHTML = renderEmptyState('No upcoming activities scheduled.', '📅');
     return;
   }
 
@@ -632,10 +626,10 @@ async function loadPlannerFeed() {
       }));
       renderItems(mapped);
     } else {
-      container.innerHTML = '<div style="text-align:center;padding:2rem;color:rgba(255,255,255,0.3);font-size:0.9rem;">No recent updates in your feed.</div>';
+      container.innerHTML = renderEmptyState('No recent updates in your feed.', '📅');
     }
   } catch (err) {
-    container.innerHTML = '<div style="text-align:center;padding:2rem;color:rgba(255,255,255,0.3);font-size:0.9rem;">No recent updates in your feed.</div>';
+    container.innerHTML = renderEmptyState('No recent updates in your feed.', '📅');
   }
 }
 async function postToPlannerFeed() {
@@ -676,7 +670,7 @@ async function loadOverviewFeed() {
     const latest = feed.slice(0, 3);
     
     if (latest.length === 0) {
-      container.innerHTML = '<p style="color: var(--text-muted); grid-column: 1/-1; text-align: center;">No updates yet.</p>';
+      container.innerHTML = renderEmptyState('No updates yet.', '📅');
       return;
     }
 
@@ -717,13 +711,7 @@ function loadUpcomingEvents() {
     .slice(0, 10);
 
   if (list.length === 0) {
-    el.innerHTML = `
-      <div class="glass-card" style="text-align: center; padding: 3rem;">
-        <div style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;">📅</div>
-        <p style="color: var(--text-muted);">No upcoming activities found.</p>
-        <button class="btn btn-primary" style="margin-top: 1rem;" onclick="showPlayerSection('event-finder')">Explore Events</button>
-      </div>
-    `;
+    el.innerHTML = renderEmptyState('No upcoming activities found. Explore Events', '📅');
     return;
   }
 
@@ -841,7 +829,7 @@ function loadRecentActivity() {
   // Fallback to bookings if no detailed activities
   const list = (PlayerDashboardState.bookings || []).slice(0, 3);
   if (list.length === 0) {
-    el.innerHTML = "<p>No recent activity</p>";
+    el.innerHTML = renderEmptyState('No recent activity', '📋');
     return;
   }
 
@@ -963,33 +951,11 @@ function loadPlayerClubs() {
   }
 
   if (!PlayerDashboardState.clubs.length && !invitationsHTML) {
-    grid.innerHTML = `
-    <div class="table-responsive">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th style="width: 40%;">Club / Group Details</th>
-            <th>Sport</th>
-            <th>Location</th>
-            <th>Members</th>
-            <th style="text-align: right;">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td colspan="5" style="text-align: center; padding: 2rem;">
-              <p style="color: var(--text-muted); margin-bottom: 1rem;">No clubs or groups joined yet</p>
-              <p style="color: rgba(255,255,255,0.4); font-size: 0.85rem;">You will see your groups here once you are invited by an administrator.</p>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    `;
+    grid.innerHTML = `<tr><td colspan="5" style="border:none; padding:2rem; background:transparent;">${renderEmptyState('Club / Group Details Sport Location Members Actions No clubs or groups joined yet You will see your groups here once you are invited by an administrator.', '👥')}</td></tr>`;
     const staffBody = byId("clubStaffTableBody");
     if (staffBody)
       staffBody.innerHTML =
-        '<tr><td colspan="4">No staff information available</td></tr>';
+        `<tr><td colspan="4" style="border:none; padding:2rem; background:transparent;">${renderEmptyState('No staff information available', '👥')}</td></tr>`;
     return;
   }
 
@@ -1099,30 +1065,9 @@ function loadPlayerTeams() {
 
   if (!PlayerDashboardState.teams.length) {
     // Show empty table logic to satisfy "table ui" requirement
-    grid.innerHTML = `
-    <div class="table-responsive">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th style="width: 35%;">Team Name</th>
-            <th>Role / Position</th>
-            <th>Coach</th>
-            <th>Age Group</th>
-            <th style="text-align: right;">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td colspan="5" style="text-align: center; padding: 2rem;">
-              <p style="color: var(--text-muted); margin-bottom: 1rem;">No teams joined yet</p>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    `;
+    grid.innerHTML = `<tr><td colspan="5" style="border:none; padding:2rem; background:transparent;">${renderEmptyState('Team Name Role / Position Coach Age Group Actions No teams joined yet', '🏆')}</td></tr>`;
     const container = byId("teamEventsContainer");
-    if (container) container.innerHTML = "<p>No team events found</p>";
+    if (container) container.innerHTML = renderEmptyState('No team events found', '🏆');
     return;
   }
 
@@ -1202,11 +1147,7 @@ function loadTeamEvents() {
   ];
 
   if (allTeamActivities.length === 0) {
-    container.innerHTML = `
-      <div style="text-align: center; padding: 2rem; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px dashed rgba(255,255,255,0.1);">
-        <p style="color: rgba(255,255,255,0.4); margin: 0;">No scheduled events or matches found for your teams.</p>
-      </div>
-    `;
+    container.innerHTML = renderEmptyState('No scheduled events or matches found for your teams.', '🏆');
     return;
   }
 
@@ -1294,7 +1235,7 @@ function loadPaymentHistory() {
   const payments = PlayerDashboardState.payments || [];
 
   if (payments.length === 0) {
-    body.innerHTML = '<tr><td colspan="5">No payment history found</td></tr>';
+    body.innerHTML = `<tr><td colspan="5" style="border:none; padding:2rem; background:transparent;">${renderEmptyState('No payment history found', '💰')}</td></tr>`;
     return;
   }
 
@@ -1347,7 +1288,7 @@ function loadOutstandingPayments() {
   );
 
   if (outstanding.length === 0) {
-    container.innerHTML = "<p>No outstanding payments</p>";
+    container.innerHTML = renderEmptyState('No outstanding payments', '💰');
     return;
   }
 
@@ -1506,7 +1447,7 @@ function renderPlayersList(filterKey = "all") {
 
       if (!products || products.length === 0) {
         container.innerHTML =
-          "<p>No items available in the shop currently.</p>";
+          renderEmptyState('No items available in the shop currently.', '💰');
         return;
       }
 
@@ -1672,7 +1613,7 @@ function renderPlayersList(filterKey = "all") {
   }
 
   if (filtered.length === 0) {
-    container.innerHTML = "<p>No players found for this filter.</p>";
+    container.innerHTML = renderEmptyState('No players found for this filter.', '⚽');
     return;
   }
 
@@ -2131,7 +2072,7 @@ function renderCurrentPlan() {
 
   const cp = PlayerDashboardState.currentPlan;
   if (!cp) {
-    el.innerHTML = "<p>No plan assigned.</p>";
+    el.innerHTML = renderEmptyState('No plan assigned.', '💰');
     return;
   }
 
@@ -2414,7 +2355,7 @@ function displayPolls(polls) {
 
   if (!polls || polls.length === 0) {
     container.innerHTML =
-      '<p style="text-align: center; color: var(--text-muted); padding: 2rem;">No active polls found.</p>';
+      renderEmptyState('No active polls found.', 'ℹ️');
     return;
   }
 
@@ -3253,13 +3194,7 @@ async function loadVenueBooking() {
     const venues = await apiService.makeRequest("/venues").catch(() => []);
 
     if (!venues || venues.length === 0) {
-      container.innerHTML = `
-          <div class="card">
-              <h3 style="margin-bottom: 1rem;">🏟️ Venue Booking</h3>
-              <p style="color: var(--text-muted); margin-bottom: 2rem;">No venues are currently available for booking in your area.</p>
-              <button class="btn btn-secondary" onclick="showPlayerSection('overview')">Back to Overview</button>
-          </div>
-        `;
+      container.innerHTML = renderEmptyState('️ Venue Booking No venues are currently available for booking in your area. Back to Overview', '🏟️');
     } else {
       container.innerHTML = `
           <div class="card">
@@ -3370,7 +3305,7 @@ async function loadPlayerProducts() {
 
     if (!products || products.length === 0) {
       container.innerHTML =
-        '<div class="empty-state"><h4>No products available</h4><p>Check back later for club merchandise</p></div>';
+        renderEmptyState('No products available Check back later for club merchandise', '💰');
       return;
     }
 
@@ -3577,7 +3512,7 @@ async function loadNotifications() {
     if (!listEl) return;
 
     if (notifications.length === 0) {
-      listEl.innerHTML = '<p class="empty-state">No notifications</p>';
+      listEl.innerHTML = renderEmptyState('No notifications', '💬');
       return;
     }
 
@@ -3733,7 +3668,7 @@ function loadFamilyMembers() {
       if (!family || !family.length) {
         if (headerBtn) headerBtn.style.display = "none";
         grid.innerHTML =
-          '<div class="stat-card" style="text-align: center; padding: 3rem;"><h3>No children added yet</h3><p>Click "+ Add Child" to create a profile for your child.</p><button class="btn btn-primary" onclick="openAddChildModal()" style="margin-top: 1rem;">+ Add Child</button></div>';
+          renderEmptyState('No children added yet Click "+ Add Child" to create a profile for your child. + Add Child', 'ℹ️');
         return;
       }
 
@@ -4007,7 +3942,7 @@ async function loadChildHistory(playerId) {
       `/players/${playerId}/history`,
     );
     if (!history || !history.length) {
-      list.innerHTML = '<p class="text-muted">No history recorded.</p>';
+      list.innerHTML = renderEmptyState('No history recorded.', '📋');
       return;
     }
 
@@ -4259,12 +4194,7 @@ async function loadPlayerVenues() {
     const venues = await apiService.makeRequest("/venues");
 
     if (!venues || venues.length === 0) {
-      content.innerHTML = `
-        <h3>🏟️ Venue Booking</h3>
-        <div style="text-align: center; padding: 2rem;">
-            <p style="color: var(--text-muted);">No venues available for booking right now.</p>
-        </div>
-       `;
+      content.innerHTML = renderEmptyState('No venues available for booking right now.', '🏟️');
       return;
     }
 
@@ -4313,12 +4243,7 @@ async function loadPlayerTraining() {
     );
 
     if (!events || events.length === 0) {
-      content.innerHTML = `
-            <h3>🎯 Training</h3>
-            <div style="text-align: center; padding: 2rem;">
-                <p style="color: var(--text-muted);">No upcoming training sessions found.</p>
-            </div>
-        `;
+      content.innerHTML = renderEmptyState('No upcoming training sessions found.', '🎯');
       return;
     }
 
@@ -4381,18 +4306,7 @@ async function loadPlayerTournaments() {
 
     if (!finalOrgId) {
       if (grid)
-        grid.innerHTML = `
-        <div style="grid-column: 1 / -1; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 4rem 2rem; background: rgba(255,255,255,0.02); border-radius: 20px; border: 1px dashed rgba(255,255,255,0.1); margin: 1rem 0;">
-          <div style="width: 80px; height: 80px; background: rgba(220,38,38,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin-bottom: 1.5rem; border: 1px solid rgba(220,38,38,0.2);">🏰</div>
-          <h3 style="margin: 0 0 0.5rem; font-size: 1.25rem; color: #fff; font-weight: 700;">No Club Selected</h3>
-          <p style="margin: 0 0 2rem; color: rgba(255,255,255,0.4); font-size: 0.95rem; text-align: center; max-width: 400px; line-height: 1.6;">
-            You need to be part of a club to see available tournaments. Visit the "My Clubs" section to manage your memberships.
-          </p>
-          <div style="display: flex; gap: 1rem;">
-            <button class="btn btn-primary" onclick="showPlayerSection('my-clubs')" style="padding: 0.75rem 2rem;">Go to My Clubs</button>
-            <button class="btn btn-secondary" onclick="showPlayerSection('event-finder')" style="padding: 0.75rem 2rem;">Browse Events</button>
-          </div>
-        </div>`;
+        grid.innerHTML = renderEmptyState('Join a club to view available tournaments.', '🏆');
       return;
     }
 
@@ -4402,16 +4316,7 @@ async function loadPlayerTournaments() {
 
     if (!tournaments || tournaments.length === 0) {
       if (grid)
-        grid.innerHTML = `
-          <div style="grid-column:1/-1; text-align:center; padding:4rem 2rem; display:flex; flex-direction:column; align-items:center; gap:1.25rem;">
-            <div style="width:72px;height:72px;border-radius:20px;background:rgba(234,179,8,0.1);border:1px solid rgba(234,179,8,0.2);display:flex;align-items:center;justify-content:center;font-size:2rem;">🏅</div>
-            <h3 style="margin:0;font-size:1.1rem;font-weight:700;color:#fff;">No Active Tournaments</h3>
-            <p style="margin:0;color:rgba(255,255,255,0.45);font-size:0.875rem;max-width:320px;line-height:1.6;">
-              Your club hasn't scheduled any tournaments yet. Explore open competitions to get started.
-            </p>
-            <button class="btn btn-primary btn-small" onclick="showPlayerSection('event-finder')">Browse Open Events →</button>
-          </div>
-        `;
+        grid.innerHTML = renderEmptyState('No active tournaments yet. Your club will post competitions here.', '🏆');
       return;
     }
 
@@ -4512,9 +4417,7 @@ function renderPlayerBracket(matches) {
   if (bracketMatches.length === 0) bracketMatches = matches; // Fallback
 
   if (bracketMatches.length === 0) {
-    container.innerHTML = `<div style="text-align:center; padding: 4rem; color: var(--text-muted); opacity: 0.5;">
-            <p>Brackets for this tournament have not been generated yet.</p>
-        </div>`;
+    container.innerHTML = renderEmptyState('Brackets for this tournament have not been generated yet.', '🏆');
     return;
   }
 
@@ -4586,7 +4489,7 @@ function renderPlayerFixtures(matches) {
 
   if (!matches || matches.length === 0) {
     container.innerHTML =
-      "<p style='text-align:center; padding:2rem; opacity:0.5;'>No fixtures scheduled.</p>";
+      renderEmptyState('No fixtures scheduled.', '⚽');
     return;
   }
 
@@ -4613,8 +4516,7 @@ function renderPlayerStandings(standings) {
   if (!container) return;
 
   if (!standings || Object.keys(standings).length === 0) {
-    container.innerHTML =
-      "<p style='text-align:center; padding:2rem; opacity:0.5;'>Standings are not currently applicable for this tournament stage.</p>";
+    container.innerHTML = renderEmptyState('Standings will appear once the league phase begins.', '📊');
     return;
   }
 
@@ -4791,7 +4693,7 @@ async function loadClubFeed() {
     const items = await apiService.getFeedItems();
     
     if (!items || items.length === 0) {
-      container.innerHTML = '<div class="empty-state"><h4>No updates found</h4><p>Check back later for new announcements and blogs.</p></div>';
+      container.innerHTML = renderEmptyState('No updates yet. Check back later for announcements and club news.', '📰');
       return;
     }
 
@@ -4855,7 +4757,7 @@ async function loadMessengerConversations() {
     }
 
     if (!html) {
-      html = '<div style="padding: 3rem; text-align: center; color: var(--text-muted);">No messages found.</div>';
+      html = renderEmptyState('No messages yet. Your team and club conversations will appear here.', '💬');
     }
 
     listContainer.innerHTML = html;

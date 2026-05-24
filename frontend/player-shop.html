@@ -452,7 +452,7 @@
 
         <div style="margin-top: 1.5rem;">
           <label style="color: #888; font-size: 0.8rem;">Bio</label>
-          <p id="cv-bio" style="color: #ddd; line-height: 1.5;">No bio added.</p>
+          <div class="empty-state"><i aria-hidden="true">ℹ️</i><p id="cv-bio" style="color: #ddd; line-height: 1.5; margin: 0;">No bio added.</p></div>
         </div>
       </div>
     </div>
@@ -774,7 +774,7 @@
           <div id="drillHistoryList"
             style="display:flex; flex-direction:column; gap:0.75rem; max-height:240px; overflow-y:auto; padding-right:0.5rem;">
             <!-- Populated by training.js -->
-            <p style="color:var(--text-muted); font-size:0.85rem;">No history yet.</p>
+            <div class="empty-state"><i aria-hidden="true">📋</i><p style="margin: 0;">No history yet.</p></div>
           </div>
         </div>
       </div>

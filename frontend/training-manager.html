@@ -39,17 +39,7 @@
             margin: 0.5rem 0;
         }
 
-        .registrants-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
 
-        .registrants-table th,
-        .registrants-table td {
-            padding: 1rem;
-            text-align: left;
-            border-bottom: 1px solid var(--border-color);
-        }
 
         .bib-badge {
             display: inline-block;
@@ -128,7 +118,7 @@
                             <button class="btn btn-primary" onclick="autoAssignAll()">🎯 Auto-Assign Bibs &
                                 Groups</button>
                         </div>
-                        <table class="registrants-table">
+                        <table class="data-table">
                             <thead>
                                 <tr>
                                     <th>ID</th>
@@ -421,7 +411,7 @@
             const tbody = document.getElementById('registrantsBody');
 
             if (!registrants || registrants.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7">No registrants yet</td></tr>';
+                tbody.innerHTML = `<tr><td colspan="7" style="border:none; padding:2rem; background:transparent;">${renderEmptyState('No registrants yet', '👥')}</td></tr>`;
                 return;
             }
 
@@ -454,7 +444,7 @@
             const container = document.getElementById('groupsContainer');
 
             if (groups.length === 0) {
-                container.innerHTML = '<p>No groups created yet</p>';
+                container.innerHTML = renderEmptyState('No groups created yet', 'ℹ️');
                 return;
             }
 
@@ -471,7 +461,7 @@
             const container = document.getElementById('bibsContainer');
 
             if (bibs.length === 0) {
-                container.innerHTML = '<p>No bibs in stock. Add bibs to get started!</p>';
+                container.innerHTML = renderEmptyState('No bibs in stock. Add bibs to get started!', '💰');
                 return;
             }
 
@@ -496,7 +486,7 @@
             const container = document.getElementById('scheduleContainer');
 
             if (schedule.length === 0) {
-                container.innerHTML = '<p>No schedule items yet</p>';
+                container.innerHTML = renderEmptyState('No schedule items yet', '📅');
                 return;
             }
 

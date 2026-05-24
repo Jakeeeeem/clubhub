@@ -342,7 +342,7 @@
                 const players = await apiService.makeRequest(`/players/scout?${new URLSearchParams(filters)}`);
 
                 if (!players || players.length === 0) {
-                    container.innerHTML = '<p class="text-center">No players found matching these criteria.</p>';
+                    container.innerHTML = renderEmptyState('No players found matching these criteria.', '⚽');
                     return;
                 }
 
@@ -406,7 +406,7 @@
                 const reports = await apiService.getScoutingReports();
 
                 if (!reports || reports.length === 0) {
-                    container.innerHTML = '<p class="text-center">No scouting reports available yet.</p>';
+                    container.innerHTML = renderEmptyState('No scouting reports available yet.', '📋');
                     return;
                 }
 

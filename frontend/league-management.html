@@ -27,25 +27,7 @@
             margin: 2rem 0;
         }
 
-        .fixtures-table,
-        .standings-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 1rem 0;
-        }
 
-        .fixtures-table th,
-        .fixtures-table td,
-        .standings-table th,
-        .standings-table td {
-            padding: 1rem;
-            text-align: left;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .standings-table tr:hover {
-            background: rgba(255, 255, 255, 0.05);
-        }
 
         .score-input {
             width: 50px;
@@ -152,7 +134,7 @@
 
             <!-- Standings Tab -->
             <div id="standings-tab" class="tab-content active">
-                <table class="standings-table">
+                <table class="data-table">
                     <thead>
                         <tr>
                             <th>Pos</th>
@@ -178,7 +160,7 @@
                 <div style="margin-bottom: 1rem;">
                     <button class="btn btn-primary" onclick="generateFixtures()">Auto-Generate Fixtures</button>
                 </div>
-                <table class="fixtures-table">
+                <table class="data-table">
                     <thead>
                         <tr>
                             <th>Week</th>
@@ -299,7 +281,7 @@
             const grid = document.getElementById('leaguesGrid');
 
             if (leagueList.length === 0) {
-                grid.innerHTML = '<p>No leagues yet. Create your first league!</p>';
+                grid.innerHTML = renderEmptyState('No leagues yet. Create your first league!', '🏆');
                 return;
             }
 
@@ -380,7 +362,7 @@
             const tbody = document.getElementById('standingsBody');
 
             if (standings.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="10">No standings yet</td></tr>';
+                tbody.innerHTML = `<tr><td colspan="10" style="border:none; padding:2rem; background:transparent;">${renderEmptyState('No standings yet', 'ℹ️')}</td></tr>`;
                 return;
             }
 
@@ -413,7 +395,7 @@
             const tbody = document.getElementById('fixturesBody');
 
             if (fixtures.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7">No fixtures yet. Generate fixtures to get started!</td></tr>';
+                tbody.innerHTML = `<tr><td colspan="7" style="border:none; padding:2rem; background:transparent;">${renderEmptyState('No fixtures yet. Generate fixtures to get started!', '⚽')}</td></tr>`;
                 return;
             }
 
@@ -471,7 +453,7 @@
             const container = document.getElementById('teamsListContainer');
 
             if (teams.length === 0) {
-                container.innerHTML = '<p>No teams in this league yet</p>';
+                container.innerHTML = renderEmptyState('No teams in this league yet', '🏆');
                 return;
             }
 

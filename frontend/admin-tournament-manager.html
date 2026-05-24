@@ -500,28 +500,28 @@
                 // In a real app, this would be specific to this tournament
                 const { teams } = await apiService.get('/teams');
                 if (!teams || teams.length === 0) {
-                    container.innerHTML = '<p style="opacity:0.5; text-align:center; padding:2rem;">No teams participating yet.</p>';
+                    container.innerHTML = renderEmptyState('No teams participating yet.', '🏆');
                     return;
                 }
                 
                 container.innerHTML = `
                     <div class="table-responsive">
-                        <table style="width:100%; border-collapse:collapse; margin-top:1rem;">
+                        <table class="data-table">
                             <thead>
-                                <tr style="border-bottom:1px solid rgba(255,255,255,0.05); text-align:left; font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;">
-                                    <th style="padding:1rem;">Team Name</th>
-                                    <th style="padding:1rem;">Coach</th>
-                                    <th style="padding:1rem;">Joined Date</th>
-                                    <th style="padding:1rem; text-align:right;">Actions</th>
+                                <tr>
+                                    <th>Team Name</th>
+                                    <th>Coach</th>
+                                    <th>Joined Date</th>
+                                    <th style="text-align:right;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 ${teams.map(t => `
-                                    <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
-                                        <td style="padding:1rem; font-weight:600;" data-label="Team Name">${t.name}</td>
-                                        <td style="padding:1rem; color:var(--text-muted);" data-label="Coach">${t.coach_name || 'N/A'}</td>
-                                        <td style="padding:1rem; font-size:0.8rem; color:var(--text-muted);" data-label="Joined Date">24 Apr 2026</td>
-                                        <td style="padding:1rem; text-align:right;" data-label="Actions">
+                                    <tr>
+                                        <td style="font-weight:600;" data-label="Team Name">${t.name}</td>
+                                        <td style="color:var(--text-muted);" data-label="Coach">${t.coach_name || 'N/A'}</td>
+                                        <td style="font-size:0.8rem; color:var(--text-muted);" data-label="Joined Date">24 Apr 2026</td>
+                                        <td style="text-align:right;" data-label="Actions">
                                             <button class="btn btn-text btn-small" style="color:var(--accent-red);" onclick="removeTeamFromComp('${t.id}')">Remove</button>
                                         </td>
                                     </tr>
@@ -543,10 +543,7 @@
                     <h3 style="margin:0;">Upcoming & Past Fixtures</h3>
                     <button class="btn btn-primary btn-small" onclick="generateFixtures()">+ Add Fixture</button>
                 </div>
-                <div class="glass-card" style="padding:2rem; text-align:center; opacity:0.6;">
-                    <div style="font-size:2rem; margin-bottom:1rem;">⚽</div>
-                    <p>No fixtures generated yet. Click "Generate Fixtures" to start the season schedule.</p>
-                </div>
+                ${renderEmptyState('No fixtures generated yet. Click "Generate Fixtures" to start the season schedule.', '⚽')}
             `;
         }
 
@@ -618,7 +615,7 @@
             try {
                 const tournaments = await apiService.getTournaments();
                 if (!tournaments || tournaments.length === 0) {
-                    container.innerHTML = `<div style="grid-column:1/-1; padding:4rem; text-align:center; color:var(--text-muted);">No competitions created yet.</div>`;
+                    container.innerHTML = renderEmptyState('No competitions created yet.', '🏆');
                     return;
                 }
 
@@ -678,7 +675,7 @@
             try {
                 const { teams } = await apiService.get('/teams');
                 if (!teams || teams.length === 0) {
-                    list.innerHTML = '<p style="opacity:0.5; text-align:center;">No teams found in your club.</p>';
+                    list.innerHTML = renderEmptyState('No teams found in your club.', '🏆');
                     return;
                 }
                 

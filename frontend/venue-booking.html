@@ -240,7 +240,7 @@
             const grid = document.getElementById('venueGrid');
 
             if (venueList.length === 0) {
-                grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-muted);">No venues match your criteria.</p>';
+                grid.innerHTML = renderEmptyState('No venues match your criteria.', '⚽');
                 return;
             }
 
@@ -410,7 +410,7 @@
             const container = document.getElementById('myBookingsList');
 
             if (bookings.length === 0) {
-                container.innerHTML = '<p>No bookings yet</p>';
+                container.innerHTML = renderEmptyState('No bookings yet', '🏟️');
                 return;
             }
 

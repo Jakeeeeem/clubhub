@@ -303,8 +303,7 @@ async function loadCoachTournaments() {
 
     if (!orgId) {
       if (grid)
-        grid.innerHTML =
-          '<p style="padding: 2rem; opacity: 0.6;">Please select a group to view tournaments.</p>';
+        grid.innerHTML = renderEmptyState('Please select a group to view tournaments.', '🏆');
       return;
     }
 
@@ -314,11 +313,7 @@ async function loadCoachTournaments() {
 
     if (!tournaments || tournaments.length === 0) {
       if (grid)
-        grid.innerHTML = `
-                <div style="text-align: center; padding: 3rem; grid-column: 1 / -1;">
-                    <p style="color: var(--text-muted);">No active tournaments found for this group.</p>
-                </div>
-            `;
+        grid.innerHTML = renderEmptyState('No active tournaments found for this group.', '🏆');
       return;
     }
 
@@ -418,9 +413,7 @@ function renderCoachBracket(matches) {
   if (!container) return;
   
   if (!matches || matches.length === 0) {
-    container.innerHTML = `<div style="text-align:center; padding: 4rem; opacity: 0.3;">
-            <p>Brackets are finalized by administrators before the knockout stage begins.</p>
-        </div>`;
+    container.innerHTML = renderEmptyState('Brackets are finalized by administrators before the knockout stage begins.', '🏆');
     return;
   }
 }
@@ -430,8 +423,7 @@ function renderCoachFixtures(matches) {
   if (!container) return;
 
   if (!matches || matches.length === 0) {
-    container.innerHTML =
-      "<p style='text-align:center; padding:2rem; opacity:0.5;'>Tournament schedule pending.</p>";
+    container.innerHTML = renderEmptyState('Tournament schedule pending. Fixtures will appear here.', '⚽');
     return;
   }
 
@@ -470,10 +462,10 @@ function renderCoachStandings(standings) {
   if (!container) return;
 
   if (!standings || (Array.isArray(standings) && standings.length === 0)) {
-    container.innerHTML =
-      "<p style='text-align:center; padding: 4rem; opacity: 0.4;'>Group standings will appear here once the league phase logic is finalized.</p>";
+    container.innerHTML = renderEmptyState('Standings will appear once the group phase begins.', '📊');
     return;
   }
+
 }
 
 async function loadCoachProducts() {
@@ -511,7 +503,7 @@ async function loadCoachProducts() {
 
     if (!products || products.length === 0) {
       container.innerHTML =
-        '<div class="card"><p>No products available in the shop</p></div>';
+        renderEmptyState('No products available in the shop', '💰');
       return;
     }
 
@@ -635,11 +627,7 @@ async function loadCoachFeed() {
         </div>
       `).join('');
     } else {
-      html += `
-        <div style="padding: 3rem; text-align: center; opacity: 0.5;">
-          <p>No recent activity. Start by sharing an update with your teams.</p>
-        </div>
-      `;
+      html += renderEmptyState('No recent activity. Start by sharing an update with your teams.', '📰');
     }
 
     container.innerHTML = html;
@@ -664,7 +652,7 @@ function loadCoachDailyPlanner() {
     .sort((a, b) => (a.event_time || "").localeCompare(b.event_time || ""));
 
   if (sessions.length === 0) {
-    container.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem;">No sessions scheduled for today.</p>';
+    container.innerHTML = renderEmptyState('No sessions scheduled for today.', '📅');
     return;
   }
 
@@ -729,7 +717,7 @@ function loadTodaySchedule() {
   const container = document.getElementById("todaySchedule");
 
   if (todayEvents.length === 0) {
-    container.innerHTML = "<p>No events scheduled for today</p>";
+    container.innerHTML = renderEmptyState('No events scheduled for today', '📅');
     return;
   }
 
@@ -755,7 +743,7 @@ function loadCoachTeams() {
 
   if (currentTeams.length === 0) {
     container.innerHTML =
-      '<div class="card"><p>No teams assigned yet. Create a team to get started.</p></div>';
+      renderEmptyState('No teams assigned yet. Create a team to get started.', '🏆');
     return;
   }
 
@@ -893,7 +881,7 @@ function filterCoachPlayers() {
   }
 
   if (players.length === 0) {
-    tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:2rem; opacity:0.5;">No players found</td></tr>';
+    tableBody.innerHTML = `<tr><td colspan="6" style="border:none; padding:2rem; background:transparent;">${renderEmptyState('No players found', '⚽')}</td></tr>`;
     return;
   }
 
@@ -948,12 +936,7 @@ function loadCoachEvents() {
     }
 
     if (teamEvents.length === 0) {
-        container.innerHTML = `
-            <div class="glass-card" style="padding: 3rem; text-align: center; border-style: dashed;">
-                <p style="color: var(--text-muted); font-size: 0.9rem;">No events scheduled for your teams yet.</p>
-                <button class="btn btn-primary btn-small" style="margin-top: 1rem;" onclick="openModal('addEventModal')">+ Add First Event</button>
-            </div>
-        `;
+        container.innerHTML = renderEmptyState('No events scheduled for your teams yet. + Add First Event', '🏆');
         return;
     }
 
@@ -1144,7 +1127,7 @@ function loadAvailablePlayers() {
 
   if (players.length === 0) {
     container.innerHTML =
-      '<p style="color:var(--text-muted); font-size: 0.8rem;">No players found in database.</p>';
+      renderEmptyState('No players found in database.', '⚽');
     return;
   }
 
@@ -1268,7 +1251,7 @@ function recordMatchResult(eventId) {
     );
 
     if (teamPlayers.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="6" class="text-center" style="padding: 2rem; color: var(--text-muted);">No squad members found for ${team.name}</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="6" style="border:none; padding:2rem; background:transparent;">${renderEmptyState(`No squad members found for ${team.name}`, '🏆')}</td></tr>`;
     } else {
       teamPlayers.forEach((player) => {
         const row = document.createElement("tr");
@@ -1425,7 +1408,7 @@ async function manageEventPlayers(eventId) {
     container.style.display = 'block';
 
     if (!responses || responses.length === 0) {
-      body.innerHTML = '<tr><td colspan="3" style="padding:2rem; text-align:center; color:var(--text-muted);">No responses yet. Invitations sent.</td></tr>';
+      body.innerHTML = `<tr><td colspan="3" style="border:none; padding:2rem; background:transparent;">${renderEmptyState('No responses yet. Invitations sent.', 'ℹ️')}</td></tr>`;
       return;
     }
 
@@ -1594,7 +1577,7 @@ async function loadCommunityFeed() {
 
     if (!items || items.length === 0) {
       container.innerHTML =
-        '<div class="empty-state"><h4>No updates found</h4><p>Check back later for new announcements and blogs.</p></div>';
+        renderEmptyState('No updates yet. Check back later for announcements and club news.', '📰');
       return;
     }
 

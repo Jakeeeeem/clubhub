@@ -108,13 +108,7 @@
 
         async function loadCampaigns() {
             const container = document.getElementById('campaignsList');
-            container.innerHTML = `
-                <div class="card">
-                    <p style="text-align: center; color: var(--text-muted);">
-                        No campaigns yet. Create your first email campaign to communicate with your players and parents!
-                    </p>
-                </div>
-            `;
+            container.innerHTML = renderEmptyState('No campaigns yet. Create your first email campaign to communicate with your players and parents!', '⚽');
         }
 
         function openCreateCampaign() {

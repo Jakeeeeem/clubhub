@@ -412,7 +412,7 @@ const SquadMessenger = {
     const convos = Object.values(contactMap).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
     if (convos.length === 0) {
-      el.innerHTML = '<div style="text-align:center;padding:2rem;color:rgba(255,255,255,0.3);font-size:0.82rem;">No conversations yet.<br>Start one using the Contacts tab.</div>';
+      el.innerHTML = renderEmptyState('No conversations yet. Start one using the Contacts tab.', '👥');
       return;
     }
 
@@ -501,7 +501,7 @@ const SquadMessenger = {
     const el = document.getElementById('sq-mass-recipients');
     if (!el) return;
     if (!this.state.allContacts.length) {
-      el.innerHTML = '<div style="text-align:center;padding:1rem;opacity:0.4;font-size:0.82rem;">No contacts found.</div>';
+      el.innerHTML = renderEmptyState('No contacts found.', '👥');
       return;
     }
     const roleLabel = { admin: '🛡', coach: '👟', player: '⚽' };
@@ -607,10 +607,7 @@ const SquadMessenger = {
       .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 
     if (!thread.length) {
-      area.innerHTML = `<div style="text-align:center;margin:auto;opacity:0.3;">
-        <div style="font-size:2.5rem;">💬</div>
-        <p style="font-size:0.8rem;margin-top:0.5rem;">No messages yet. Say hello!</p>
-      </div>`;
+      area.innerHTML = renderEmptyState('No messages yet. Say hello!', '💬');
       return;
     }
     console.log('[SquadMessenger] _renderThread rendering', { threadLength: thread.length });

@@ -107,9 +107,7 @@
                             <span style="margin-left:auto;font-size:0.75rem;color:var(--text-muted);">Live updates</span>
                         </div>
                         <div id="coachFeedContainer">
-                            <div style="padding: 2rem; text-align: center; opacity: 0.5;">
-                                <p>No recent activity.</p>
-                            </div>
+                            <div class="empty-state"><i aria-hidden="true">📋</i><p>No recent activity.</p></div>
                         </div>
                     </div>
 
@@ -119,8 +117,9 @@
                             <button class="btn btn-secondary btn-small" style="margin-left:auto;" onclick="openModal('addEventModal')">Plan Session</button>
                         </div>
                         <div id="coachUpcomingSessions" style="display:flex;flex-direction:column;gap:0.75rem;">
-                            <div style="padding: 1.5rem; text-align: center; opacity: 0.5; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px dashed rgba(255,255,255,0.1);">
-                                <p style="font-size: 0.85rem; margin: 0;">No sessions scheduled.</p>
+                            <div class="empty-state" style="margin:0;">
+                                <i aria-hidden="true">📅</i>
+                                <p>No sessions scheduled. Plan your first session!</p>
                             </div>
                         </div>
                     </div>
@@ -143,9 +142,7 @@
                     <div class="glass-card" style="padding:1.5rem;">
                         <div style="font-size:1rem;font-weight:700;color:#fff;margin-bottom:1rem;">👥 My Squad</div>
                         <div id="squadList">
-                            <div style="padding: 2rem; text-align: center; opacity: 0.5;">
-                                <p>No players in squad.</p>
-                            </div>
+                            <div class="empty-state"><i aria-hidden="true">⚽</i><p>No players in squad.</p></div>
                         </div>
                     </div>
                 </div>
@@ -167,7 +164,7 @@
                 
                 <div class="glass-card" style="padding:0;">
                     <div class="table-responsive">
-                        <table class="table">
+                        <table class="data-table">
                             <thead>
                                 <tr>
                                     <th>Player Name</th>
@@ -462,12 +459,12 @@
             </div>
 
             <div id="rosterListContainer" style="max-height: 450px; overflow-y: auto; display: none;">
-                <table style="width: 100%; border-collapse: collapse;">
-                    <thead style="background: rgba(255,255,255,0.02); position: sticky; top: 0; z-index: 10;">
+                <table class="data-table">
+                    <thead style="position: sticky; top: 0; z-index: 10; background: rgba(30,30,30,0.95);">
                         <tr>
-                            <th style="padding: 1rem; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted);">Player</th>
-                            <th style="padding: 1rem; text-align: center; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted);">Status</th>
-                            <th style="padding: 1rem; text-align: left; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted);">Notes / Reason</th>
+                            <th>Player</th>
+                            <th style="text-align: center;">Status</th>
+                            <th>Notes / Reason</th>
                         </tr>
                     </thead>
                     <tbody id="rosterListBody">
@@ -521,15 +518,15 @@
                 <div id="playerStatsSection">
                     <h3 style="font-size:1rem; margin:1.5rem 0 0.75rem;">Player Performance</h3>
                     <div id="playerStatsTable" style="max-height:300px; overflow-y:auto; border:1px solid rgba(255,255,255,0.05); border-radius:8px;">
-                        <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
-                            <thead style="background:rgba(255,255,255,0.05); position:sticky; top:0;">
+                        <table class="data-table" style="font-size:0.85rem;">
+                            <thead style="position:sticky; top:0; z-index:10; background: rgba(30,30,30,0.95);">
                                 <tr>
-                                    <th style="padding:0.75rem; text-align:left;">Player</th>
-                                    <th style="padding:0.75rem; text-align:center;">Rating</th>
-                                    <th style="padding:0.75rem; text-align:center;">Goals</th>
-                                    <th style="padding:0.75rem; text-align:center;">Assists</th>
-                                    <th style="padding:0.75rem; text-align:center;">Cards</th>
-                                    <th style="padding:1rem; text-align:center;">Min</th>
+                                    <th style="text-align:left;">Player</th>
+                                    <th style="text-align:center;">Rating</th>
+                                    <th style="text-align:center;">Goals</th>
+                                    <th style="text-align:center;">Assists</th>
+                                    <th style="text-align:center;">Cards</th>
+                                    <th style="text-align:center;">Min</th>
                                 </tr>
                             </thead>
                             <tbody id="playerStatsTableBody">

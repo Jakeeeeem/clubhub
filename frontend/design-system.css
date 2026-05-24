@@ -575,3 +575,102 @@ input:focus, select:focus, textarea:focus {
         padding: 1.25rem;
     }
 }
+
+/* --- Premium Empty State --- */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  margin: 2rem auto;
+  max-width: 420px;
+  width: 100%;
+  background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  color: var(--text-primary, #e2e8f0);
+  text-align: center;
+  font-family: 'Inter', sans-serif;
+  line-height: 1.6;
+  position: relative;
+  overflow: hidden;
+  animation: emptyStateFadeIn 0.4s ease both;
+}
+
+@keyframes emptyStateFadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Subtle radial glow behind icon */
+.empty-state::before {
+  content: '';
+  position: absolute;
+  top: -30%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(220, 38, 38, 0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.empty-state i {
+  font-size: 2.75rem;
+  margin-bottom: 1rem;
+  display: block;
+  filter: drop-shadow(0 0 12px rgba(220, 38, 38, 0.4));
+  animation: emptyIconPulse 3s ease-in-out infinite;
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes emptyIconPulse {
+  0%, 100% { transform: scale(1);   filter: drop-shadow(0 0 10px rgba(220, 38, 38, 0.35)); }
+  50%       { transform: scale(1.06); filter: drop-shadow(0 0 18px rgba(220, 38, 38, 0.55)); }
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: 0.975rem;
+  color: rgba(255, 255, 255, 0.55);
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  position: relative;
+  z-index: 1;
+}
+
+.empty-state strong,
+.empty-state .empty-title {
+  display: block;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 0.35rem;
+  letter-spacing: -0.01em;
+}
+
+/* Wide containers: allow full width */
+.dashboard-grid > .empty-state,
+.card-grid > .empty-state,
+[style*="grid-template-columns"] > .empty-state {
+  grid-column: 1 / -1;
+  max-width: 100%;
+}
+
+/* Inside table cells — remove own border/shadow for clean look */
+td > .empty-state {
+  border: none;
+  box-shadow: none;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  margin: 0;
+  padding: 2.5rem 1rem;
+}

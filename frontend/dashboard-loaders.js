@@ -42,7 +42,7 @@ window.DashboardLoaders = {
         try {
             const { activity } = await apiService.get('/feed');
             if (!activity || activity.length === 0) {
-                container.innerHTML = '<div style="padding:1rem; opacity:0.5; font-size:0.85rem;">No recent activity</div>';
+                container.innerHTML = renderEmptyState('No recent activity', '📋');
                 return;
             }
             
@@ -91,7 +91,7 @@ window.DashboardLoaders = {
         try {
             const { players } = await apiService.get('/members');
             if (!players || players.length === 0) {
-                container.innerHTML = '<p style="color:var(--text-muted); font-size:0.85rem;">No recent members.</p>';
+                container.innerHTML = renderEmptyState('No recent members.', '👥');
                 return;
             }
             
@@ -116,7 +116,7 @@ window.DashboardLoaders = {
         try {
             const { teams } = await apiService.get('/teams');
             if (!teams || teams.length === 0) {
-                container.innerHTML = '<div style="grid-column:1/-1; padding:3rem; text-align:center; color:var(--text-muted);">No teams created yet.</div>';
+                container.innerHTML = renderEmptyState('No teams created yet.', '🏆');
                 return;
             }
             container.innerHTML = teams.map(t => `
@@ -141,7 +141,7 @@ window.DashboardLoaders = {
         try {
             const { staff } = await apiService.get('/members?role=coach');
             if (!staff || staff.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:2rem; opacity:0.5;">No staff found</td></tr>';
+                tableBody.innerHTML = `<tr><td colspan="5" style="border:none; padding:2rem; background:transparent;">${renderEmptyState('No staff found', '👥')}</td></tr>`;
                 return;
             }
             tableBody.innerHTML = staff.map(s => `
@@ -166,7 +166,7 @@ window.DashboardLoaders = {
             let players = response.players || [];
             
             if (!players || players.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="padding:3rem; text-align:center; color:var(--text-muted);">No members found.</td></tr>';
+                tbody.innerHTML = `<tr><td colspan="5" style="border:none; padding:2rem; background:transparent;">${renderEmptyState('No members found.', '👥')}</td></tr>`;
                 return;
             }
 
@@ -204,7 +204,7 @@ window.DashboardLoaders = {
 
             const approvals = await apiService.getPlatformScoutVerifications();
             if (!approvals || approvals.length === 0) {
-                list.innerHTML = '<div style="padding:1rem; color:var(--text-muted);">No pending platform scout approvals.</div>';
+                list.innerHTML = renderEmptyState('No pending platform scout approvals.', 'ℹ️');
                 return;
             }
             list.innerHTML = approvals.map(r => `

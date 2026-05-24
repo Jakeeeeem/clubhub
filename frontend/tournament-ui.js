@@ -91,7 +91,7 @@ const TournamentUI = {
         if (!container) return;
 
         if (!standings || standings.length === 0) {
-            container.innerHTML = '<p style="text-align:center; padding:2rem; opacity:0.5;">No league data available.</p>';
+            container.innerHTML = renderEmptyState('No league data available.', '🏆');
             return;
         }
 

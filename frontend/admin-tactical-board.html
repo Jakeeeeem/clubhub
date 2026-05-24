@@ -193,9 +193,7 @@
                                     style="margin-left:auto;font-size:0.75rem;font-weight:400;color:var(--text-muted);">Live
                                     updates</span>
                                                          <div id="activityFeed">
-                                    <div style="padding: 2rem; text-align: center; opacity: 0.5;">
-                                        <p>No recent activity.</p>
-                                    </div>
+                                    <div class="empty-state"><i aria-hidden="true">📋</i><p>No recent activity.</p></div>
                                 </div>            </div>
                         </div>
 
@@ -239,24 +237,26 @@
                     </div>
                     <div id="membersListContainer">
                         <div class="table-responsive">
-                            <table style="width:100%; text-align:left; border-collapse:collapse;">
+                            <table class="data-table">
                                 <thead>
-                                    <tr
-                                        style="color:var(--text-muted); font-size:0.75rem; text-transform:uppercase; letter-spacing:1px;">
-                                        <th style="padding:0.75rem 0;">Name</th>
-                                        <th style="padding:0.75rem 0;">Role</th>
-                                        <th style="padding:0.75rem 0;">Squad</th>
-                                        <th style="padding:0.75rem 0;">Status</th>
-                                        <th style="padding:0.75rem 0; text-align:right;">Actions</th>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Role</th>
+                                        <th>Squad</th>
+                                        <th>Status</th>
+                                        <th style="text-align:right;">Actions</th>
                                     </tr>
                                 </thead>
-                                    <tbody style="font-size:0.9rem;">
-                                        <tr style="border-top:1px solid rgba(255,255,255,0.05);">
-                                            <td colspan="5" style="padding: 2.5rem; text-align: center; opacity: 0.5;">
-                                                No members found.
-                                            </td>
-                                        </tr>
-                                    </tbody>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="5">
+                                            <div class="empty-state" style="margin: 1.5rem auto;">
+                                                <i aria-hidden="true">👥</i>
+                                                <p>No members found.</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
                             </table>
                         </div>
                     </div>
@@ -580,7 +580,7 @@
                     let teamsToRender = teams;
 
                     if (!teamsToRender || teamsToRender.length === 0) {
-                        container.innerHTML = '<div style="grid-column:1/-1; padding:3rem; text-align:center; color:var(--text-muted);">No teams created yet.</div>';
+                        container.innerHTML = renderEmptyState('No teams created yet.', '🏆');
                         return;
                     }
                     container.innerHTML = teamsToRender.map(t => `
@@ -757,7 +757,7 @@
                 const requests = await apiService.getPlatformScoutVerifications('pending');
                 loading.style.display = 'none';
                 if (!requests || !requests.length) {
-                    list.innerHTML = '<div style="padding:1rem; color:var(--text-muted);">No pending scout approval requests at this time.</div>';
+                    list.innerHTML = renderEmptyState('No pending scout approval requests at this time.', 'ℹ️');
                     return;
                 }
 
@@ -831,7 +831,7 @@
                 const pending = staff.filter(s => !s.club_verified_scout && (s.can_manage_scouting || (s.permissions || []).includes('scouting')));
 
                 if (!pending.length) {
-                    list.innerHTML = '<div style="padding:1rem; color:var(--text-muted);">No pending club scout approvals at this time.</div>';
+                    list.innerHTML = renderEmptyState('No pending club scout approvals at this time.', 'ℹ️');
                     return;
                 }
 

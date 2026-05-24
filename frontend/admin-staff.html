@@ -193,9 +193,7 @@
                                     style="margin-left:auto;font-size:0.75rem;font-weight:400;color:var(--text-muted);">Live
                                     updates</span>
                                                          <div id="activityFeed">
-                                    <div style="padding: 2rem; text-align: center; opacity: 0.5;">
-                                        <p>No recent activity.</p>
-                                    </div>
+                                    <div class="empty-state"><i aria-hidden="true">📋</i><p>No recent activity.</p></div>
                                 </div>            </div>
                         </div>
 
@@ -287,24 +285,24 @@
                     </div>
                     <div id="membersListContainer">
                         <div class="table-responsive">
-                            <table style="width:100%; text-align:left; border-collapse:collapse;">
+                            <table class="data-table">
                                 <thead>
-                                    <tr
-                                        style="color:var(--text-muted); font-size:0.75rem; text-transform:uppercase; letter-spacing:1px;">
-                                        <th style="padding:0.75rem 0;">Name</th>
-                                        <th style="padding:0.75rem 0;">Role</th>
-                                        <th style="padding:0.75rem 0;">Squad</th>
-                                        <th style="padding:0.75rem 0;">Status</th>
-                                        <th style="padding:0.75rem 0; text-align:right;">Actions</th>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Role</th>
+                                        <th>Squad</th>
+                                        <th>Status</th>
+                                        <th style="text-align:right;">Actions</th>
                                     </tr>
                                 </thead>
-                                    <tbody style="font-size:0.9rem;">
-                                        <tr style="border-top:1px solid rgba(255,255,255,0.05);">
-                                            <td colspan="5" style="padding: 2.5rem; text-align: center; opacity: 0.5;">
-                                                No members found.
-                                            </td>
-                                        </tr>
-                                    </tbody>
+                                <tbody id="membersTableBody">
+                                    <tr><td colspan="5" style="padding:0;">
+                                        <div class="empty-state" style="margin:1rem auto;">
+                                            <i aria-hidden="true">👥</i>
+                                            <p>No members found. Add your first member to get started.</p>
+                                        </div>
+                                    </td></tr>
+                                </tbody>
                             </table>
                         </div>
                     </div>
@@ -313,19 +311,24 @@
 
             <!-- Staff Section -->
             <div id="staff" class="dashboard-section active" style="display:block; padding:1.5rem;">
-                <div id="staffListContainer" class="glass-card" style="padding:1.5rem; margin-top:1rem;">
+                <div id="staffListContainer" class="glass-card" style="padding:0; overflow:hidden; margin-top:1rem;">
                     <div class="table-responsive">
-                        <table style="width:100%; text-align:left; border-collapse:collapse;">
+                        <table class="data-table">
                             <thead>
-                                <tr style="color:var(--text-muted); font-size:0.75rem; text-transform:uppercase; letter-spacing:1px;">
-                                    <th style="padding:0.75rem 0;">Name</th>
-                                    <th style="padding:0.75rem 0;">Role</th>
-                                    <th style="padding:0.75rem 0;">Contact</th>
-                                    <th style="padding:0.75rem 0; text-align:right;">Actions</th>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Role</th>
+                                    <th>Contact</th>
+                                    <th style="text-align:right;">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody id="staffTableBody" style="font-size:0.9rem;">
-                                <tr><td colspan="4" style="padding:2rem; text-align:center; color:var(--text-muted);">Loading staff...</td></tr>
+                            <tbody id="staffTableBody">
+                                <tr><td colspan="4" style="padding:0;">
+                                    <div style="display:flex;align-items:center;justify-content:center;gap:0.75rem;padding:2.5rem;">
+                                        <div class="loader" style="width:20px;height:20px;"></div>
+                                        <span style="color:var(--text-muted);font-size:0.9rem;">Loading staff...</span>
+                                    </div>
+                                </td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -341,8 +344,10 @@
                 <div class="dash-grid" id="teamsListContainer"
                     style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:1.5rem;">
                     <!-- Dynamically loaded -->
-                    <div style="grid-column:1/-1; padding:3rem; text-align:center; color:var(--text-muted);">Loading
-                        squads...</div>
+                    <div style="grid-column:1/-1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:3rem; gap:0.75rem;">
+                        <div class="loader"></div>
+                        <span style="color:var(--text-muted);font-size:0.9rem;">Loading squads...</span>
+                    </div>
                 </div>
             </div>
 
@@ -627,7 +632,7 @@
                 const staff = data.staff || [];
                 
                 if (staff.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4" style="padding:2rem; text-align:center; color:var(--text-muted);">No staff members found.</td></tr>';
+                    tbody.innerHTML = `<tr><td colspan="4" style="border:none; padding:2rem; background:transparent;">${renderEmptyState('No staff members found.', '👥')}</td></tr>`;
                     return;
                 }
 
@@ -667,7 +672,7 @@
                     let teamsToRender = teams;
 
                     if (!teamsToRender || teamsToRender.length === 0) {
-                        container.innerHTML = '<div style="grid-column:1/-1; padding:3rem; text-align:center; color:var(--text-muted);">No teams created yet.</div>';
+                        container.innerHTML = renderEmptyState('No teams created yet.', '🏆');
                         return;
                     }
                     container.innerHTML = teamsToRender.map(t => `
@@ -807,7 +812,7 @@
                 const requests = await apiService.getPlatformScoutVerifications('pending');
                 loading.style.display = 'none';
                 if (!requests || !requests.length) {
-                    list.innerHTML = '<div style="padding:1rem; color:var(--text-muted);">No pending scout approval requests at this time.</div>';
+                    list.innerHTML = renderEmptyState('No pending scout approval requests at this time.', 'ℹ️');
                     return;
                 }
 
@@ -881,7 +886,7 @@
                 const pending = staff.filter(s => !s.club_verified_scout && (s.can_manage_scouting || (s.permissions || []).includes('scouting')));
 
                 if (!pending.length) {
-                    list.innerHTML = '<div style="padding:1rem; color:var(--text-muted);">No pending club scout approvals at this time.</div>';
+                    list.innerHTML = renderEmptyState('No pending club scout approvals at this time.', 'ℹ️');
                     return;
                 }
 

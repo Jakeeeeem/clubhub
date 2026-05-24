@@ -206,9 +206,7 @@ async function openDrillDetail(drillId, assignmentId) {
             </video>
           `}
         </div>` : `
-        <div class="glass-panel" style="padding:2rem; text-align:center; margin-bottom:1.5rem; color:var(--text-muted);">
-          📹 No demo video yet
-        </div>`}
+        ${renderEmptyState('No demo video yet', '🎥')}`}
 
       <div class="glass-panel" style="padding:1.5rem; margin-bottom:1.5rem;">
         <h4 style="margin:0 0 0.75rem; color:var(--primary);">📋 Instructions</h4>
@@ -286,7 +284,7 @@ async function loadCoachReviewQueue() {
     const submissions = data.submissions || [];
 
     if (!submissions.length) {
-      container.innerHTML = '<div class="glass-card" style="padding:2rem;text-align:center;color:var(--text-muted);">🎉 No pending reviews! All caught up.</div>';
+      container.innerHTML = renderEmptyState('No pending reviews! All caught up.', 'ℹ️');
       return;
     }
 
@@ -375,7 +373,7 @@ function renderDrillHistory(history) {
   if (!container) return;
 
   if (!history.length) {
-    container.innerHTML = '<p style="color:var(--text-muted); font-size:0.9rem;">No completed drills yet.</p>';
+    container.innerHTML = renderEmptyState('No completed drills yet.', 'ℹ️');
     return;
   }
 

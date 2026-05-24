@@ -315,7 +315,7 @@
                 });
 
                 if (tourneys.length === 0) {
-                    grid.innerHTML = '<div style="grid-column: 1 / -1; padding: 4rem 1rem; text-align: center; color: var(--text-muted);"><h3>No tournaments found</h3><p>Try adjusting your search criteria</p></div>';
+                    grid.innerHTML = renderEmptyState('No tournaments found Try adjusting your search criteria', '🏆');
                     return;
                 }
 

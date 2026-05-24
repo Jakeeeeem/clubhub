@@ -21,7 +21,7 @@
       const params = new URLSearchParams(window.location.search);
       const groupId = params.get('group') || localStorage.getItem('activeGroupId');
       const group = Groups.GroupSwitcher.get(groupId);
-      if(!group){ document.getElementById('membersList').innerText = 'No group selected'; return; }
+      if(!group){ document.getElementById('membersList').innerHTML = renderEmptyState('No group selected', 'ℹ️'); return; }
       const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
       const userType = user.account_type || localStorage.getItem('userType');
       const isPlayer = userType === 'player' || userType === 'talent' || userType === 'parent';

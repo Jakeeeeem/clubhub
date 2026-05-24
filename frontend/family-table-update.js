@@ -6,24 +6,7 @@ function renderFamilyGrid() {
     if (!grid) return;
     
     if (PlayerDashboardState.family.length === 0) {
-        grid.innerHTML = `
-            <div class="empty-state" style="text-align: center; padding: 4rem 2rem; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px dashed rgba(255,255,255,0.1);">
-                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin: 0 auto 1.5rem; opacity: 0.3;">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="9" cy="7" r="4"></circle>
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                </svg>
-                <h3 style="margin: 0 0 0.5rem; font-size: 1.25rem;">No Family Members Yet</h3>
-                <p style="color: var(--text-muted); margin: 0 0 2rem; max-width: 400px; margin-left: auto; margin-right: auto;">Add your children to manage their sports activities and track their progress</p>
-                <button class="btn btn-primary" onclick="openAddChildModal()" style="padding: 0.75rem 2rem;">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="margin-right: 0.5rem;">
-                        <path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                    Add First Child
-                </button>
-            </div>
-        `;
+        grid.innerHTML = renderEmptyState('No Family Members Yet Add your children to manage their sports activities and track their progress Add First Child', '👥');
         return;
     }
     

@@ -451,7 +451,7 @@
         function displayWaitlist() {
             const body = document.getElementById('waitlistBody');
             if (waitlist.length === 0) {
-                body.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 2rem; color: var(--text-muted);">No one on the waitlist.</td></tr>';
+                body.innerHTML = `<tr><td colspan="4" style="border:none; padding:2rem; background:transparent;">${renderEmptyState('No one on the waitlist.', 'ℹ️')}</td></tr>`;
                 return;
             }
             body.innerHTML = waitlist.map((w, index) => `
@@ -472,7 +472,7 @@
         function displayStaff() {
             const grid = document.getElementById('staffGrid');
             if (staff.length === 0) {
-                grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-muted);">No staff assigned yet.</p>';
+                grid.innerHTML = renderEmptyState('No staff assigned yet.', '👥');
                 return;
             }
             grid.innerHTML = staff.map(s => `

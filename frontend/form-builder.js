@@ -50,7 +50,7 @@ async function loadMyForms() {
     const container = document.getElementById("myFormsContainer");
     if (!forms.length) {
       container.innerHTML =
-        '<p style="color:var(--text-muted); font-size:0.85rem;">No forms yet. Click + New Form to start.</p>';
+        renderEmptyState('No forms yet. Click + New Form to start.', 'ℹ️');
       return;
     }
     container.innerHTML = forms
