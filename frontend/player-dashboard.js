@@ -1052,7 +1052,7 @@ function loadPlayerClubs() {
     });
     staffBody.innerHTML = rows.length
       ? rows.join("")
-      : '<tr><td colspan="4">No staff information available</td></tr>';
+      : `<tr><td colspan="4" style="border:none; padding:2rem; background:transparent;">${renderEmptyState('No staff information available', 'No coaches or staff have been linked to your clubs yet.', '👥')}</td></tr>`;
   }
 }
 

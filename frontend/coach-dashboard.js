@@ -1561,7 +1561,7 @@ window.submitMatchResult = window.submitMatchResult || function(e) {
 };
 window.initializeCoachDashboard = initializeCoachDashboard;
 window.loadCommunityFeed = loadCommunityFeed;
-window.loadMessengerConversations = window.loadMessengerConversations || function() { console.log("Messenger loading..."); };
+window.loadMessengerConversations = loadMessengerConversations;
 window.openMessageThread = window.openMessageThread || function(id) { showNotification("Opening thread " + id, "info"); };
 window.postToCommunityAsCoach = window.postToCommunityAsCoach || function() { console.log("Posting to community..."); };
 

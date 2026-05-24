@@ -143,9 +143,9 @@
                 <p style="color:var(--text-muted);">Explore analytics for prospects, leagues, and competition trends.</p>
             </div>
 
-            <div id="scout-messenger" class="dashboard-section" style="display:none; padding:2rem; text-align:center;">
-                <h2 class="neon-text">Communications</h2>
-                <p style="color:var(--text-muted);">Secure messaging with clubs and colleagues.</p>
+            <div id="scout-messenger" class="dashboard-section" style="display:none; padding:1rem;">
+                <h2 class="neon-text" style="margin-bottom:1.5rem;">💬 Messenger</h2>
+                <div id="scout-messenger-mount" class="glass-card" style="min-height:560px; overflow:hidden;"></div>
             </div>
         </div>
     </main>
@@ -156,7 +156,22 @@
     <script src="group-switcher.js?v=20260429_v18"></script>
     <script src="pwa-install.js?v=20260429_v18"></script>
     <script src="unified-nav.js?v=20260429_v18"></script>
+    <script src="squad-messenger.js?v=20260429_v18"></script>
     <script>
+        let _scoutMessengerMounted = false;
+
+        function mountScoutMessenger() {
+            if (window.SquadMessenger) {
+                if (!_scoutMessengerMounted) {
+                    SquadMessenger.mount('scout-messenger-mount');
+                    _scoutMessengerMounted = true;
+                }
+                SquadMessenger.load();
+            } else {
+                setTimeout(mountScoutMessenger, 500);
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', async () => {
             const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
             if (user && user.firstName) {
@@ -176,6 +191,9 @@
             if (t) {
                 t.style.display = 'block';
                 t.classList.add('active');
+            }
+            if (id === 'messenger') {
+                mountScoutMessenger();
             }
         }
     </script>

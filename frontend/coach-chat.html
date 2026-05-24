@@ -79,8 +79,8 @@
                 <!-- Left: Feed -->
                 <div>
                     <div class="glass-card" style="padding:1.5rem;">
-                </body>
-            </html>
+                        <div style="display:flex;align-items:center;margin-bottom:1rem;">
+                            <span style="font-size:1rem;font-weight:700;color:#fff;">📋 Activity Feed</span>
                             <span style="margin-left:auto;font-size:0.75rem;color:var(--text-muted);">Live updates</span>
                         </div>
                         <div id="coachFeedContainer">
@@ -614,6 +614,10 @@
                     if (typeof showCoachSection === 'function') {
                         showCoachSection(section);
                     }
+                }
+            } else {
+                if (typeof loadMessengerConversations === 'function') {
+                    await loadMessengerConversations();
                 }
             }
         });
