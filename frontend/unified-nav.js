@@ -954,15 +954,17 @@ const UnifiedNav = {
       document.body.style.opacity = '1';
     }
 
-    // Sidebar: CLOSED (collapsed) by default on desktop unless user explicitly opened it
+    // Sidebar: DEFAULT to collapsed on desktop so it never auto-opens unexpectedly.
+    // If the user has explicitly chosen to open it previously (sidebarCollapsed === 'false'), honour that.
     if (isDesktop && isDashboard) {
       const sidebarPref = localStorage.getItem("sidebarCollapsed");
-      // If never set OR set to true, default to collapsed
-      if (sidebarPref === null || sidebarPref === "true") {
-        document.body.classList.add("sidebar-collapsed");
-        localStorage.setItem("sidebarCollapsed", "true");
-      } else {
+      if (sidebarPref === "false") {
+        // user explicitly asked for open
         document.body.classList.remove("sidebar-collapsed");
+      } else {
+        // default to collapsed for first-time visitors or when pref is true
+        document.body.classList.add("sidebar-collapsed");
+        if (sidebarPref === null) localStorage.setItem("sidebarCollapsed", "true");
       }
     }
 
