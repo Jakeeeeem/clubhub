@@ -2877,7 +2877,7 @@ body.has-top-tabs .dashboard-main {
 .nav-group .sidebar-link .nav-icon {
     width: 20px !important;
     height: 20px !important;
-    margin-right: 10px !important;
+    margin-right: 0px !important;
 }
 
 .nav-group .sidebar-link .nav-icon svg,
