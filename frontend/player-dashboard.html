@@ -273,9 +273,9 @@
             </div>
             <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:1.5rem;cursor:pointer;transition:all 0.2s;" onclick="showPlayerSection('teams')">
               <div style="font-size:1.5rem;margin-bottom:0.5rem;">📊</div>
-              <div style="font-size:0.72rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);">Attendance</div>
-              <div style="font-size:2.2rem;font-weight:900;color:#fff;" id="playerAttendanceRate">--%</div>
-              <div style="font-size:0.78rem;color:var(--text-muted);">Season average</div>
+              <div style="font-size:0.72rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);" id="playerNextMatchLabel">Next Match</div>
+              <div style="font-size:2.2rem;font-weight:900;color:#fff;" id="playerNextMatchTime">--:--</div>
+              <div style="font-size:0.78rem;color:var(--text-muted);" id="playerNextMatchName">No matches scheduled</div>
             </div>
             <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:1.5rem;cursor:pointer;transition:all 0.2s;" onclick="showPlayerSection('subscriptions')">
               <div style="font-size:1.5rem;margin-bottom:0.5rem;">✅</div>
@@ -468,6 +468,37 @@
         <div class="glass-panel" style="padding: 2rem;">
           <h2 class="neon-text" style="margin-bottom: 1.5rem;">Team Events & Availability</h2>
           <div id="teamEventsContainer" class="activity-card-list"></div>
+        </div>
+      </div>
+
+      <!-- Events & Venues -->
+      <div id="player-events-venues" class="dashboard-section" style="display: none;">
+        <div class="glass-panel" style="padding: 2rem; margin-bottom: 2rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+            <div>
+              <h2 class="neon-text" style="margin-bottom: 0.25rem;">My Events & Venues</h2>
+              <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0;">View the upcoming events you are going to and venue details.</p>
+            </div>
+            <!-- Tab switches inside the panel -->
+            <div style="display: flex; background: rgba(0, 0, 0, 0.2); padding: 4px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.08);">
+              <button class="btn btn-small" id="toggleEventsTabBtn" onclick="switchEventsVenuesTab('events')" style="border-radius: 8px; padding: 0.5rem 1.25rem; font-weight: 600; font-size: 0.85rem; background: var(--primary); color: white; border: none; cursor: pointer;">📅 Going To</button>
+              <button class="btn btn-small" id="toggleVenuesTabBtn" onclick="switchEventsVenuesTab('venues')" style="border-radius: 8px; padding: 0.5rem 1.25rem; font-weight: 600; font-size: 0.85rem; background: transparent; color: var(--text-muted); border: none; cursor: pointer;">📍 Venues</button>
+            </div>
+          </div>
+
+          <!-- Events Tab Content -->
+          <div id="eventsTabContent">
+            <div id="myEventsListContainer" class="activity-card-list">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- Venues Tab Content -->
+          <div id="venuesTabContent" style="display: none;">
+            <div id="myVenuesListContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem;">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
         </div>
       </div>
 

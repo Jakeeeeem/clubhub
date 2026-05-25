@@ -601,13 +601,14 @@
             let inviteToken = urlParams.get('invite');
             const inviteEmail = urlParams.get('email');
 
-            // IMPORTANT: Also check localStorage for pending invite token
-            // This handles the case where user clicked "Create Account" from invite page
-            if (!inviteToken) {
-                inviteToken = localStorage.getItem('pendingInviteToken');
-                if (inviteToken) {
-                    console.log('📧 Found pending invite token in localStorage');
-                }
+            // IMPORTANT: If invite token is present in the URL, keep it in-memory
+            // and let the user explicitly accept the invitation after signup.
+            // Do NOT persist it automatically to localStorage here.
+            if (inviteToken) {
+                window.__pendingInviteToken = inviteToken;
+                // Keep returnUrl if caller provided one
+                window.__pendingInviteReturnUrl = urlParams.get('returnUrl') || null;
+                console.log('📧 Invitation present in URL; deferring acceptance until user action');
             }
 
             // Default signup account type is always Player unless an invite indicates otherwise.
@@ -616,8 +617,10 @@
             if (inviteToken) {
                 console.log('📧 Invitation detected, pre-filling email');
 
-                // Store the invite token for later (in case it came from URL)
-                localStorage.setItem('pendingInviteToken', inviteToken);
+                // Keep invite token in-memory for explicit acceptance after signup
+                // (do not auto-accept or persist it here)
+                window.__pendingInviteToken = inviteToken;
+                window.__pendingInviteReturnUrl = urlParams.get('returnUrl') || null;
 
                 // Pre-fill email if provided
                 if (inviteEmail) {
@@ -640,7 +643,7 @@
                             ✉️ You're Joining via Invitation
                         </div>
                         <div style="color: #6ee7b7; font-size: 0.9rem;">
-                            After creating your account, you'll automatically join the group
+                            After creating your account, you can explicitly accept this invitation on the next screen
                         </div>
                     `;
                     step1.insertBefore(banner, step1.firstChild.nextSibling);
@@ -814,38 +817,17 @@
 
                 // ============================================================================
                 // HANDLE PENDING INVITATION (if exists)
+                // Do NOT auto-accept invitations here. If an invite token was present on the
+                // signup URL, keep it in-memory so the user may explicitly accept the invite
+                // from the success screen.
                 // ============================================================================
                 let invitationAccepted = false;
                 let invitationRole = null;
-                const pendingInviteToken = localStorage.getItem('pendingInviteToken');
-
+                const pendingInviteToken = window.__pendingInviteToken || localStorage.getItem('pendingInviteToken');
                 if (pendingInviteToken) {
-                    try {
-                        console.log('📧 Registration Step 3: Accepting pending invitation:', pendingInviteToken);
-                        nextBtn.textContent = 'Joining Group...';
-
-                        const inviteResponse = await apiService.acceptInvitation(pendingInviteToken);
-
-                        if (inviteResponse.success) {
-                            console.log('✅ Invitation accepted successfully');
-                            invitationAccepted = true;
-
-                            // Get the role from the invitation to decide redirect
-                            try {
-                                const inviteDetails = await apiService.getInvitation(pendingInviteToken);
-                                invitationRole = inviteDetails.invitation?.role;
-                                console.log('📋 Assigned role:', invitationRole);
-                            } catch (e) {
-                                console.warn('Could not fetch role, defaulting to player dashboard');
-                            }
-                        }
-
-                        // Clear the pending token
-                        localStorage.removeItem('pendingInviteToken');
-                    } catch (inviteError) {
-                        console.error('Failed to accept invitation:', inviteError);
-                        // Continue even if invitation fails, they can retry later
-                    }
+                    // Ensure it's accessible to the post-signup UI but do not auto-accept.
+                    window.__pendingInviteToken = pendingInviteToken;
+                    console.log('📧 Invitation token deferred for explicit acceptance after signup');
                 }
 
                 // ============================================================================

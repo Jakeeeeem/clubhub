@@ -216,23 +216,23 @@
           <div class="dashboard-card-strip">
             <div class="dashboard-card-strip-item" onclick="showPlayerSection('my-clubs')">
               <div class="dashboard-card-strip-label">My Groups</div>
-              <div class="dashboard-card-strip-value" id="playerGroupCount">2</div>
+              <div class="dashboard-card-strip-value" id="playerGroupCount">1</div>
               <div class="dashboard-card-strip-meta">Active memberships</div>
             </div>
             <div class="dashboard-card-strip-item active-highlight" onclick="showPlayerSection('teams')">
               <div class="dashboard-card-strip-label">Next Session</div>
-              <div class="dashboard-card-strip-value">Tue 18:00</div>
-              <div class="dashboard-card-strip-meta">Training · Astro Pitch 2</div>
+              <div class="dashboard-card-strip-value" id="playerNextSessionTime">--:--</div>
+              <div class="dashboard-card-strip-meta" id="playerNextSessionName">No sessions scheduled</div>
             </div>
             <div class="dashboard-card-strip-item" onclick="showPlayerSection('teams')">
-              <div class="dashboard-card-strip-label">Attendance</div>
-              <div class="dashboard-card-strip-value">84%</div>
-              <div class="dashboard-card-strip-meta">↑ 4% this month</div>
+              <div class="dashboard-card-strip-label" id="playerNextMatchLabel">Next Match</div>
+              <div class="dashboard-card-strip-value" id="playerNextMatchTime">--:--</div>
+              <div class="dashboard-card-strip-meta" id="playerNextMatchName">No matches scheduled</div>
             </div>
             <div class="dashboard-card-strip-item" onclick="showPlayerSection('subscriptions')">
               <div class="dashboard-card-strip-label">Subscription</div>
               <div class="dashboard-card-strip-value" id="playerSubStatus" style="color: #4ade80;">Paid ✓</div>
-              <div class="dashboard-card-strip-meta">Next due: 1 May</div>
+              <div class="dashboard-card-strip-meta" id="playerSubNextDue">Manage billing</div>
             </div>
           </div>
 

@@ -1,0 +1,382 @@
+[
+  {
+    "file": "frontend/admin-academy-tv.html",
+    "hasViewport": true,
+    "usesMobileClass": false
+  },
+  {
+    "file": "frontend/admin-bibs.html",
+    "hasViewport": true,
+    "usesMobileClass": false
+  },
+  {
+    "file": "frontend/admin-chat.html",
+    "hasViewport": true,
+    "usesMobileClass": false
+  },
+  {
+    "file": "frontend/admin-dashboard.html",
+    "hasViewport": true,
+    "usesMobileClass": true
+  },
+  {
+    "file": "frontend/admin-email-test.html",
+    "hasViewport": true,
+    "usesMobileClass": false
+  },
+  {
+    "file": "frontend/admin-events.html",
+    "hasViewport": true,
+    "usesMobileClass": true
+  },
+  {
+    "file": "frontend/admin-finances.html",
+    "hasViewport": true,
+    "usesMobileClass": true
+  },
+  {
+    "file": "frontend/admin-members-dev.html",
+    "hasViewport": true,
+    "usesMobileClass": true
+  },
+  {
+    "file": "frontend/admin-members.html",
+    "hasViewport": true,
+    "usesMobileClass": true
+  },
+  {
+    "file": "frontend/admin-scout-approvals.html",
+    "hasViewport": true,
+    "usesMobileClass": true
+  },
+  {
+    "file": "frontend/admin-shop.html",
+    "hasViewport": true,
+    "usesMobileClass": true
+  },
+  {
+    "file": "frontend/admin-staff.html",
+    "hasViewport": true,
+    "usesMobileClass": true
+  },
+  {
+    "file": "frontend/admin-tactical-board.html",
+    "hasViewport": true,
+    "usesMobileClass": true
+  },
+  {
+    "file": "frontend/admin-teams.html",
+    "hasViewport": true,
+    "usesMobileClass": true
+  },
+  {
+    "file": "frontend/admin-tournament-manager.html",
+    "hasViewport": true,
+    "usesMobileClass": true
+  },
+  {
+    "file": "frontend/admin-venues.html",
+    "hasViewport": true,
+    "usesMobileClass": false
+  },
+  {
+    "file": "frontend/apply.html",
+    "hasViewport": true,
+    "usesMobileClass": false
+  },
+  {
+    "file": "frontend/camp-admin.html",
+    "hasViewport": true,
+    "usesMobileClass": false
+  },
+  {
+    "file": "frontend/camp-manager.html",
+    "hasViewport": true,
+    "usesMobileClass": true
+  },
+  {
+    "file": "frontend/club-detail.html",
+    "hasViewport": true,
+    "usesMobileClass": false
+  },
+  {
+    "file": "frontend/club-finder.html",
+    "hasViewport": true,
+    "usesMobileClass": true
+  },
+  {
+    "file": "frontend/coach-chat.html",
+    "hasViewport": true,
+    "usesMobileClass": true
+  },
+  {
+    "file": "frontend/coach-dashboard.html",
+    "hasViewport": true,
+    "usesMobileClass": true
+  },
+  {
+    "file": "frontend/coach-events.html",
+    "hasViewport": true,
+    "usesMobileClass": true
+  },
+  {
+    "file": "frontend/coach-players.html",
+    "hasViewport": true,
+    "usesMobileClass": true
+  },
+  {
+    "file": "frontend/coach-tactical-board.html",
+    "hasViewport": true,
+    "usesMobileClass": true
+  },
+  {
+    "file": "frontend/coach-teams.html",
+    "hasViewport": true,
+    "usesMobileClass": true
+  },
+  {
+    "file": "frontend/coach-tournament-manager.html",
+    "hasViewport": true,
+    "usesMobileClass": true
+  },
+  {
+    "file": "frontend/coming-soon.html",
+    "hasViewport": true,
+    "usesMobileClass": false
+  },
+  {
+    "file": "frontend/contact.html",
+    "hasViewport": true,
+    "usesMobileClass": false
+  },
+  {
+    "file": "frontend/create-group.html",
+    "hasViewport": true,
+    "usesMobileClass": true
+  },
+  {
+    "file": "frontend/dashboard-new.html",
+    "hasViewport": true,
+    "usesMobileClass": false
+  },
+  {
+    "file": "frontend/email-campaigns.html",
+    "hasViewport": true,
+    "usesMobileClass": false
+  },
+  {
+    "file": "frontend/event-finder.html",
+    "hasViewport": true,
+    "usesMobileClass": true
+  },
+  {
+    "file": "frontend/event-qr.html",
+    "hasViewport": false,
+    "usesMobileClass": false
+  },
+  {
+    "file": "frontend/forgot-password.html",
+    "hasViewport": true,
+    "usesMobileClass": false
+  },
+  {
+    "file": "frontend/form-builder.html",
+    "hasViewport": true,
+    "usesMobileClass": false
+  },
+  {
+    "file": "frontend/group-dashboard.html",
+    "hasViewport": true,
+    "usesMobileClass": true
+  },
+  {
+    "file": "frontend/group-event.html",
+    "hasViewport": true,
+    "usesMobileClass": true
+  },
+  {
+    "file": "frontend/group-members.html",
+    "hasViewport": true,
+    "usesMobileClass": false
+  },
+  {
+    "file": "frontend/index.html",
+    "hasViewport": true,
+    "usesMobileClass": true
+  },
+  {
+    "file": "frontend/invitation-accept.html",
+    "hasViewport": true,
+    "usesMobileClass": false
+  },
+  {
+    "file": "frontend/invite-page.html",
+    "hasViewport": true,
+    "usesMobileClass": false
+  },
+  {
+    "file": "frontend/invite.html",
+    "hasViewport": true,
+    "usesMobileClass": false
+  },
+  {
+    "file": "frontend/league-management.html",
+    "hasViewport": true,
+    "usesMobileClass": true
+  },
+  {
+    "file": "frontend/parent-approval.html",
+    "hasViewport": true,
+    "usesMobileClass": false
+  },
+  {
+    "file": "frontend/player-academy-tv.html",
+    "hasViewport": true,
+    "usesMobileClass": false
+  },
+  {
+    "file": "frontend/player-chat.html",
+    "hasViewport": true,
+    "usesMobileClass": true
+  },
+  {
+    "file": "frontend/player-dashboard.html",
+    "hasViewport": true,
+    "usesMobileClass": true
+  },
+  {
+    "file": "frontend/player-finances.html",
+    "hasViewport": true,
+    "usesMobileClass": true
+  },
+  {
+    "file": "frontend/player-performance.html",
+    "hasViewport": true,
+    "usesMobileClass": true
+  },
+  {
+    "file": "frontend/player-schedule.html",
+    "hasViewport": true,
+    "usesMobileClass": true
+  },
+  {
+    "file": "frontend/player-shop.html",
+    "hasViewport": true,
+    "usesMobileClass": true
+  },
+  {
+    "file": "frontend/privacy.html",
+    "hasViewport": true,
+    "usesMobileClass": false
+  },
+  {
+    "file": "frontend/public-form.html",
+    "hasViewport": true,
+    "usesMobileClass": false
+  },
+  {
+    "file": "frontend/qr-checkin.html",
+    "hasViewport": false,
+    "usesMobileClass": false
+  },
+  {
+    "file": "frontend/qr-scanner.html",
+    "hasViewport": false,
+    "usesMobileClass": false
+  },
+  {
+    "file": "frontend/scout-dashboard.html",
+    "hasViewport": true,
+    "usesMobileClass": true
+  },
+  {
+    "file": "frontend/scouting.html",
+    "hasViewport": true,
+    "usesMobileClass": false
+  },
+  {
+    "file": "frontend/settings.html",
+    "hasViewport": true,
+    "usesMobileClass": false
+  },
+  {
+    "file": "frontend/signup.html",
+    "hasViewport": true,
+    "usesMobileClass": true
+  },
+  {
+    "file": "frontend/stripe-onboarding-sim.html",
+    "hasViewport": true,
+    "usesMobileClass": false
+  },
+  {
+    "file": "frontend/super-admin-dashboard.html",
+    "hasViewport": true,
+    "usesMobileClass": true
+  },
+  {
+    "file": "frontend/tactical-board.html",
+    "hasViewport": true,
+    "usesMobileClass": false
+  },
+  {
+    "file": "frontend/talent-registration.html",
+    "hasViewport": true,
+    "usesMobileClass": false
+  },
+  {
+    "file": "frontend/team-finder.html",
+    "hasViewport": true,
+    "usesMobileClass": true
+  },
+  {
+    "file": "frontend/terms.html",
+    "hasViewport": true,
+    "usesMobileClass": true
+  },
+  {
+    "file": "frontend/test-direct-login.html",
+    "hasViewport": true,
+    "usesMobileClass": false
+  },
+  {
+    "file": "frontend/test-login.html",
+    "hasViewport": false,
+    "usesMobileClass": false
+  },
+  {
+    "file": "frontend/test-signup-flow.html",
+    "hasViewport": true,
+    "usesMobileClass": false
+  },
+  {
+    "file": "frontend/tournament-finder.html",
+    "hasViewport": true,
+    "usesMobileClass": true
+  },
+  {
+    "file": "frontend/tournament-manager.html",
+    "hasViewport": true,
+    "usesMobileClass": true
+  },
+  {
+    "file": "frontend/tournaments-admin.html",
+    "hasViewport": true,
+    "usesMobileClass": false
+  },
+  {
+    "file": "frontend/training-manager.html",
+    "hasViewport": true,
+    "usesMobileClass": true
+  },
+  {
+    "file": "frontend/venue-booking.html",
+    "hasViewport": true,
+    "usesMobileClass": false
+  },
+  {
+    "file": "frontend/venue-finder.html",
+    "hasViewport": true,
+    "usesMobileClass": true
+  }
+]

@@ -1,0 +1,16 @@
+/* Minimal mobile overrides and utilities for ClubHub
+   Purpose: small, safe CSS changes to improve mobile layout without relying on JS. */
+
+@media (max-width: 768px) {
+  body { font-size: 15px; }
+  .dash-grid { grid-template-columns: 1fr !important; }
+  .stats-grid { gap: 0.75rem; grid-template-columns: 1fr !important; }
+  .stat-card { padding: 1rem; border-radius: 14px; }
+  .quick-action-btn { padding: 0.8rem; font-size: 0.95rem; }
+  .dashboard-container { padding: 1rem; }
+  .feed-entry { gap: 0.6rem; }
+}
+
+/* Mobile card list styles for JS progressive enhancements */
+.mobile-card-list { display:flex; flex-direction:column; gap:0.75rem; }
+.mobile-card { background: rgba(255,255,255,0.03); padding: 0.9rem; border-radius: 12px; }

@@ -66,6 +66,7 @@ window.DashboardLoaders = {
     async loadStripeStatus() {
         const text = document.getElementById('stripeStatusText');
         const indicator = document.getElementById('stripeStatusIndicator');
+        const banner = document.getElementById('stripeAlertBanner');
         if (!text || !indicator) return;
 
         try {
@@ -74,14 +75,17 @@ window.DashboardLoaders = {
                 text.textContent = 'Connected';
                 text.style.color = '#4ade80';
                 indicator.innerHTML = '<span style="color:#4ade80;">✅ Payouts Active</span>';
+                if (banner) banner.style.display = 'none';
             } else {
                 text.textContent = 'Disconnected';
                 text.style.color = '#f87171';
                 indicator.innerHTML = '<span style="color:#f59e0b;">⚠️ Setup Required</span>';
+                if (banner) banner.style.display = 'flex';
             }
         } catch (e) {
             text.textContent = 'Offline';
             indicator.textContent = 'API Unavailable';
+            if (banner) banner.style.display = 'flex';
         }
     },
 

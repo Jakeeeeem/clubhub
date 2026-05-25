@@ -452,6 +452,151 @@ function loadPlayerOverview() {
   loadDailyPlanner();
   loadFullSchedule();
   loadPlannerFeed();
+  updateDashboardCards();
+}
+
+function updateDashboardCards() {
+  const now = new Date();
+  
+  // Combine all activities
+  const allActivities = [
+    ...(PlayerDashboardState.events || []).map(e => ({ ...e, type: e.event_type || 'training' })),
+    ...(PlayerDashboardState.bookings || []).map(b => ({ ...b, title: b.title || b.venue_name || 'Booking', type: 'venue' })),
+    ...(PlayerDashboardState.tournaments || []).map(t => ({ ...t, title: t.name || 'Tournament', type: 'tournament' })),
+    ...(PlayerDashboardState.matches || []).map(m => ({ ...m, title: `${m.home_team} vs ${m.away_team}`, type: 'match' }))
+  ];
+
+  // Filter and sort upcoming activities
+  const upcoming = allActivities
+    .filter(e => {
+      const d = new Date(e.event_date || e.date || e.start_date);
+      return d && !isNaN(d.getTime()) && d >= now;
+    })
+    .sort((a, b) => new Date(a.event_date || a.date || a.start_date) - new Date(b.event_date || b.date || b.start_date));
+
+  // Find next event (not a match)
+  const nextEvent = upcoming.find(a => a.type !== 'match') || upcoming[0];
+  
+  // Find next match
+  const nextMatch = upcoming.find(a => a.type === 'match');
+
+  // Format date helper
+  function formatCardDate(dateStr, timeStr) {
+    if (!dateStr) return "--:--";
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return "--:--";
+    const day = date.toLocaleDateString("en-GB", { weekday: "short" });
+    const time = timeStr ? timeStr.slice(0, 5) : "TBA";
+    return `${day} ${time}`;
+  }
+
+  // 1. My Groups
+  const groupsCount = PlayerDashboardState.clubs.length || 1;
+
+  // 2. Next Session
+  let eventTime = "--:--";
+  let eventMeta = "No sessions scheduled";
+  if (nextEvent) {
+    eventTime = formatCardDate(nextEvent.event_date || nextEvent.date || nextEvent.start_date, nextEvent.event_time || nextEvent.time || nextEvent.start_time);
+    eventMeta = `${nextEvent.title || nextEvent.name || 'Training'} · ${nextEvent.location || nextEvent.venue_name || 'TBA'}`;
+  }
+
+  // 3. Next Match
+  let matchTime = "--:--";
+  let matchMeta = "No matches scheduled";
+  if (nextMatch) {
+    matchTime = formatCardDate(nextMatch.event_date || nextMatch.date || nextMatch.start_date, nextMatch.event_time || nextMatch.time || nextMatch.start_time);
+    matchMeta = `${nextMatch.title || nextMatch.name || 'Match'} · ${nextMatch.location || nextMatch.venue_name || 'TBA'}`;
+  }
+
+  // 4. Subscription/Status
+  const userType = window.AppState?.userType || safeGetCurrentUser()?.account_type || "";
+  let subStatus = "No Plan";
+  let subMeta = "Not on plan";
+  let subColor = "var(--text-muted)";
+  
+  if (userType === "admin" || userType === "group" || userType === "coach") {
+    subStatus = "Admin of Group";
+    subMeta = "Owner status";
+    subColor = "#4ade80"; // green status
+  } else {
+    // If not admin, check if player has a plan
+    const hasPlan = PlayerDashboardState.currentPlan || PlayerDashboardState.player?.has_payment_plan || PlayerDashboardState.player?.plan_id;
+    if (hasPlan) {
+      subStatus = "On Plan";
+      const planName = PlayerDashboardState.currentPlan?.name || PlayerDashboardState.player?.payment_plan_name || "Active plan";
+      subMeta = planName;
+      subColor = "#4ade80"; // green status
+    } else {
+      subStatus = "No Plan";
+      subMeta = "Manage billing";
+      subColor = "var(--text-muted)";
+    }
+  }
+
+  // Update DOM Elements
+  
+  // My Groups
+  updateText("playerGroupCount", groupsCount);
+  
+  // Next Session
+  updateText("playerNextSessionTime", eventTime);
+  updateText("playerNextSessionName", eventMeta);
+
+  // Next Match (Label, Time, Name)
+  updateText("playerNextMatchLabel", "Next Match");
+  updateText("playerNextMatchTime", matchTime);
+  updateText("playerNextMatchName", matchMeta);
+  // Support legacy ID if any
+  updateText("playerAttendanceRate", matchTime);
+
+  // Subscription
+  updateText("playerSubStatus", subStatus);
+  updateText("playerSubNextDue", subMeta);
+
+  // Set subscription status color
+  const subStatusEl = byId("playerSubStatus");
+  if (subStatusEl) {
+    subStatusEl.style.color = subColor;
+  }
+
+  // Also support list-based cards on other pages
+  const strips = document.querySelectorAll(".dashboard-card-strip");
+  strips.forEach(strip => {
+    const items = strip.querySelectorAll(".dashboard-card-strip-item");
+    if (items.length >= 4) {
+      // Card 1
+      const val1 = items[0].querySelector(".dashboard-card-strip-value");
+      if (val1) val1.textContent = groupsCount;
+
+      // Card 2
+      const label2 = items[1].querySelector(".dashboard-card-strip-label");
+      if (label2) label2.textContent = "Next Session";
+      const val2 = items[1].querySelector(".dashboard-card-strip-value");
+      if (val2) val2.textContent = eventTime;
+      const meta2 = items[1].querySelector(".dashboard-card-strip-meta");
+      if (meta2) meta2.textContent = eventMeta;
+
+      // Card 3
+      const label3 = items[2].querySelector(".dashboard-card-strip-label");
+      if (label3) label3.textContent = "Next Match";
+      const val3 = items[2].querySelector(".dashboard-card-strip-value");
+      if (val3) val3.textContent = matchTime;
+      const meta3 = items[2].querySelector(".dashboard-card-strip-meta");
+      if (meta3) meta3.textContent = matchMeta;
+
+      // Card 4
+      const label4 = items[3].querySelector(".dashboard-card-strip-label");
+      if (label4) label4.textContent = "Subscription";
+      const val4 = items[3].querySelector(".dashboard-card-strip-value");
+      if (val4) {
+        val4.textContent = subStatus;
+        val4.style.color = subColor;
+      }
+      const meta4 = items[3].querySelector(".dashboard-card-strip-meta");
+      if (meta4) meta4.textContent = subMeta;
+    }
+  });
 }
 
 /**
@@ -3093,6 +3238,10 @@ function _doShowPlayerSection(sectionId) {
       loadPlayerTeams();
       updatePostComposerVisibility();
       break;
+    case "events-venues":
+      loadPlayerEventsAndVenues();
+      updatePostComposerVisibility();
+      break;
     case "finances":
       loadPlayerFinances();
       updatePostComposerVisibility();
@@ -4161,7 +4310,217 @@ async function deleteChildProfile(childId) {
   }
 }
 
+async function loadPlayerEventsAndVenues() {
+  const eventsContainer = document.getElementById("myEventsListContainer");
+  const venuesContainer = document.getElementById("myVenuesListContainer");
+  if (!eventsContainer || !venuesContainer) return;
+
+  eventsContainer.innerHTML = `
+    <div style="text-align:center; padding:2rem; display:flex; flex-direction:column; align-items:center; gap:0.5rem;">
+      <div style="width:36px;height:36px;border:3px solid rgba(220,38,38,0.3);border-top-color:var(--primary);border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+      <p style="color:rgba(255,255,255,0.4); font-size:0.85rem;">Loading events and venues...</p>
+    </div>`;
+
+  const events = PlayerDashboardState.events || [];
+  const bookings = PlayerDashboardState.bookings || [];
+  const tournaments = PlayerDashboardState.tournaments || [];
+  const matches = PlayerDashboardState.matches || [];
+
+  const allActivities = [
+    ...events.map(e => ({ ...e, type: e.event_type || 'training' })),
+    ...bookings.map(b => ({ ...b, title: b.title || b.venue_name || 'Booking', type: 'venue' })),
+    ...tournaments.map(t => ({ ...t, title: t.name || 'Tournament', type: 'tournament' })),
+    ...matches.map(m => ({ ...m, title: `${m.home_team} vs ${m.away_team}`, type: 'match' }))
+  ];
+
+  const now = new Date().setHours(0,0,0,0);
+  const upcomingActivities = allActivities
+    .filter(e => {
+      const d = new Date(e.event_date || e.date || e.start_date || e.start_time);
+      return d && !isNaN(d) && d >= now;
+    })
+    .sort((a, b) => new Date(a.event_date || a.date || a.start_date || a.start_time) - new Date(b.event_date || b.date || b.start_date || b.start_time));
+
+  // 1. Render Events
+  if (upcomingActivities.length === 0) {
+    eventsContainer.innerHTML = renderEmptyState('No upcoming events or matches scheduled.', '📅');
+  } else {
+    eventsContainer.innerHTML = upcomingActivities.map(item => {
+      const d = new Date(item.event_date || item.date || item.start_date || item.start_time);
+      const time = item.event_time || item.time || (item.start_time ? item.start_time.slice(0, 5) : 'TBA');
+      const venueName = item.location || item.venue_name || item.venue || 'TBA';
+      
+      let color = 'var(--primary)';
+      if (item.type === 'tournament') color = '#f59e0b';
+      else if (item.type === 'match') color = '#3b82f6';
+      else if (item.type === 'venue') color = '#10b981';
+
+      return `
+        <div class="activity-card" style="display: flex; gap: 1.5rem; padding: 1.5rem; background: rgba(255,255,255,0.03); border-radius: 16px; margin-bottom: 1rem; border: 1px solid rgba(255,255,255,0.08); border-left: 6px solid ${color}; transition: all 0.2s;">
+          <div style="text-align: center; min-width: 70px; display: flex; flex-direction: column; justify-content: center; border-right: 1px solid rgba(255,255,255,0.1); padding-right: 1rem;">
+            <div style="font-size: 1.5rem; font-weight: 900; color: ${color}; line-height: 1;">${d.getDate()}</div>
+            <div style="font-size: 0.8rem; color: rgba(255,255,255,0.5); text-transform: uppercase; font-weight: 700; margin-top: 4px;">${d.toLocaleString('default', { month: 'short' })}</div>
+          </div>
+          <div style="flex: 1;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+               <div style="display: flex; align-items: center; gap: 0.5rem;">
+                 <span style="background: ${color}22; color: ${color}; font-size: 0.65rem; font-weight: 800; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid ${color}44;">${item.type}</span>
+                 <span style="font-size: 0.8rem; font-weight: 600; color: rgba(255,255,255,0.5);">${d.toLocaleString('default', { weekday: 'long' })}</span>
+               </div>
+               <span style="font-size: 0.85rem; font-weight: 700; color: #fff;">${time}</span>
+            </div>
+            <h3 style="margin: 0; font-size: 1.15rem; color: #fff;">${escapeHTML(item.title || item.name || 'Activity')}</h3>
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; color: rgba(255,255,255,0.4); font-size: 0.85rem;">
+              📍 ${escapeHTML(venueName)}
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+             <button class="btn btn-secondary btn-small" onclick="viewEventDetails('${item.id || item.event_id || ''}')">Details</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // 2. Fetch system venues & match with active ones
+  let systemVenues = [];
+  try {
+    if (typeof apiService !== 'undefined') {
+      systemVenues = await apiService.get('/api/venues') || [];
+    }
+  } catch (e) {
+    console.warn("Could not load database venues:", e);
+  }
+
+  // Build list of unique venues from the player's upcoming activities
+  const uniqueVenueMap = new Map();
+  upcomingActivities.forEach(item => {
+    const name = item.location || item.venue_name || item.venue || 'TBA';
+    if (!name || name === 'TBA') return;
+
+    if (!uniqueVenueMap.has(name)) {
+      // Find matches in system venues (by name/location substring)
+      const matchedDbVenue = systemVenues.find(sv => 
+        sv.name.toLowerCase().includes(name.toLowerCase()) || 
+        name.toLowerCase().includes(sv.name.toLowerCase()) ||
+        sv.location.toLowerCase().includes(name.toLowerCase())
+      );
+
+      uniqueVenueMap.set(name, {
+        name: matchedDbVenue ? matchedDbVenue.name : name,
+        location: matchedDbVenue ? matchedDbVenue.location : name,
+        description: matchedDbVenue ? matchedDbVenue.description : 'Standard club playing grounds.',
+        capacity: matchedDbVenue ? matchedDbVenue.capacity : 'Open seating',
+        facilities: matchedDbVenue && matchedDbVenue.facilities ? matchedDbVenue.facilities : ['Pitch', 'Parking'],
+        imageUrl: matchedDbVenue ? matchedDbVenue.image_url : null,
+        hourlyRate: matchedDbVenue ? matchedDbVenue.hourly_rate : null,
+        upcomingEvents: []
+      });
+    }
+    
+    uniqueVenueMap.get(name).upcomingEvents.push(item);
+  });
+
+  if (uniqueVenueMap.size === 0) {
+    venuesContainer.innerHTML = `<div style="grid-column: 1/-1;">${renderEmptyState('No venues found for your scheduled events.', '📍')}</div>`;
+  } else {
+    let venuesHtml = '';
+    uniqueVenueMap.forEach(venue => {
+      let facilitiesList = [];
+      try {
+        facilitiesList = Array.isArray(venue.facilities) 
+          ? venue.facilities 
+          : (typeof venue.facilities === 'string' ? JSON.parse(venue.facilities || '[]') : []);
+      } catch (e) {
+        facilitiesList = ['Pitch', 'Parking'];
+      }
+
+      const facilitiesBadges = facilitiesList.map(f => 
+        `<span style="background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.7); font-size: 0.75rem; padding: 2px 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">${escapeHTML(f)}</span>`
+      ).join(' ');
+
+      const imageStyle = venue.imageUrl 
+        ? `background-image: url('${venue.imageUrl}'); background-size: cover; background-position: center;` 
+        : `background: linear-gradient(135deg, var(--primary) 0%, #3b82f6 100%);`;
+
+      venuesHtml += `
+        <div class="card" style="margin: 0; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; height: 100%; transition: all 0.2s;">
+          <div style="height: 140px; ${imageStyle} position: relative; display: flex; align-items: flex-end; padding: 1rem;">
+            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%);"></div>
+            <div style="position: relative; z-index: 1;">
+              <span style="background: var(--primary); color: white; font-size: 0.65rem; font-weight: 800; padding: 4px 8px; border-radius: 8px; text-transform: uppercase; margin-bottom: 0.5rem; display: inline-block;">📍 Active Venue</span>
+              <h3 style="margin: 0; color: white; font-size: 1.2rem; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">${escapeHTML(venue.name)}</h3>
+            </div>
+          </div>
+          <div style="padding: 1.25rem; flex: 1; display: flex; flex-direction: column; gap: 1rem;">
+            <p style="color: var(--text-muted); font-size: 0.88rem; line-height: 1.5; margin: 0;">${escapeHTML(venue.description)}</p>
+            
+            <div style="display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.85rem; color: rgba(255,255,255,0.6);">
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span>📍</span> <span style="word-break: break-all;">${escapeHTML(venue.location)}</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span>👥</span> <span>Capacity: ${escapeHTML(String(venue.capacity))}</span>
+              </div>
+              ${venue.hourlyRate ? `
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span>💳</span> <span>Rate: £${escapeHTML(String(venue.hourlyRate))}/hr</span>
+              </div>` : ''}
+            </div>
+
+            <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
+              ${facilitiesBadges}
+            </div>
+
+            <div style="margin-top: auto; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.06);">
+              <div style="font-size: 0.8rem; font-weight: 700; color: var(--primary); margin-bottom: 0.5rem;">Upcoming Events Here (${venue.upcomingEvents.length})</div>
+              <div style="display: flex; flex-direction: column; gap: 0.4rem; max-height: 120px; overflow-y: auto;">
+                ${venue.upcomingEvents.map(ue => {
+                  const ued = new Date(ue.event_date || ue.date || ue.start_date || ue.start_time);
+                  return `
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; background: rgba(255,255,255,0.02); padding: 6px 10px; border-radius: 8px;">
+                      <span style="color: #fff; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px;">${escapeHTML(ue.title || ue.name || 'Event')}</span>
+                      <span style="color: rgba(255,255,255,0.4);">${ued.getDate()} ${ued.toLocaleString('default', { month: 'short' })}</span>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    venuesContainer.innerHTML = venuesHtml;
+  }
+}
+
+window.switchEventsVenuesTab = function(tab) {
+  const eventsTab = document.getElementById("eventsTabContent");
+  const venuesTab = document.getElementById("venuesTabContent");
+  const eventsBtn = document.getElementById("toggleEventsTabBtn");
+  const venuesBtn = document.getElementById("toggleVenuesTabBtn");
+
+  if (!eventsTab || !venuesTab || !eventsBtn || !venuesBtn) return;
+
+  if (tab === 'events') {
+    eventsTab.style.display = "block";
+    venuesTab.style.display = "none";
+    eventsBtn.style.background = "var(--primary)";
+    eventsBtn.style.color = "white";
+    venuesBtn.style.background = "transparent";
+    venuesBtn.style.color = "var(--text-muted)";
+  } else {
+    eventsTab.style.display = "none";
+    venuesTab.style.display = "block";
+    eventsBtn.style.background = "transparent";
+    eventsBtn.style.color = "var(--text-muted)";
+    venuesBtn.style.background = "var(--primary)";
+    venuesBtn.style.color = "white";
+  }
+};
+
 // Expose functions
+window.loadPlayerEventsAndVenues = loadPlayerEventsAndVenues;
 window.wireFamilyListeners = wireFamilyListeners;
 window.loadFamilyMembers = loadFamilyMembers;
 window.openAddChildModal = openAddChildModal;

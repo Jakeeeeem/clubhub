@@ -19,6 +19,7 @@
     <link rel="stylesheet" href="design-system.css?v=20260504_v3">
     <link rel="stylesheet" href="unified-nav.css?v=20260504_v3">
     <link rel="stylesheet" href="quick-fixes.css?v=20260502">
+    <link rel="stylesheet" href="css/mobile.css?v=20260525">
     <script>
         // CRITICAL: Force Service Worker Unregistration if stuck on old version
         (function() {
@@ -39,29 +40,32 @@
                 });
             }
         })();
-                // Early diagnostics + suppression: extend recent-switch suppression
-                (function(){
-                    try {
-                        const now = Date.now();
-                        const MIN_SUPPRESS = 5000; // ms
-                        const prev = window.__recentSwitchSuppressUntil || 0;
-                        const newUntil = Math.max(prev, now + MIN_SUPPRESS);
-                        window.__recentSwitchSuppressUntil = newUntil;
-                        console.warn('🔁 Early guard: extended __recentSwitchSuppressUntil to', newUntil);
+        // Early diagnostics + suppression: extend recent-switch suppression
+        (function(){
+            // Default: keep unified nav debug silent. Set `window.UNIFIED_NAV_DEBUG = true` in console to enable.
+            if (!window.UNIFIED_NAV_DEBUG) return;
+            try {
+                const now = Date.now();
+                const MIN_SUPPRESS = 5000; // ms
+                const prev = window.__recentSwitchSuppressUntil || 0;
+                const newUntil = Math.max(prev, now + MIN_SUPPRESS);
+                window.__recentSwitchSuppressUntil = newUntil;
+                console.warn('🔁 Early guard: extended __recentSwitchSuppressUntil to', newUntil);
 
-                        // Log quick snapshot for debugging (visible in console & unified debug panel)
-                        try {
-                            console.log('🔍 EarlySnapshot', {
-                                url: window.location.href,
-                                recentGroupSwitch: sessionStorage.getItem('recentGroupSwitch'),
-                                debugRedirects: sessionStorage.getItem('debugRedirects'),
-                                localStorage: (function(){ try { return JSON.parse(JSON.stringify(localStorage)); } catch (e) { return 'error'; }})(),
-                                sessionStorage: (function(){ try { return JSON.parse(JSON.stringify(sessionStorage)); } catch (e) { return 'error'; }})()
-                            });
-                        } catch (e) { /* ignore */ }
-                    } catch (e) { console.warn('Early suppression setup failed', e); }
-                })();
+                // Log quick snapshot for debugging (visible in console & unified debug panel)
+                try {
+                    console.log('🔍 EarlySnapshot', {
+                        url: window.location.href,
+                        recentGroupSwitch: sessionStorage.getItem('recentGroupSwitch'),
+                        debugRedirects: sessionStorage.getItem('debugRedirects'),
+                        localStorage: (function(){ try { return JSON.parse(JSON.stringify(localStorage)); } catch (e) { return 'error'; }})(),
+                        sessionStorage: (function(){ try { return JSON.parse(JSON.stringify(sessionStorage)); } catch (e) { return 'error'; }})()
+                    });
+                } catch (e) { /* ignore */ }
+            } catch (e) { console.warn('Early suppression setup failed', e); }
+        })();
     </script>
+    <script src="js/unifiednav-stripe-helper.js?v=20260525"></script>
     <style>
         .feed-entry {
             display: flex;
@@ -245,6 +249,20 @@
 
             <!-- Dashboard Sections -->
             <div id="overview" class="dashboard-section active">
+                <!-- Stripe Alert Banner -->
+                <div id="stripeAlertBanner" style="display:none; background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(239, 68, 68, 0.05) 100%); border: 1px solid rgba(239, 68, 68, 0.3); border-left: 5px solid #ef4444; border-radius: 16px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.1); margin-top: 0.5rem;">
+                  <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div style="font-size: 2rem;">💳</div>
+                    <div>
+                      <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #fff;">Stripe Account Disconnected</h3>
+                      <p style="margin: 4px 0 0; font-size: 0.85rem; color: rgba(255, 255, 255, 0.7); max-width: 600px;">To charge registration plans, payments, and book events, you must connect a Stripe account for your group.</p>
+                    </div>
+                  </div>
+                                    <button class="btn btn-primary" onclick="handleStripeConnectClick()" style="padding: 0.6rem 1.5rem; font-size: 0.85rem; display: flex; align-items: center; gap: 0.5rem; background: #dc2626; border-color: #dc2626; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3); cursor: pointer; border-radius: 8px;">
+                                        Connect Stripe Now →
+                                    </button>
+                </div>
+
                 <div class="stats-grid">
                     <div class="stat-card" onclick="window.location.href='admin-members.html'" style="cursor: pointer;">
                         <span class="stat-label">Total Members</span>

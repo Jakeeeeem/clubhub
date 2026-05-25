@@ -272,9 +272,11 @@
             const token = localStorage.getItem('authToken');
 
             if (!token) {
-                // User not logged in - redirect to registration with invite token
-                localStorage.setItem('pendingInviteToken', invitationToken);
-                window.location.href = `registration.html?invite=${invitationToken}&email=${encodeURIComponent(invitationData.email)}`;
+                // User not logged in - redirect to signup with invite token.
+                // Do NOT set `pendingInviteToken` automatically here — require explicit acceptance
+                // after sign-up. Include a returnUrl so we can bring the user back to this invite if desired.
+                const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
+                window.location.href = `signup.html?invite=${invitationToken}&email=${encodeURIComponent(invitationData.email)}&returnUrl=${returnUrl}`;
                 return;
             }
 

@@ -1,5 +1,29 @@
 // Initialization moved to the end of the file to ensure const UnifiedNav is defined
 
+// Safety shim: avoid uncaught errors when Stripe/UnifiedNav manage function
+// is called in environments where the real UnifiedNav or Stripe integration
+// isn't available (e.g., local dev). This prevents noisy console errors and
+// provides a friendly fallback notification.
+(function(){
+  try {
+    window.UnifiedNav = window.UnifiedNav || {};
+    if (!window.UnifiedNav.manageStripeAccount) {
+      window.UnifiedNav.manageStripeAccount = function(){
+        if (window.chShowToast) {
+          window.chShowToast('Stripe is not connected in this environment.', 'error');
+        }
+      };
+    }
+    if (!window.UnifiedNav.showNotification) {
+      window.UnifiedNav.showNotification = function(msg, type){
+        if (window.chShowToast) return window.chShowToast(msg, type);
+      };
+    }
+  } catch (e) {
+    // Intentionally silent - safety shim should never throw
+  }
+})();
+
 // ─── ICON LIBRARY (Apple SF Symbol-style clean SVGs) ─────────────────────────
 const ICONS = {
   // UI chrome icons
@@ -860,7 +884,7 @@ const UnifiedNav = {
             window.location.href = "index.html";
             return;
           }
-          safeCall('renderHeader', () => this.renderHeader());
+          safeCall('ensureDashboardHeader', () => this.ensureDashboardHeader());
           safeCall('renderSidebar', () => this.renderSidebar());
           safeCall('renderBottomNav', () => this.renderBottomNav());
           // Render mobile FAB for quick actions and generic bottom sheet support
@@ -3946,6 +3970,7 @@ const UnifiedNav = {
                     <a href="player-dashboard.html#schedule" onclick="return UnifiedNav.handleNavClick(event, 'player-dashboard.html', 'schedule')" class="sidebar-link ${p.includes('schedule') ? 'active' : ''}">${ICONS.nav.training}<span>Schedule</span></a>
                     <a href="player-dashboard.html#clubs" onclick="return UnifiedNav.handleNavClick(event, 'player-dashboard.html', 'clubs')" class="sidebar-link ${p.includes('clubs') ? 'active' : ''}">${ICONS.nav.teams}<span>My Clubs</span></a>
                     <a href="player-dashboard.html#teams" onclick="return UnifiedNav.handleNavClick(event, 'player-dashboard.html', 'teams')" class="sidebar-link ${p.includes('teams') ? 'active' : ''}">${ICONS.nav.teams}<span>My Teams</span></a>
+                    <a href="player-dashboard.html#events-venues" onclick="return UnifiedNav.handleNavClick(event, 'player-dashboard.html', 'events-venues')" class="sidebar-link ${p.includes('events-venues') || window.location.hash === '#events-venues' ? 'active' : ''}">${ICONS.nav.venue}<span>My Events & Venues</span></a>
                     <a href="player-academy-tv.html" onclick="return UnifiedNav.handleNavClick(event, 'player-academy-tv.html', 'academy-tv')" class="sidebar-link ${isActive('player-academy-tv.html')}">${ICONS.nav.academy}<span>Academy TV</span></a>
                     <a href="player-finances.html" onclick="return UnifiedNav.handleNavClick(event, 'player-finances.html', 'payments')" class="sidebar-link ${isActive('player-finances.html') || p.includes('payments') ? 'active' : ''}">${ICONS.nav.finance}<span>Finances</span></a>
                     
