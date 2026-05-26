@@ -61,6 +61,151 @@
             .dashboard-section table:not(.no-mobile-cards) td[data-label="Actions"] { text-align:left !important; }
             .dashboard-section table:not(.no-mobile-cards) td[data-label="Actions"] .btn { width:100% !important; display:block !important; margin-bottom:0.5rem !important; }
         }
+
+        /* Sleek Modern Modal Styling Overrides */
+        .modal {
+            backdrop-filter: blur(16px) !important;
+            -webkit-backdrop-filter: blur(16px) !important;
+            background: rgba(10, 10, 12, 0.6) !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+        .modal-content.glass-card {
+            background: rgba(18, 18, 22, 0.85) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            border-radius: 20px !important;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5) !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+        }
+        .modal-header {
+            padding: 1.5rem 1.75rem 1.25rem !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+            background: transparent !important;
+        }
+        .modal-header h2 {
+            font-size: 1.3rem !important;
+            font-weight: 700 !important;
+            color: #fff !important;
+            margin: 0 !important;
+        }
+        .modal-close {
+            font-size: 1.5rem !important;
+            color: var(--text-muted) !important;
+            cursor: pointer !important;
+            transition: color 0.2s !important;
+            line-height: 1 !important;
+        }
+        .modal-close:hover {
+            color: #fff !important;
+        }
+        .modal-body {
+            padding: 1.75rem !important;
+        }
+        .modal-body form {
+            padding: 0 !important;
+        }
+        .modal-footer {
+            padding: 1.25rem 1.75rem 1.5rem !important;
+            border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
+            background: transparent !important;
+            display: flex !important;
+            gap: 0.75rem !important;
+            justify-content: flex-end !important;
+        }
+        .modal-footer .btn {
+            margin: 0 !important;
+            padding: 0.75rem 1.5rem !important;
+            border-radius: 10px !important;
+            font-weight: 600 !important;
+            font-size: 0.9rem !important;
+        }
+        .modal-footer .btn-primary {
+            background: var(--primary) !important;
+            border-color: var(--primary) !important;
+            color: #fff !important;
+        }
+        .modal-footer .btn-primary:hover {
+            background: var(--primary-hover, #ef4444) !important;
+            border-color: var(--primary-hover, #ef4444) !important;
+        }
+        .modal-footer .btn-secondary {
+            background: rgba(255, 255, 255, 0.06) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            color: #cbd5e1 !important;
+        }
+        .modal-footer .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1) !important;
+            color: #fff !important;
+        }
+        
+        /* Modern Clean Input Fields inside Modals */
+        .modal .form-group {
+            margin-bottom: 1.25rem !important;
+        }
+        .modal .form-group label {
+            display: block !important;
+            font-size: 0.82rem !important;
+            font-weight: 600 !important;
+            color: #94a3b8 !important;
+            margin-bottom: 0.5rem !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.5px !important;
+        }
+        .modal .form-group input,
+        .modal .form-group select,
+        .modal .form-group textarea {
+            width: 100% !important;
+            height: auto !important;
+            padding: 0.75rem 1rem !important;
+            background: rgba(0, 0, 0, 0.25) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            border-radius: 10px !important;
+            color: #fff !important;
+            font-size: 0.92rem !important;
+            transition: all 0.2s ease !important;
+            box-sizing: border-box !important;
+        }
+        .modal .form-group input::placeholder {
+            color: rgba(255, 255, 255, 0.3) !important;
+        }
+        .modal .form-group input:focus,
+        .modal .form-group select:focus,
+        .modal .form-group textarea:focus {
+            outline: none !important;
+            border-color: rgba(220, 67, 67, 0.8) !important;
+            background: rgba(0, 0, 0, 0.35) !important;
+            box-shadow: 0 0 0 3px rgba(220, 67, 67, 0.2) !important;
+        }
+        .modal .form-group select option {
+            background: #18181b !important;
+            color: #fff !important;
+        }
+        /* Ensure modal-content centers correctly in all layouts */
+        .modal-content {
+            margin: auto !important;
+            transform: none !important;
+        }
+        /* Force modal content to column layout and keep footer inside the modal */
+        .modal-content {
+            display: flex !important;
+            flex-direction: column !important;
+            width: 520px !important;
+            max-height: 90vh !important;
+            box-sizing: border-box !important;
+        }
+        .modal-body {
+            flex: 1 1 auto !important;
+            overflow-y: auto !important;
+            padding: 1.5rem !important;
+        }
+        .modal-footer {
+            position: sticky !important;
+            bottom: 0 !important;
+            background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.04) 100%) !important;
+            z-index: 3 !important;
+            padding: 1rem 1.5rem !important;
+        }
     </style>
     <style>
         .feed-entry {
@@ -345,12 +490,13 @@
                                         <th>Name</th>
                                         <th>Role</th>
                                         <th>Squad</th>
+                                        <th>Plan</th>
                                         <th>Status</th>
                                         <th style="text-align:right;">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="membersTableBody">
-                                    <tr><td colspan="5" style="padding:0;">
+                                    <tr><td colspan="6" style="padding:0;">
                                         <div style="display:flex;align-items:center;justify-content:center;gap:0.75rem;padding:2.5rem;">
                                             <div class="loader" style="width:20px;height:20px;"></div>
                                             <span style="color:var(--text-muted);font-size:0.9rem;">Loading members...</span>
@@ -688,19 +834,20 @@
                 <div class="modal-close" onclick="closeModal('assignPlanModal')">&times;</div>
             </div>
             <div class="modal-body">
-                <div style="text-align:center; margin-bottom:1.5rem;">
+                <div style="display:flex; flex-direction:column; align-items:center; text-align:center; margin-bottom:1.5rem; width:100%;">
                     <div style="width:50px; height:50px; background:rgba(220,38,38,0.1); border-radius:12px; display:flex; align-items:center; justify-content:center; margin:0 auto 1rem; font-size:1.5rem;">💳</div>
-                    <p id="assignPlanMemberName" style="color:#fff; font-size:1.1rem; font-weight:700;">Member Name</p>
+                    <p id="assignPlanMemberName" style="display:block !important; width:100% !important; text-align:center !important; color:#fff; font-size:1.1rem; font-weight:700; margin:0 0 0.25rem 0;">Member Name</p>
+                    <p id="assignPlanMemberEmail" style="display:block !important; width:100% !important; text-align:center !important; color:var(--text-muted); font-size:0.85rem; margin:0;">member@email.com</p>
                 </div>
                 <form id="assignPlanForm" onsubmit="handleAssignPlan(event)">
                     <input type="hidden" id="assignPlanMemberId">
                     <div class="form-group">
                         <label>Select Plan</label>
-                        <select id="planSelect" required style="width:100%; padding:0.8rem; background:rgba(0,0,0,0.3); border:1px solid var(--glass-border); color:#fff; border-radius:12px;">
+                        <select id="planSelect" required>
                             <option value="">-- Loading Plans --</option>
                         </select>
                     </div>
-                    <div style="background:rgba(255,255,255,0.03); padding:1rem; border-radius:10px; margin-top:1rem; border:1px solid var(--glass-border);">
+                    <div style="background:rgba(255,255,255,0.03); padding:1rem; border-radius:10px; margin-top:1rem; border:1px solid rgba(255,255,255,0.08);">
                         <p style="font-size:0.8rem; color:var(--text-muted); margin:0;">This will create a recurring subscription for the member via Stripe. They will receive an email to confirm their payment details.</p>
                     </div>
                 </form>
@@ -714,7 +861,7 @@
 
     <!-- Edit Member Modal -->
     <div id="editMemberModal" class="modal" style="display:none;">
-        <div class="modal-content glass-card" style="max-width:500px;">
+        <div class="modal-content" style="max-width:500px;">
             <div class="modal-header">
                 <h2>Edit Member Details</h2>
                 <div class="modal-close" onclick="closeModal('editMemberModal')">&times;</div>
@@ -761,11 +908,17 @@
                         </select>
                     </div>
                     </div>
+                    <!-- Debug dump for troubleshooting prefill issues -->
+                    <div id="editMemberDebugWrap" style="margin-top:1rem; display:none;">
+                        <label style="font-size:0.75rem; color:var(--text-muted);">Debug: member payload</label>
+                        <pre id="editMemberDebug" style="max-height:180px; overflow:auto; background:rgba(0,0,0,0.25); color:#d1d5db; padding:0.75rem; border-radius:8px; font-size:0.75rem;"></pre>
+                    </div>
                 </form>
-            </div>
+            
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" onclick="closeModal('editMemberModal')">Cancel</button>
                 <button type="submit" class="btn btn-primary" form="editMemberForm">Save Changes</button>
+            </div>
             </div>
         </div>
     </div>
@@ -837,9 +990,36 @@
                     const membersResp = await apiService.get('/members');
                     if (membersResp && membersResp.members) {
                         // Use the unified members list directly from the API
-                        const members = membersResp.members;
+                            let members = membersResp.members || [];
+                            // Ensure pending invites are included: some backends expose invites separately
+                            try {
+                                const sent = await apiService.getSentInvites('pending');
+                                if (sent && Array.isArray(sent.invites) && sent.invites.length) {
+                                    const pendingInvites = sent.invites.map(inv => ({
+                                        id: inv.id || `invite-${inv.id}`,
+                                        invite_id: inv.id,
+                                        first_name: inv.first_name || inv.firstName || '',
+                                        last_name: inv.last_name || inv.lastName || '',
+                                        email: inv.email || null,
+                                        role: inv.role || inv.clubRole || inv.club_role || 'player',
+                                        status: inv.status || inv.inviteStatus || inv.invite_status || 'pending',
+                                        source: 'invite',
+                                        team_id: inv.team_id || null
+                                    }));
+                                    // Merge invites into members array with deduplication
+                                    pendingInvites.forEach(pInv => {
+                                        const exists = members.some(m => 
+                                            (m.email && pInv.email && m.email.toLowerCase() === pInv.email.toLowerCase()) || 
+                                            (m.id && pInv.id && String(m.id) === String(pInv.id))
+                                        );
+                                        if (!exists) {
+                                            members.push(pInv);
+                                        }
+                                    });
+                                }
+                            } catch (ie) { console.warn('Failed to fetch sent invites fallback', ie); }
                         if (members.length === 0) {
-                            tbody.innerHTML = `<tr><td colspan="5" style="border:none; padding:2rem; background:transparent;">${renderEmptyState('No members found.', '👥')}</td></tr>`;
+                            tbody.innerHTML = `<tr><td colspan="6" style="border:none; padding:2rem; background:transparent;">${renderEmptyState('No members found.', '👥')}</td></tr>`;
                             return;
                         }
                         await renderMembersTable(members);
@@ -888,7 +1068,7 @@
                 await renderMembersTable(members);
             } catch (err) {
                 console.error('Final loadMembers failure:', err);
-                tbody.innerHTML = '<tr><td colspan="5" style="padding:2rem; text-align:center; color:var(--text-muted);">Error loading members.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="padding:2rem; text-align:center; color:var(--text-muted);">Error loading members.</td></tr>';
             }
         }
 
@@ -900,7 +1080,7 @@
                 console.log('[DEBUG] renderMembersTable - members count:', members.length);
                 
                 if (members.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="5" style="border:none; padding:2rem; background:transparent;">${renderEmptyState('No members found.', '👥')}</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="6" style="border:none; padding:2rem; background:transparent;">${renderEmptyState('No members found.', '👥')}</td></tr>`;
                     return;
                 }
 
@@ -929,9 +1109,12 @@
                 console.log('[DEBUG] ownerIdFromCtx:', ownerIdFromCtx);
                 for (const m of members) {
                     console.log('[DEBUG] processing member:', m.email, 'role:', m.role);
-                    const isInvite = (m.source || '').toString().toLowerCase() === 'invite' || (m.join_status || '').toString().toLowerCase() === 'invited' || (m.status || '').toString().toLowerCase() === 'pending';
+                    const memberStatus = (m.status || 'active').toLowerCase();
+                    const isCancelled = memberStatus === 'cancelled';
+                    const isInvite = (m.source || '').toString().toLowerCase() === 'invite' || (m.join_status || '').toString().toLowerCase() === 'invited' || memberStatus === 'pending';
                     const isRegisteredPlayer = Boolean(m.user_id) && ((m.join_status || '').toString().toLowerCase() === 'registered');
-                    const planName = m.payment_plan_name || m.plan_name || m.plan_name_display;
+                    const planName = m.payment_plan_name || m.plan_name || m.plan_name_display || null;
+                    const paymentStatus = (m.payment_status || (planName ? 'due' : 'n/a')).toLowerCase();
                     const displayRole = (m.role || 'Member');
                     
                     let isOwner = false;
@@ -946,7 +1129,8 @@
                     tr.dataset.id = m.id || '';
 
                     const tdName = document.createElement('td'); tdName.setAttribute('data-label','Name'); tdName.style.padding = '1rem 0.5rem';
-                    const nameDiv = document.createElement('div'); nameDiv.style.fontWeight = '700'; nameDiv.style.color = '#fff'; nameDiv.textContent = (m.first_name || '') + (m.last_name ? (' ' + m.last_name) : '');
+                    const fullName = ((m.first_name || '') + (m.last_name ? (' ' + m.last_name) : '')).trim();
+                    const nameDiv = document.createElement('div'); nameDiv.style.fontWeight = '700'; nameDiv.style.color = '#fff'; nameDiv.textContent = fullName || m.email || 'Pending Invitation';
                     const emailDiv = document.createElement('div'); emailDiv.style.fontSize = '0.75rem'; emailDiv.style.color = 'var(--text-muted)'; emailDiv.textContent = m.email || '';
                     tdName.appendChild(nameDiv); tdName.appendChild(emailDiv);
 
@@ -958,15 +1142,24 @@
 
                     const tdStatus = document.createElement('td'); tdStatus.setAttribute('data-label','Status'); tdStatus.style.padding = '1rem 0.5rem';
                     const statusBadge = document.createElement('span'); statusBadge.className = 'badge';
-                    if (isInvite) { statusBadge.style.background = 'rgba(250,204,21,0.12)'; statusBadge.style.color = '#f59e0b'; statusBadge.textContent = 'Pending'; }
+                    if (isCancelled) { statusBadge.style.background = 'rgba(148,163,184,0.1)'; statusBadge.style.color = '#94a3b8'; statusBadge.textContent = 'Cancelled'; }
+                    else if (isInvite) { statusBadge.style.background = 'rgba(250,204,21,0.12)'; statusBadge.style.color = '#f59e0b'; statusBadge.textContent = 'Pending'; }
                     else { statusBadge.style.background = 'rgba(74,222,128,0.1)'; statusBadge.style.color = '#4ade80'; statusBadge.textContent = 'Active'; }
                     tdStatus.appendChild(statusBadge);
-                    
-                    if (isRegisteredPlayer) {
-                        const planSpan = document.createElement('span'); planSpan.className = 'badge'; planSpan.style.display = 'block'; planSpan.style.marginTop = '0.25rem'; planSpan.style.fontSize = '0.7rem';
-                        if (planName) { planSpan.style.background = 'rgba(220,38,38,0.1)'; planSpan.style.color = 'var(--primary)'; planSpan.textContent = planName; }
-                        else { planSpan.style.background = 'rgba(255,255,255,0.05)'; planSpan.style.color = 'var(--text-muted)'; planSpan.textContent = 'No Plan'; }
-                        tdStatus.appendChild(planSpan);
+
+                    // Plan column
+                    const tdPlan = document.createElement('td'); tdPlan.setAttribute('data-label','Plan'); tdPlan.style.padding = '1rem 0.5rem';
+                    if (planName) {
+                        const planNameSpan = document.createElement('div'); planNameSpan.style.fontSize = '0.82rem'; planNameSpan.style.color = '#f1f5f9'; planNameSpan.style.fontWeight = '600'; planNameSpan.textContent = planName;
+                        tdPlan.appendChild(planNameSpan);
+                        const payBadge = document.createElement('span'); payBadge.className = 'badge'; payBadge.style.fontSize = '0.68rem'; payBadge.style.marginTop = '0.2rem'; payBadge.style.display = 'inline-block';
+                        if (paymentStatus === 'paid') { payBadge.style.background = 'rgba(74,222,128,0.1)'; payBadge.style.color = '#4ade80'; payBadge.textContent = 'Paid'; }
+                        else if (paymentStatus === 'due') { payBadge.style.background = 'rgba(251,191,36,0.1)'; payBadge.style.color = '#fbbf24'; payBadge.textContent = 'Due'; }
+                        else { payBadge.style.background = 'rgba(255,255,255,0.04)'; payBadge.style.color = 'var(--text-muted)'; payBadge.textContent = 'N/A'; }
+                        tdPlan.appendChild(payBadge);
+                    } else {
+                        const noPlanSpan = document.createElement('span'); noPlanSpan.style.color = 'var(--text-muted)'; noPlanSpan.style.fontSize = '0.8rem'; noPlanSpan.textContent = 'No Plan';
+                        tdPlan.appendChild(noPlanSpan);
                     }
 
                     const tdActions = document.createElement('td'); tdActions.setAttribute('data-label','Actions'); tdActions.style.padding = '1rem 0.5rem'; tdActions.style.textAlign = 'right';
@@ -974,7 +1167,7 @@
 
                     if (!isInvite && isRegisteredPlayer && !isOwner) {
                         const assignBtn = document.createElement('button'); assignBtn.className = 'btn btn-text btn-small'; assignBtn.style.color = 'var(--accent-cyan)'; assignBtn.textContent = 'Assign Plan';
-                        assignBtn.addEventListener('click', () => openAssignPlanModal(m.id, (m.first_name||'') + ' ' + (m.last_name||'')));
+                        assignBtn.addEventListener('click', () => openAssignPlanModal(m.id, (m.first_name||'') + ' ' + (m.last_name||''), m.email));
                         actionsDiv.appendChild(assignBtn);
                     }
 
@@ -1002,6 +1195,7 @@
                     tr.appendChild(tdName);
                     tr.appendChild(tdRole);
                     tr.appendChild(tdSquad);
+                    tr.appendChild(tdPlan);
                     tr.appendChild(tdStatus);
                     tr.appendChild(tdActions);
                     frag.appendChild(tr);
@@ -1009,7 +1203,7 @@
                 tbody.appendChild(frag);
             } catch (err) {
                 console.error("renderMembersTable error:", err);
-                tbody.innerHTML = '<tr><td colspan="5" style="padding:2rem; text-align:center; color:var(--accent-red);">Failed to render members.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="padding:2rem; text-align:center; color:var(--accent-red);">Failed to render members.</td></tr>';
             }
         }
 
@@ -1078,7 +1272,7 @@
             const select = document.getElementById('coachSelect');
             if (!select) return;
             try {
-                const { coaches } = await apiService.get('/api/members?role=coach');
+                const { coaches } = await apiService.get('/members?role=coach');
                 coaches.forEach(c => {
                     const opt = document.createElement('option');
                     opt.value = c.id;
@@ -1092,7 +1286,7 @@
             const select = document.getElementById('formSelect');
             if (!select) return;
             try {
-                const { forms } = await apiService.get('/api/forms');
+                const { forms } = await apiService.get('/forms');
                 forms.forEach(f => {
                     const opt = document.createElement('option');
                     opt.value = f.id;
@@ -1254,12 +1448,17 @@
         // Local stripe functions removed in favor of UnifiedNav
 
         // --- Assign Plan Logic ---
-        window.openAssignPlanModal = async function(memberId, name) {
+        window.openAssignPlanModal = async function(memberId, name, email) {
             const m = document.getElementById('assignPlanModal');
             if (!m) return;
             
             document.getElementById('assignPlanMemberId').value = memberId;
             document.getElementById('assignPlanMemberName').textContent = name;
+            const emailEl = document.getElementById('assignPlanMemberEmail');
+            if (emailEl) {
+                emailEl.textContent = email || '';
+                emailEl.style.display = email ? 'block' : 'none';
+            }
             m.style.display = 'flex';
             
             const select = document.getElementById('planSelect');
@@ -1285,7 +1484,7 @@
             if (!planId) return;
             
             try {
-                await apiService.post('/api/payments/assign-plan', { memberId, planId });
+                await apiService.post('/payments/assign-plan', { memberId, planId });
                 showNotification("Plan assigned successfully!", "success");
                 closeModal('assignPlanModal');
                 loadMembers();
@@ -1295,30 +1494,104 @@
         };
 
         window.openEditMemberModal = async function(id, member) {
+            // Support multiple call signatures:
+            // - openEditMemberModal(id, memberObject)
+            // - openEditMemberModal(id, firstName, lastName, email, role)  (used by unified-nav)
+            try {
+                if (typeof member === 'string' && arguments.length > 2) {
+                    // Reconstruct a minimal member object from positional args
+                    const first = arguments[1] || '';
+                    const last = arguments[2] || '';
+                    const email = arguments[3] || '';
+                    const role = arguments[4] || '';
+                    member = { id, first_name: first, last_name: last, email, role };
+                }
+
+                console.debug('DEBUG: openEditMemberModal called with id,member:', id, member);
+                const dbgWrap = document.getElementById('editMemberDebugWrap');
+                const dbg = document.getElementById('editMemberDebug');
+                if (dbg && dbgWrap) {
+                    try { dbg.textContent = JSON.stringify(member || { id }, null, 2); } catch(e) { dbg.textContent = String(member || id); }
+                    dbgWrap.style.display = 'block';
+                }
+            } catch (e) { console.warn('Debug panel update failed', e); }
+
+            // If caller provided only an ID or we still have a non-object, attempt to fetch full member details
             if (!member || typeof member !== 'object') {
-                // If only ID was passed, we might need to fetch, but the list should have it
-                console.warn('openEditMemberModal: member object missing, using ID only');
-                member = { id };
+                try {
+                    const fetched = await apiService.get(`/members/${id}`);
+                    if (fetched && typeof fetched === 'object') member = fetched;
+                } catch (err) {
+                    try {
+                        const dash = await apiService.getAdminDashboardData();
+                        const all = dash.players || dash.members || [];
+                        const found = all.find(x => String(x.id || x.user_id || x.player_id) === String(id));
+                        if (found) member = found;
+                    } catch (e) { /* ignore */ }
+                }
             }
 
             document.getElementById('editMemberId').value = id || member.id || member.user_id || '';
-            document.getElementById('editFirstName').value = member.first_name || '';
-            document.getElementById('editLastName').value = member.last_name || '';
-            document.getElementById('editEmail').value = member.email || '';
-            document.getElementById('editRole').value = (member.role || 'player').toLowerCase();
-            
+            document.getElementById('editFirstName').value = member.first_name || member.first || '';
+            document.getElementById('editLastName').value = member.last_name || member.last || '';
+            document.getElementById('editEmail').value = member.email || member.contact_email || '';
+            document.getElementById('editRole').value = (member.role || member.user_role || 'player').toLowerCase();
+
             if (document.getElementById('editDOB')) {
                 // Format date for input[type=date] (YYYY-MM-DD)
-                let dob = member.date_of_birth || member.dob || '';
-                if (dob && dob.includes('T')) dob = dob.split('T')[0];
-                document.getElementById('editDOB').value = dob;
+                let dob = member.date_of_birth || member.dob || member.date || '';
+                if (dob && dob.includes && dob.includes('T')) dob = dob.split('T')[0];
+                document.getElementById('editDOB').value = dob || '';
             }
             if (document.getElementById('editPosition')) {
                 document.getElementById('editPosition').value = member.position || member.team_position || '';
             }
             if (document.getElementById('editSquadSelect')) {
-                document.getElementById('editSquadSelect').value = member.team_id || '';
+                // Ensure squads are loaded then set value
+                try {
+                    const data = await apiService.getAdminDashboardData();
+                    const teams = data.teams || [];
+                    const sel = document.getElementById('editSquadSelect');
+                    sel.innerHTML = '<option value="">-- No Squad --</option>';
+                    teams.forEach(t => {
+                        const o = document.createElement('option');
+                        o.value = t.id;
+                        o.textContent = t.name;
+                        sel.appendChild(o);
+                    });
+                    sel.value = member.team_id || member.teamId || '';
+                } catch (e) {
+                    // leave as-is
+                }
             }
+
+            // Force modal overlay centering and sizing to avoid layout conflicts
+            try {
+                const modalEl = document.getElementById('editMemberModal');
+                const modalContentEl = modalEl?.querySelector('.modal-content');
+                if (modalEl) {
+                    modalEl.style.display = 'flex';
+                    modalEl.style.position = 'fixed';
+                    modalEl.style.inset = '0';
+                    modalEl.style.width = '100%';
+                    modalEl.style.height = '100%';
+                    modalEl.style.padding = '0';
+                    modalEl.style.alignItems = 'center';
+                    modalEl.style.justifyContent = 'center';
+                    modalEl.style.zIndex = '100000';
+                }
+                if (modalContentEl) {
+                    modalContentEl.style.margin = '0 auto';
+                    modalContentEl.style.width = '520px';
+                    modalContentEl.style.maxHeight = '90vh';
+                    modalContentEl.style.overflow = 'hidden';
+                    const bodyEl = modalContentEl.querySelector('.modal-body');
+                    if (bodyEl) {
+                        bodyEl.style.maxHeight = '68vh';
+                        bodyEl.style.overflowY = 'auto';
+                    }
+                }
+            } catch (e) { console.warn('Modal centering patch failed', e); }
 
             openModal('editMemberModal');
         };
@@ -1331,18 +1604,69 @@
                 last_name: document.getElementById('editLastName').value,
                 email: document.getElementById('editEmail').value,
                 role: document.getElementById('editRole').value,
+                // Provide multiple date field names to match varying backend expectations
                 dateOfBirth: document.getElementById('editDOB') ? document.getElementById('editDOB').value : null,
+                date_of_birth: document.getElementById('editDOB') ? document.getElementById('editDOB').value : null,
+                dob: document.getElementById('editDOB') ? document.getElementById('editDOB').value : null,
+                // Position mappings
                 position: document.getElementById('editPosition') ? document.getElementById('editPosition').value : null,
-                teamId: document.getElementById('editSquadSelect') ? document.getElementById('editSquadSelect').value : null
+                teamId: document.getElementById('editSquadSelect') ? document.getElementById('editSquadSelect').value : null,
+                team_id: document.getElementById('editSquadSelect') ? document.getElementById('editSquadSelect').value : null
             };
 
-            try {
-                await apiService.post(`/api/members/${id}/update`, data);
-                showNotification("Member updated successfully!", "success");
-                closeModal('editMemberModal');
-                loadMembers();
-            } catch (err) {
-                showNotification("Failed to update member: " + err.message, "error");
+            // If editing an invite id, try invite endpoints first (they often error on /members/:id)
+            const isInvite = String(id).startsWith('invite-');
+            const attemptOrder = isInvite ? ['invites', 'invitations', 'members'] : ['members', 'invites', 'invitations'];
+            let updated = false;
+            let lastErr = null;
+            for (const prefix of attemptOrder) {
+                try {
+                    await apiService.post(`/${prefix}/${id}/update`, data);
+                    showNotification("Member/Invite updated successfully!", "success");
+                    closeModal('editMemberModal');
+                    loadMembers();
+                    updated = true;
+                    break;
+                } catch (e) {
+                    lastErr = e;
+                    console.warn(`Update attempt failed for /${prefix}/${id}/update`, e);
+                }
+            }
+            if (!updated) {
+                // Try a final generic members update without /update suffix as a last resort
+                try {
+                    await apiService.post(`/members/${id}`, data);
+                    showNotification("Member updated successfully!", "success");
+                    closeModal('editMemberModal');
+                    loadMembers();
+                    updated = true;
+                } catch (finalErr) {
+                    lastErr = finalErr || lastErr;
+                }
+            }
+
+            if (!updated) {
+                // Better surface the error details and show raw response in debug panel
+                let msg = 'Failed to update member';
+                try {
+                    if (lastErr && lastErr.error) msg = lastErr.error;
+                    else if (lastErr && lastErr.message) msg = lastErr.message;
+                    else msg = JSON.stringify(lastErr);
+                } catch (ee) {
+                    msg = String(lastErr);
+                }
+                console.error('Failed to update member (all attempts):', lastErr);
+                showNotification(msg, 'error');
+
+                // Dump raw error into debug panel for easier copying
+                try {
+                    const dbgWrap = document.getElementById('editMemberDebugWrap');
+                    const dbg = document.getElementById('editMemberDebug');
+                    if (dbg && dbgWrap) {
+                        dbg.textContent = typeof lastErr === 'string' ? lastErr : JSON.stringify(lastErr, Object.getOwnPropertyNames(lastErr), 2);
+                        dbgWrap.style.display = 'block';
+                    }
+                } catch (ee) { /* ignore */ }
             }
         };
 
@@ -1353,7 +1677,7 @@
             }
             if (!confirm("Are you sure you want to remove this member?")) return;
             try {
-                await apiService.delete(`/api/members/${id}`);
+                await apiService.delete(`/members/${id}`);
                 showNotification("Member removed", "success");
                 loadMembers();
             } catch (err) {
@@ -1364,7 +1688,7 @@
         window.resendInvite = async function(id) {
             if (!confirm('Resend this invite email?')) return;
             try {
-                await apiService.post(`/api/invites/${id}/resend`, {});
+                await apiService.post(`/invites/${id}/resend`, {});
                 showNotification('Invite resent', 'success');
             } catch (err) {
                 console.error('Resend invite error', err);

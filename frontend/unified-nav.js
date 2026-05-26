@@ -3242,6 +3242,32 @@ const UnifiedNav = {
     const row = btn.closest("tr");
     if (!row) return;
 
+    // If this appears to be the Teams table (Squad Name header), route to team modal
+    try {
+      const table = row.closest('table');
+      const firstHeader = table?.querySelector('thead th')?.textContent?.trim() || '';
+      if (firstHeader === 'Squad Name' && typeof window.openEditTeamModal === 'function' && typeof apiService !== 'undefined') {
+        // Extract squad name from first cell (or data-label)
+        const nameCell = row.querySelector('td[data-label="Squad Name"]') || row.querySelector('td');
+        const squadName = (nameCell?.textContent || '').trim();
+        if (squadName) {
+          try {
+            const data = await apiService.getAdminDashboardData();
+            const teams = data.teams || [];
+            const found = teams.find(t => String(t.name || '').trim() === String(squadName).trim());
+            if (found) {
+              window.openEditTeamModal(found.id, found.name, found.coach_id || found.coachId || '', found.player_count || found.players_count || (found.players ? found.players.length : 0));
+              return;
+            }
+          } catch (e) {
+            console.warn('unified-nav: failed to fetch teams for edit routing', e);
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('unified-nav: failed to route to team edit modal', e);
+    }
+
     // Check for specialized handler
     if (typeof window.openEditMemberModal === 'function') {
       const memberId = row.dataset.id;
@@ -3368,12 +3394,18 @@ const UnifiedNav = {
   handleAssignPlan(btn) {
     const row = btn.closest("tr");
     if (!row) return;
-    const name = row.querySelector("td")?.textContent.trim().split('\n')[0] || "this member";
+    
+    // Extract clean name and email from row divs if they exist
+    const nameDiv = row.querySelector("td div");
+    const name = nameDiv ? nameDiv.textContent.trim() : (row.querySelector("td")?.textContent.trim().split('\n')[0] || "this member");
+    
+    const emailDiv = row.querySelector("td div[style*='font-size:0.75rem']") || row.querySelector("td div[style*='opacity']");
+    const email = emailDiv ? emailDiv.textContent.trim() : "";
 
     // Check for specialized handler
     if (typeof window.openAssignPlanModal === 'function') {
       const memberId = row.dataset.id || 'temp-id';
-      window.openAssignPlanModal(memberId, name);
+      window.openAssignPlanModal(memberId, name, email);
       return;
     }
 

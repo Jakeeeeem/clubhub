@@ -139,6 +139,9 @@
                 grid-template-columns: 1fr 1fr !important;
             }
         }
+        /* Modal standardization for dashboard modals */
+        .modal .modal-content { padding: 1.25rem; border-radius: 12px; position: relative; }
+        .modal .close { position: absolute; top: 12px; right: 12px; cursor: pointer; font-size: 1.2rem; background: rgba(0,0,0,0.15); padding:6px 10px; border-radius:8px; }
     </style>
 </head>
 
@@ -550,8 +553,10 @@
     <!-- Add Member Modal -->
     <div id="addMemberModal" class="modal" style="display:none;">
         <div class="modal-content glass-card" style="max-width:500px;">
-            <span class="close" onclick="closeModal('addMemberModal')">&times;</span>
-            <h2 class="neon-text" style="font-size:1.4rem; margin-bottom:1.5rem;">Add New Member</h2>
+            <div class="modal-header">
+                <h2 class="neon-text" style="font-size:1.4rem; margin:0 0 0.5rem;">Add New Member</h2>
+                <div class="modal-close" onclick="closeModal('addMemberModal')">&times;</div>
+            </div>
             <form id="addMemberForm" onsubmit="handleAdminAddMember(event)">
                 <div class="form-group">
                     <label>First Name</label>
@@ -574,7 +579,7 @@
                         <option value="staff">Staff / Admin</option>
                     </select>
                 </div>
-                <div style="display:flex; gap:1rem; margin-top:2rem;">
+                <div class="modal-footer" style="display:flex; gap:1rem;">
                     <button type="button" class="btn btn-secondary" onclick="closeModal('addMemberModal')" style="flex:1;">Cancel</button>
                     <button type="submit" class="btn btn-primary" style="flex:1;">Send Invite</button>
                 </div>
@@ -585,9 +590,9 @@
     <!-- Add Event Modal -->
     <div id="addEventModal" class="modal" style="display:none;">
         <div class="modal-content glass-card" style="max-width:700px;">
-            <div class="modal-header" style="padding: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
+            <div class="modal-header">
                 <h2 class="neon-text" style="font-size:1.4rem; margin:0;">Create New Event</h2>
-                <span class="close" onclick="closeModal('addEventModal')" style="position: static; font-size: 1.5rem;">&times;</span>
+                <div class="modal-close" onclick="closeModal('addEventModal')">&times;</div>
             </div>
             <form id="addEventForm" onsubmit="handleAdminCreateEvent(event)">
                 <div class="modal-body" style="padding: 1.5rem; max-height: 60vh; overflow-y: auto;">
@@ -620,12 +625,31 @@
                             <div class="form-group">
                                <label>Target Audience</label>
                                <select name="target" id="eventTargetSelect" required style="width:100%; padding:0.75rem; background:rgba(0,0,0,0.3); border:1px solid var(--border-color); color:#fff; border-radius:8px;">
-                                   <option value="global">Whole Club (Global)</option>
+                                   <option value="open">Open event (Whole club)</option>
+                                   <option value="group">Group event (Choose teams)</option>
                                </select>
+
+                               <div id="eventTeamChooser" style="display:none; margin-top:0.75rem;">
+                                   <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.5rem;">
+                                       <input type="checkbox" id="eventTeamAll" />
+                                       <label for="eventTeamAll" style="margin:0; font-size:0.9rem;">All teams (open to whole group)</label>
+                                   </div>
+                                   <div id="eventTeamSelected" style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.5rem;"></div>
+                                   <div id="eventTeamList" style="display:flex; flex-direction:column; gap:0.4rem; max-height:140px; overflow:auto; padding:0.5rem; background:rgba(255,255,255,0.02); border-radius:8px; border:1px solid rgba(255,255,255,0.03);">
+                                       <!-- Team checkboxes populated dynamically -->
+                                   </div>
+                               </div>
                             </div>
                             <div class="form-group">
                                 <label>Capacity (Places)</label>
                                 <input type="number" name="capacity" placeholder="0 for unlimited" style="width:100%; padding:0.75rem; background:rgba(0,0,0,0.3); border:1px solid var(--border-color); color:#fff; border-radius:8px;">
+                            </div>
+                            <div class="form-group">
+                                <label>Price (£)</label>
+                                <input type="number" name="price" id="eventPriceInput" step="0.01" min="0" placeholder="0 for Free" style="width:100%; padding:0.75rem; background:rgba(0,0,0,0.3); border:1px solid var(--border-color); color:#fff; border-radius:8px;" oninput="validateEventPrice()">
+                                <div id="stripeConnectionWarning" style="display:none; margin-top:0.5rem; padding:0.65rem; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:8px; color:#f87171; font-size:0.78rem; line-height:1.4;">
+                                    ⚠️ To charge for events, you must connect Stripe first in the <a href="#finances" onclick="closeModal('addEventModal'); showSection('finances');" style="color:#60a5fa; text-decoration:underline; font-weight:600;">Finances tab</a>.
+                                </div>
                             </div>
                             <div style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 12px; margin-top: 1rem;">
                                 <div class="form-group" style="display:flex; align-items:center; gap:0.5rem;">
@@ -663,9 +687,11 @@
     <!-- Event Detail Modal (Attendance View) -->
     <div id="eventDetailModal" class="modal" style="display:none;">
         <div class="modal-content glass-card" style="max-width:700px;">
-            <span class="close" onclick="closeModal('eventDetailModal')">&times;</span>
-            <div id="eventDetailHeader" style="margin-bottom:2rem;">
+            <div class="modal-header">
                 <h2 id="eventDetailTitle" class="neon-text" style="margin:0;">Event Details</h2>
+                <div class="modal-close" onclick="closeModal('eventDetailModal')">&times;</div>
+            </div>
+            <div id="eventDetailHeader" style="margin-bottom:1rem; padding:0 1.5rem;">
                 <p id="eventDetailMeta" style="color:var(--text-muted); font-size:0.88rem; margin-top:0.5rem;"></p>
             </div>
 
@@ -721,6 +747,104 @@
             } catch (e) { /* silent - demo fallback will be used */ }
         }
 
+        window.stripeConnected = false;
+        async function checkStripeConnectionForEvents() {
+            if (typeof apiService === 'undefined') return;
+            try {
+                const data = await apiService.makeRequest('/payments/stripe/connect/status');
+                window.stripeConnected = !!(data && data.connected);
+            } catch (err) {
+                window.stripeConnected = false;
+            }
+        }
+
+        window.validateEventPrice = function() {
+            const priceInput = document.getElementById('eventPriceInput');
+            const warning = document.getElementById('stripeConnectionWarning');
+            const submitBtn = document.querySelector('#addEventForm button[type="submit"]');
+            if (!priceInput) return;
+
+            const val = parseFloat(priceInput.value) || 0;
+            if (val > 0 && !window.stripeConnected) {
+                if (warning) warning.style.display = 'block';
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.style.opacity = '0.5';
+                    submitBtn.style.pointerEvents = 'none';
+                    submitBtn.textContent = 'Stripe Connection Required';
+                }
+            } else {
+                if (warning) warning.style.display = 'none';
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.style.opacity = '1';
+                    submitBtn.style.pointerEvents = 'auto';
+                    submitBtn.textContent = 'Create & Publish Event';
+                }
+            }
+        };
+
+        // Hook window.openModal to reset form and query latest Stripe status in real-time
+        const originalOpenModal = window.openModal;
+        window.openModal = function(id) {
+            if (id === 'addEventModal') {
+                const form = document.getElementById('addEventForm');
+                if (form) form.reset();
+                
+                const warning = document.getElementById('stripeConnectionWarning');
+                if (warning) warning.style.display = 'none';
+                
+                const submitBtn = document.querySelector('#addEventForm button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.style.opacity = '1';
+                    submitBtn.style.pointerEvents = 'auto';
+                    submitBtn.textContent = 'Create & Publish Event';
+                }
+                
+                if (typeof checkStripeConnectionForEvents === 'function') {
+                    checkStripeConnectionForEvents();
+                }
+                // Ensure club context header is available for API calls
+                try {
+                    apiService.getContext().then(ctx => {
+                        const clubId = ctx?.currentOrganization?.id || ctx?.currentGroup?.id || null;
+                        if (clubId) localStorage.setItem('clubId', clubId);
+                    }).catch(()=>{});
+                } catch(e) {}
+                // Populate teams for chooser in case modal is opened standalone
+                try {
+                    if (typeof loadTargetTeams === 'function') await loadTargetTeams();
+                    // Ensure chooser visibility matches current select value
+                    const select = document.getElementById('eventTargetSelect');
+                    const chooser = document.getElementById('eventTeamChooser');
+                    if (select && chooser) {
+                        chooser.style.display = (select.value === 'group') ? 'block' : 'none';
+                    }
+                } catch(e) { /* ignore */ }
+                // Autofill date/time defaults and focus first input
+                try {
+                    const dateInput = document.querySelector('#addEventForm input[name="date"]');
+                    const timeInput = document.querySelector('#addEventForm input[name="time"]');
+                    const titleInput = document.querySelector('#addEventForm input[name="title"]');
+                    const now = new Date();
+                    const yyyy = now.getFullYear();
+                    const mm = String(now.getMonth() + 1).padStart(2, '0');
+                    const dd = String(now.getDate()).padStart(2, '0');
+                    if (dateInput && !dateInput.value) dateInput.value = `${yyyy}-${mm}-${dd}`;
+                    // Default time to next full hour
+                    const nextHour = new Date(now.getTime()); nextHour.setHours(now.getHours() + 1); nextHour.setMinutes(0); nextHour.setSeconds(0);
+                    const hh = String(nextHour.getHours()).padStart(2, '0');
+                    const mins = String(nextHour.getMinutes()).padStart(2, '0');
+                    if (timeInput && !timeInput.value) timeInput.value = `${hh}:${mins}`;
+                    if (titleInput) setTimeout(()=> titleInput.focus(), 50);
+                } catch (e) { /* ignore */ }
+            }
+            if (typeof originalOpenModal === 'function') {
+                originalOpenModal(id);
+            }
+        };
+
         document.addEventListener('DOMContentLoaded', async () => {
             // Auth check
             if (typeof checkAuthStatus === 'function') {
@@ -740,6 +864,10 @@
             if (typeof loadAvailableCoaches === 'function') loadAvailableCoaches();
             if (typeof loadAvailableForms === 'function') loadAvailableForms();
             if (typeof loadScoutApprovals === 'function') loadScoutApprovals();
+            
+            // Check stripe connection status for paid events
+            await checkStripeConnectionForEvents();
+
             // default tab
             const tp = document.getElementById('tabPlatform'); if (tp) tp.classList.add('active');
         });
@@ -807,6 +935,9 @@
             const ctx = await apiService.getContext();
             const clubId = ctx?.currentOrganization?.id || (window.AppState && window.AppState.currentUser && (window.AppState.currentUser.clubId || window.AppState.currentUser.currentOrganizationId));
 
+            const capacityVal = parseInt(formData.get('capacity'));
+            const priceVal = parseFloat(formData.get('price')) || 0;
+
             const data = {
                 title: formData.get('title'),
                 description: formData.get('description'),
@@ -814,11 +945,34 @@
                 eventTime: formData.get('time'),
                 location: formData.get('location'),
                 eventType: formData.get('type'),
-                capacity: parseInt(formData.get('capacity')) || 0,
-                teamId: formData.get('target') === 'global' ? null : formData.get('target'),
+                price: priceVal,
                 sendEmail: formData.get('sendEmail') === 'on',
                 clubId: clubId
             };
+
+            // Attach team selection only when Group event is chosen. 'open' means whole club.
+            const target = formData.get('target');
+            if (target === 'group') {
+                // If 'All teams' selected, mark scope as all; otherwise collect chosen team ids
+                const allCheckbox = document.getElementById('eventTeamAll');
+                const teamList = document.getElementById('eventTeamList');
+                if (allCheckbox && allCheckbox.checked) {
+                    data.teamScope = 'all';
+                } else if (teamList) {
+                    const selected = [];
+                    teamList.querySelectorAll('input[type="checkbox"]:checked').forEach(cb => selected.push(cb.value));
+                    if (selected.length === 1) {
+                        data.teamId = selected[0];
+                    } else if (selected.length > 1) {
+                        data.teamIds = selected;
+                    }
+                }
+            }
+
+            // Only include capacity if it is a positive integer >= 1
+            if (capacityVal && capacityVal > 0) {
+                data.capacity = capacityVal;
+            }
 
             try {
                 const btn = e.target.querySelector('button[type="submit"]');
@@ -831,11 +985,23 @@
                 e.target.reset();
                 loadAdminEvents();
             } catch (err) {
-                showNotification("Failed to create event: " + err.message, "error");
+                // Log full error for debugging (includes validation details from backend)
+                console.error('Create event failed:', err);
+
+                // If backend returned validation details, show them to the admin
+                if (err && err.details && Array.isArray(err.details)) {
+                    const messages = err.details.map(d => `${d.param || d.path || 'field'}: ${d.msg || d.message}`).join('\n');
+                    showNotification("Failed to create event: " + (err.message || 'Validation failed'), "error");
+                    // Also show a detailed console warning to help local devs
+                    console.warn('Validation details:\n' + messages);
+                } else {
+                    showNotification("Failed to create event: " + (err.message || 'Unknown error'), "error");
+                }
             } finally {
                 const btn = e.target.querySelector('button[type="submit"]');
                 btn.disabled = false;
-                btn.textContent = 'Create & Publish';
+                // Keep button text aligned with other modals
+                btn.textContent = 'Create & Publish Event';
             }
         }
 
@@ -978,17 +1144,90 @@
 
         async function loadTargetTeams() {
             const select = document.getElementById('eventTargetSelect');
+            const chooser = document.getElementById('eventTeamChooser');
+            const teamList = document.getElementById('eventTeamList');
+            const teamAll = document.getElementById('eventTeamAll');
             if (!select) return;
             try {
                 const { teams } = await apiService.get('/teams');
-                // Keep the 'global' option
-                select.innerHTML = '<option value="global">Whole Club (Global)</option>';
-                (teams||[]).forEach(t => {
-                    const opt = document.createElement('option');
-                    opt.value = t.id;
-                    opt.textContent = `Team: ${t.name}`;
-                    select.appendChild(opt);
+                // Provide Open vs Group options
+                select.innerHTML = '<option value="open">Open event (Whole club)</option><option value="group">Group event (Choose teams)</option>';
+
+                // Populate team chooser checkboxes
+                if (teamList) {
+                    teamList.innerHTML = '';
+                    (teams||[]).forEach(t => {
+                        const id = `team-checkbox-${t.id}`;
+                        const wrapper = document.createElement('label');
+                        wrapper.style = 'display:flex; align-items:center; gap:0.5rem; font-size:0.9rem;';
+                        const cb = document.createElement('input');
+                        cb.type = 'checkbox';
+                        cb.value = t.id;
+                        cb.id = id;
+                        wrapper.appendChild(cb);
+                        const span = document.createElement('span');
+                        span.textContent = ` ${t.name}`;
+                        wrapper.appendChild(span);
+                        teamList.appendChild(wrapper);
+                    });
+                }
+
+                // Update selected teams display (used by multiple handlers)
+                function updateSelectedTeamsDisplay() {
+                    const sel = document.getElementById('eventTeamSelected');
+                    if (!sel || !teamList) return;
+                    sel.innerHTML = '';
+                    const checked = teamList.querySelectorAll('input[type="checkbox"]:checked');
+                    checked.forEach(cb => {
+                        const name = cb.parentElement?.textContent?.trim() || cb.value;
+                        const chip = document.createElement('div');
+                        chip.style = 'background:rgba(96,165,250,0.12); color:#60a5fa; padding:0.25rem 0.6rem; border-radius:999px; display:inline-flex; align-items:center; gap:0.5rem; font-size:0.85rem; cursor:pointer;';
+                        chip.textContent = name;
+                        const remove = document.createElement('span');
+                        remove.textContent = '×';
+                        remove.style = 'margin-left:0.4rem; font-weight:700;';
+                        remove.addEventListener('click', (ev) => {
+                            ev.stopPropagation();
+                            cb.checked = false;
+                            updateSelectedTeamsDisplay();
+                        });
+                        chip.appendChild(remove);
+                        sel.appendChild(chip);
+                    });
+                }
+
+                // Show/hide chooser when selecting Group event
+                select.addEventListener('change', () => {
+                    if (select.value === 'group') {
+                        if (chooser) chooser.style.display = 'block';
+                    } else {
+                        if (chooser) chooser.style.display = 'none';
+                        if (teamAll) teamAll.checked = false;
+                        if (teamList) {
+                            teamList.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+                        }
+                        updateSelectedTeamsDisplay();
+                    }
                 });
+
+                // All teams checkbox behavior
+                if (teamAll) {
+                    teamAll.addEventListener('change', () => {
+                        const checked = teamAll.checked;
+                        teamList.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = checked);
+                        updateSelectedTeamsDisplay();
+                    });
+                }
+
+                // Wire checkbox change handlers to update selected chips
+                (function wireCheckboxes() {
+                    if (!teamList) return;
+                    teamList.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                        cb.addEventListener('change', updateSelectedTeamsDisplay);
+                    });
+                    // initial render
+                    updateSelectedTeamsDisplay();
+                })();
             } catch (e) {}
         }
     </script>

@@ -43,7 +43,7 @@ const eventValidation = [
     .isLength({ min: 1 })
     .withMessage("Event title is required"),
   body("eventType")
-    .isIn(["training", "match", "tournament", "camp", "social", "talent-id"])
+    .isIn(["training", "match", "tournament", "camp", "social", "talent-id", "other"])
     .withMessage("Invalid event type"),
   body("eventDate")
     .isISO8601()
@@ -60,6 +60,9 @@ const eventValidation = [
     .withMessage("Capacity must be a positive number"),
   body("clubId").optional().isUUID().withMessage("Valid club ID required"),
   body("teamId").optional().isUUID().withMessage("Valid team ID required"),
+  body("teamIds").optional().isArray().withMessage("teamIds must be an array of UUIDs"),
+  body("teamIds.*").optional().isUUID().withMessage("Each team ID must be a valid UUID"),
+  body("teamScope").optional().isIn(["all"]).withMessage("Invalid teamScope"),
   body("recurrencePattern")
     .optional()
     .isIn(["daily", "weekly", "monthly", "none"])
@@ -239,6 +242,17 @@ router.get("/:id", optionalAuth, async (req, res) => {
     }
 
     const event = eventResult.rows[0];
+
+    // Fetch any linked teams for this event (multi-team support)
+    try {
+      const et = await query(
+        `SELECT t.id, t.name FROM event_teams et JOIN teams t ON et.team_id = t.id WHERE et.event_id = $1`,
+        [req.params.id],
+      );
+      event.linked_teams = et.rows || [];
+    } catch (e) {
+      event.linked_teams = [];
+    }
 
     // Get bookings count
     const bookingsResult = await query(
@@ -421,6 +435,29 @@ router.post(
           const newEvent = result.rows[0];
           createdEvents.push(newEvent);
 
+          // Persist multi-team mappings if provided
+          // teamIds: explicit list of team UUIDs
+          // teamScope: 'all' => link to all teams in the club
+          if (req.body.teamIds && Array.isArray(req.body.teamIds) && req.body.teamIds.length > 0) {
+            for (const tId of req.body.teamIds) {
+              await client.query(
+                `INSERT INTO event_teams (event_id, team_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+                [newEvent.id, tId],
+              );
+            }
+          } else if (req.body.teamScope === 'all') {
+            // Link to all teams in the club
+            const teamsRes = await client.query(
+              `SELECT id FROM teams WHERE club_id = $1`,
+              [clubId || userClubId],
+            );
+            for (const t of teamsRes.rows) {
+              await client.query(
+                `INSERT INTO event_teams (event_id, team_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+                [newEvent.id, t.id],
+              );
+            }
+          }
           // 🗓️ Schedule Notifications (7, 4, 2, 1 day logic)
           if (notificationSchedule && Array.isArray(notificationSchedule)) {
             for (const schedule of notificationSchedule) {

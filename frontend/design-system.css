@@ -511,6 +511,20 @@ input:focus, select:focus, textarea:focus {
     gap: 1rem;
 }
 
+/* Make modal action buttons slightly smaller for a compact look */
+.modal .modal-footer .btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.88rem;
+    border-radius: 10px;
+    min-height: 40px;
+}
+
+.modal .modal-footer .btn.btn-small {
+    padding: 0.35rem 0.8rem;
+    font-size: 0.82rem;
+    min-height: 32px;
+}
+
 .modal-close {
     width: 32px;
     height: 32px;

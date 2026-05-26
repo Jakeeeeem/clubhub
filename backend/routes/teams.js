@@ -16,7 +16,7 @@ const teamValidation = [
   body("ageGroup").optional().trim(),
   body("sport").trim().isLength({ min: 1 }).withMessage("Sport is required"),
   body("description").optional().trim(),
-  body("coachId").optional().isUUID().withMessage("Valid coach ID required"),
+  body("coachId").optional({ checkFalsy: true }).isUUID().withMessage("Valid coach ID required"),
   body("clubId").isUUID().withMessage("Valid club ID is required"),
 ];
 
@@ -331,6 +331,31 @@ router.post(
         // If the frontend provided playerIds, attach them to the team
         if (Array.isArray(req.body.playerIds) && req.body.playerIds.length > 0) {
           for (const pid of req.body.playerIds) {
+            if (typeof pid !== "string") continue;
+
+            if (pid.startsWith("invite-")) {
+              const inviteId = pid.substring(7);
+              const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+              if (!uuidRegex.test(inviteId)) continue;
+
+              // Verify invite exists and belongs to this club/org
+              const invRes = await client.query(
+                "SELECT * FROM invitations WHERE id = $1 AND organization_id = $2",
+                [inviteId, clubId]
+              );
+              if (invRes.rows.length > 0) {
+                // Link team_id to invitation
+                await client.query(
+                  "UPDATE invitations SET team_id = $1 WHERE id = $2",
+                  [newTeam.id, inviteId]
+                );
+              }
+              continue;
+            }
+
+            const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+            if (!uuidRegex.test(pid)) continue;
+
             // Verify player belongs to this club
             const pRes = await client.query("SELECT * FROM players WHERE id = $1 AND club_id = $2", [pid, clubId]);
             if (pRes.rows.length === 0) continue; // skip invalid players
@@ -350,6 +375,10 @@ router.post(
       if (Array.isArray(req.body.playerIds) && req.body.playerIds.length > 0 && req.body.notifyPlayers) {
         try {
           for (const pid of req.body.playerIds) {
+            if (typeof pid !== "string" || pid.startsWith("invite-")) continue;
+            const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+            if (!uuidRegex.test(pid)) continue;
+
             try {
               const playerRow = await query('SELECT p.*, u.email as user_email, u.first_name as user_first FROM players p LEFT JOIN users u ON p.user_id = u.id WHERE p.id = $1', [pid]);
               if (playerRow.rows.length === 0) continue;

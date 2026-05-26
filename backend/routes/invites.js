@@ -801,18 +801,13 @@ router.get(
     try {
       const { status } = req.query;
 
-      // Get user's club
-      const clubResult = await query(
-        "SELECT id FROM clubs WHERE owner_id = $1",
-        [req.user.id],
-      );
-      if (clubResult.rows.length === 0) {
+      // Get user's club from request context (supports switcher and non-owners)
+      const clubId = req.user.organization_id;
+      if (!clubId) {
         return res.status(404).json({
-          error: "No club found",
+          error: "No active organization selected",
         });
       }
-
-      const clubId = clubResult.rows[0].id;
 
       let queryText = `
       SELECT ci.*, u.first_name as inviter_first_name, u.last_name as inviter_last_name,

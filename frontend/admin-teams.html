@@ -20,6 +20,39 @@
     <link rel="stylesheet" href="unified-nav.css?v=20260502">
     <link rel="stylesheet" href="quick-fixes.css?v=20260502">
     <style>
+        /* Custom Premium Checkbox Style Override */
+        .form-group input[type="checkbox"] {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 18px !important;
+            height: 18px !important;
+            border: 1.5px solid rgba(255, 255, 255, 0.25) !important;
+            border-radius: 4px !important;
+            background: rgba(0, 0, 0, 0.2) !important;
+            display: inline-flex !important;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.15s;
+            position: relative;
+            padding: 0 !important;
+            margin: 0 !important;
+            flex-shrink: 0 !important;
+            box-shadow: none !important;
+        }
+
+        .form-group input[type="checkbox"]:checked {
+            background: #60a5fa !important;
+            border-color: #60a5fa !important;
+        }
+
+        .form-group input[type="checkbox"]:checked::after {
+            content: "✓";
+            font-size: 11px;
+            color: #000;
+            font-weight: 900;
+        }
+
         .feed-entry {
             display: flex;
             gap: 1rem;
@@ -295,14 +328,27 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Add / Remove Players</label>
-                        <select id="teamPlayersSelect" name="playerIds" multiple style="width:100%; min-height:120px; padding:0.5rem; background:rgba(0,0,0,0.03); border:1px solid rgba(255,255,255,0.04); color:#fff;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                            <label style="margin:0;">Add / Remove Players</label>
+                            <span id="selectedPlayersCount" style="font-size:0.75rem; background:rgba(96,165,250,0.15); color:#60a5fa; padding:0.2rem 0.5rem; border-radius:12px; font-weight:600;">0 Selected</span>
+                        </div>
+                        <select id="teamPlayersSelect" name="playerIds" multiple style="display:none;">
                             <!-- Dynamically populated -->
                         </select>
-                        <div style="font-size:0.85rem;color:var(--text-muted);margin-top:0.5rem;">Tip: hold Shift/Cmd to select multiple players.</div>
+                        
+                        <!-- Premium Custom Search & List Picker -->
+                        <div style="margin-bottom:0.5rem;">
+                            <input type="text" id="playerSearchInput" placeholder="🔍 Search players by name..." style="width:100%; padding:0.65rem 0.85rem; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; color:#fff; font-size:0.85rem; transition:border-color 0.2s;" oninput="filterCustomPlayers()">
+                        </div>
+                        <div id="customPlayerList" style="max-height:180px; overflow-y:auto; border:1px solid rgba(255,255,255,0.08); border-radius:12px; background:rgba(0,0,0,0.15); padding:0.25rem;">
+                            <!-- Custom player items populated by renderCustomPlayerPicker() -->
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label style="display:flex;align-items:center;gap:0.6rem;"><input type="checkbox" id="notifyPlayersCheckbox" name="notifyPlayers"> Notify players by email</label>
+                    <div class="form-group" style="margin-bottom:1.5rem;">
+                        <label style="display:flex; align-items:center; gap:0.65rem; cursor:pointer; font-weight:500; color:#c8d2df; user-select:none; margin:0;">
+                            <input type="checkbox" id="notifyPlayersCheckbox" name="notifyPlayers">
+                            <span style="font-size:0.88rem; color:#f1f5f9;">Notify players by email</span>
+                        </label>
                     </div>
                     <div class="form-group">
                         <label>Registration Form (Jotform)</label>
@@ -477,6 +523,7 @@
                         <td style="padding:1.25rem 1.5rem; text-align:right;">
                             <div style="display:flex; gap:0.5rem; justify-content:flex-end;">
                                 <button class="btn btn-text btn-small" onclick="viewTeam('${t.id}', '${t.name}')">View Squad</button>
+                                <button class="btn btn-text btn-small" onclick="openAddPlayerToTeamModal('${t.id}')">Add Player</button>
                                 <button class="btn btn-text btn-small" onclick="openEditTeamModal('${t.id}', '${t.name.replace(/'/g, "\\'")}', '${t.coach_id || ''}', ${t.player_count || 0})">Edit</button>
                                 <button class="btn btn-text btn-small" style="color:#f87171;" onclick="deleteTeam('${t.id}')">Delete</button>
                             </div>
@@ -547,7 +594,7 @@
             }
         };
 
-        window.openAddPlayerToTeamModal = async function() {
+        window.openAddPlayerToTeamModal = async function(teamId) {
             const select = document.getElementById('availablePlayersSelect');
             if (!select) return;
             
@@ -561,6 +608,7 @@
                     opt.textContent = `${p.first_name} ${p.last_name}`;
                     select.appendChild(opt);
                 });
+                if (teamId) window.currentViewedTeamId = teamId;
                 openModal('addPlayerToTeamModal');
             } catch (e) {
                 window.showNotification("Failed to load players", "error");
@@ -620,6 +668,7 @@
                 select.innerHTML = '';
                 if (!players || players.length === 0) {
                     select.innerHTML = '<option value="">No players found</option>';
+                    if (window.syncCustomPlayerPicker) window.syncCustomPlayerPicker();
                     return;
                 }
                 players.forEach(p => {
@@ -628,8 +677,12 @@
                     opt.textContent = `${p.first_name || ''} ${p.last_name || ''} ${p.email ? '• ' + p.email : ''}`;
                     select.appendChild(opt);
                 });
+                
+                // Sync the custom visual picker
+                if (window.syncCustomPlayerPicker) window.syncCustomPlayerPicker();
             } catch (e) {
                 select.innerHTML = '<option value="">Failed to load players</option>';
+                if (window.syncCustomPlayerPicker) window.syncCustomPlayerPicker();
             }
         }
 
@@ -648,11 +701,151 @@
             } catch (e) { }
         }
 
+        // --- Premium Custom Player Selector Helper Functions ---
+        window.syncCustomPlayerPicker = function() {
+            const select = document.getElementById('teamPlayersSelect');
+            const customList = document.getElementById('customPlayerList');
+            if (!select || !customList) return;
+
+            customList.innerHTML = '';
+            
+            const options = Array.from(select.options);
+            if (options.length === 0 || (options.length === 1 && !options[0].value)) {
+                customList.innerHTML = '<div style="padding:1rem; text-align:center; color:var(--text-muted); font-size:0.85rem;">No players available</div>';
+                return;
+            }
+
+            options.forEach(opt => {
+                if (!opt.value) return;
+                
+                // Extract clean name by splitting off the email
+                const rawText = opt.textContent || '';
+                const namePart = rawText.split('•')[0].trim();
+                
+                // Get initials
+                const initials = namePart.split(' ').map(n => n[0] || '').join('').substring(0, 2).toUpperCase() || 'P';
+
+                const div = document.createElement('div');
+                div.className = 'custom-player-item';
+                div.setAttribute('data-value', opt.value);
+                div.style.cssText = 'display:flex; align-items:center; justify-content:space-between; padding:0.5rem 0.75rem; border-radius:8px; margin-bottom:0.25rem; cursor:pointer; transition:all 0.15s; border:1px solid transparent;';
+                
+                // Render gorgeous initials avatar, clean name (no email!), and modern check box
+                div.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:0.65rem;">
+                        <div class="avatar-circle" style="width:28px; height:28px; border-radius:50%; background:rgba(255,255,255,0.05); color:#fff; display:flex; align-items:center; justify-content:center; font-size:0.7rem; font-weight:700; border:1px solid rgba(255,255,255,0.1); transition:all 0.15s;">
+                            ${initials}
+                        </div>
+                        <span style="font-size:0.85rem; color:#f1f5f9; font-weight:500; transition:color 0.15s;">${namePart}</span>
+                    </div>
+                    <div class="checkbox-indicator" style="width:16px; height:16px; border-radius:4px; border:1.5px solid rgba(255,255,255,0.25); display:flex; align-items:center; justify-content:center; font-size:0.65rem; transition:all 0.15s; color:#fff; font-weight:bold;">
+                    </div>
+                `;
+
+                div.addEventListener('click', () => {
+                    toggleCustomPlayer(opt.value);
+                });
+
+                customList.appendChild(div);
+            });
+
+            updateCustomPlayerPickerUI();
+        };
+
+        window.toggleCustomPlayer = function(value) {
+            const select = document.getElementById('teamPlayersSelect');
+            if (!select) return;
+
+            const opt = Array.from(select.options).find(o => o.value === value);
+            if (opt) {
+                opt.selected = !opt.selected;
+                // Dispatch change event to keep options clean and responsive
+                select.dispatchEvent(new Event('change'));
+                updateCustomPlayerPickerUI();
+            }
+        };
+
+        window.updateCustomPlayerPickerUI = function() {
+            const select = document.getElementById('teamPlayersSelect');
+            const customList = document.getElementById('customPlayerList');
+            const countBadge = document.getElementById('selectedPlayersCount');
+            if (!select || !customList) return;
+
+            const selectedValues = new Set(Array.from(select.selectedOptions).map(o => o.value));
+            
+            // Update each item in the custom list
+            const items = customList.querySelectorAll('.custom-player-item');
+            items.forEach(item => {
+                const val = item.getAttribute('data-value');
+                const isSelected = selectedValues.has(val);
+                
+                const avatar = item.querySelector('.avatar-circle');
+                const nameSpan = item.querySelector('span');
+                const indicator = item.querySelector('.checkbox-indicator');
+
+                if (isSelected) {
+                    item.style.background = 'rgba(96,165,250,0.08)';
+                    item.style.borderColor = 'rgba(96,165,250,0.2)';
+                    if (avatar) {
+                        avatar.style.background = 'linear-gradient(135deg, var(--accent-cyan), #3b82f6)';
+                        avatar.style.borderColor = 'transparent';
+                    }
+                    if (nameSpan) {
+                        nameSpan.style.color = '#fff';
+                    }
+                    if (indicator) {
+                        indicator.style.background = '#60a5fa';
+                        indicator.style.borderColor = '#60a5fa';
+                        indicator.innerHTML = '✓';
+                    }
+                } else {
+                    item.style.background = 'transparent';
+                    item.style.borderColor = 'transparent';
+                    if (avatar) {
+                        avatar.style.background = 'rgba(255,255,255,0.05)';
+                        avatar.style.borderColor = 'rgba(255,255,255,0.1)';
+                    }
+                    if (nameSpan) {
+                        nameSpan.style.color = '#c8d2df';
+                    }
+                    if (indicator) {
+                        indicator.style.background = 'transparent';
+                        indicator.style.borderColor = 'rgba(255,255,255,0.25)';
+                        indicator.innerHTML = '';
+                    }
+                }
+            });
+
+            if (countBadge) {
+                countBadge.textContent = `${selectedValues.size} Selected`;
+            }
+        };
+
+        window.filterCustomPlayers = function() {
+            const query = (document.getElementById('playerSearchInput')?.value || '').toLowerCase().trim();
+            const customList = document.getElementById('customPlayerList');
+            if (!customList) return;
+
+            const items = customList.querySelectorAll('.custom-player-item');
+            items.forEach(item => {
+                const name = (item.querySelector('span')?.textContent || '').toLowerCase();
+                if (name.includes(query)) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        };
+
         window.openCreateTeamModal = function() {
             document.getElementById('teamModalTitle').textContent = 'Create New Team';
             document.getElementById('teamSubmitBtn').textContent = 'Create Team';
             document.getElementById('teamId').value = '';
             document.getElementById('teamForm').reset();
+            
+            // Clear search filter input
+            const searchInput = document.getElementById('playerSearchInput');
+            if (searchInput) searchInput.value = '';
             
             // Populate coach and player selects if not already done
             loadAvailableCoaches();
@@ -668,9 +861,53 @@
                 document.getElementById('teamSubmitBtn').textContent = 'Save Changes';
                 document.getElementById('teamId').value = id;
                 
-                // Fetch team details to prefill sport and players
+                // Clear search filter input
+                const searchInput = document.getElementById('playerSearchInput');
+                if (searchInput) searchInput.value = '';
+
+                // Fetch full team details (prefer detailed endpoint that includes players)
                 let team = {};
-                try { team = await apiService.get(`/teams/${id}`); } catch(e){ team = { id, name }; }
+                try {
+                    if (typeof apiService.getTeamDetails === 'function') {
+                        team = await apiService.getTeamDetails(id);
+                    } else {
+                        team = await apiService.get(`/teams/${id}/details`);
+                    }
+                } catch (e) {
+                    try { team = await apiService.get(`/teams/${id}`); } catch(inner){ team = { id, name }; }
+                }
+
+                // If team object doesn't include player details, try the players endpoint
+                try {
+                    if ((!team.players || team.players.length === 0) && typeof apiService.get === 'function') {
+                        const playersResp = await apiService.get(`/teams/${id}/players`);
+                        // playersResp may be an object { players: [...] } or an array
+                        if (Array.isArray(playersResp)) {
+                            team.players = playersResp;
+                        } else if (playersResp && Array.isArray(playersResp.players)) {
+                            team.players = playersResp.players;
+                        }
+                    }
+                } catch (e) {
+                    // ignore missing players endpoint
+                }
+
+                // Final fallback: try admin dashboard payload which may include players with team_id
+                try {
+                    if ((!team.players || team.players.length === 0) && typeof apiService.getAdminDashboardData === 'function') {
+                        const dash = await apiService.getAdminDashboardData();
+                        const allPlayers = dash.players || dash.members || [];
+                        const matched = allPlayers.filter(p => String(p.team_id || p.teamId || p.team || '') === String(id));
+                        if (matched && matched.length) {
+                            team.players = matched;
+                        }
+                    }
+                } catch (e) {
+                    // ignore
+                }
+
+                // DEBUG: log team payload shape so we can adapt selection logic if needed
+                try { console.debug('DEBUG: openEditTeamModal team payload:', team); } catch(e){}
 
                 document.getElementById('teamNameInput').value = name || team.name || '';
                 document.getElementById('teamSport').value = team.sport || '';
@@ -688,15 +925,76 @@
                     playersSelect.innerHTML = '<option value="">Loading players...</option>';
                     try {
                         const { players } = await apiService.get('/members');
-                        const teamPlayerIds = new Set((team.players || []).map(p => p.id));
-                        playersSelect.innerHTML = '';
-                        players.forEach(p => {
-                            const opt = document.createElement('option');
-                            opt.value = p.id || p.user_id || p.player_id || '';
-                            opt.textContent = `${p.first_name || ''} ${p.last_name || ''} ${p.email ? '• ' + p.email : ''}`;
-                            if (teamPlayerIds.has(opt.value)) opt.selected = true;
-                            playersSelect.appendChild(opt);
-                        });
+                                // Build team identifier sets from possible shapes: players array, playerIds, emails, names
+                                const teamPlayerIds = new Set();
+                                const teamEmails = new Set();
+                                const teamNames = new Set();
+
+                                // helper to push id/email/name
+                                function addTeamPerson(tp) {
+                                    if (!tp) return;
+                                    if (typeof tp === 'string' || typeof tp === 'number') {
+                                        teamPlayerIds.add(String(tp));
+                                        return;
+                                    }
+                                    const id = tp.id || tp.player_id || tp.user_id || tp.member_id || tp.memberId || tp.userId;
+                                    if (id !== undefined && id !== null) teamPlayerIds.add(String(id));
+                                    const email = (tp.email || tp.contact_email || tp.email_address);
+                                    if (email) teamEmails.add(String(email).toLowerCase());
+                                    const fname = tp.first_name || tp.first || tp.fname || '';
+                                    const lname = tp.last_name || tp.last || tp.lname || '';
+                                    const full = (fname + ' ' + lname).trim();
+                                    if (full) teamNames.add(full.toLowerCase());
+                                    if (tp.name) teamNames.add(String(tp.name).toLowerCase());
+                                }
+
+                                if (Array.isArray(team.players)) team.players.forEach(addTeamPerson);
+                                if (Array.isArray(team.playerIds)) team.playerIds.forEach(addTeamPerson);
+                                if (Array.isArray(team.player_ids)) team.player_ids.forEach(addTeamPerson);
+                                if (Array.isArray(team.members)) team.members.forEach(addTeamPerson);
+                                if (Array.isArray(team.memberships)) team.memberships.forEach(addTeamPerson);
+                                // also accept comma-separated string
+                                if (typeof team.playerIds === 'string' && team.playerIds.includes(',')) team.playerIds.split(',').forEach(s => addTeamPerson(s.trim()));
+
+                                console.debug('DEBUG: available players count=', players.length, 'team.players count=', (team.players||[]).length);
+                                console.debug('DEBUG: sample available players ids=', players.slice(0,6).map(x=>x.id||x.user_id||x.player_id));
+                                console.debug('DEBUG: sample team players samples=', (team.players||[]).slice(0,6));
+
+                                playersSelect.innerHTML = '';
+                                players.forEach(p => {
+                                    const opt = document.createElement('option');
+                                    const val = p.id || p.user_id || p.player_id || p.member_id || '';
+                                    opt.value = val;
+                                    const namePart = `${p.first_name || p.first || ''} ${p.last_name || p.last || ''}`.trim();
+                                    opt.textContent = `${namePart} ${p.email ? '• ' + p.email : ''}`;
+
+                                    // Match by id first
+                                    if (val && teamPlayerIds.has(String(val))) {
+                                        opt.selected = true;
+                                    } else {
+                                        // fallback: match by email
+                                        const email = (p.email || '').toLowerCase();
+                                        if (email && teamEmails.has(email)) {
+                                            opt.selected = true;
+                                        } else if (namePart && teamNames.has(namePart.toLowerCase())) {
+                                            opt.selected = true;
+                                        }
+                                    }
+
+                                    playersSelect.appendChild(opt);
+                                });
+
+                                // Sync custom selector UI and update selected count
+                                if (window.syncCustomPlayerPicker) window.syncCustomPlayerPicker();
+                                // Ensure UI shows current selection
+                                playersSelect.dispatchEvent(new Event('change'));
+                                if (window.updateCustomPlayerPickerUI) window.updateCustomPlayerPickerUI();
+
+                                // DEBUG: log which player option values are selected
+                                try {
+                                    const selected = Array.from(playersSelect.selectedOptions).map(o => o.value);
+                                    console.debug('DEBUG: edit modal selected playerIds ->', selected, 'teamPlayerIds ->', Array.from(teamPlayerIds), 'teamEmails ->', Array.from(teamEmails), 'teamNames ->', Array.from(teamNames));
+                                } catch (e) { }
                     } catch (pe) {
                         playersSelect.innerHTML = '<option value="">Failed to load players</option>';
                     }
@@ -709,9 +1007,11 @@
                     formSelect.value = team.form_id || '';
                 }
 
-                // Reset notify checkbox
+                // Reset notify checkbox (use team preference if present)
                 const notify = document.getElementById('notifyPlayersCheckbox');
-                if (notify) notify.checked = false;
+                if (notify) {
+                    notify.checked = Boolean(team.notifyPlayers || team.notify_players || false);
+                }
 
                 openModal('teamModal');
             } catch (err) {
@@ -745,26 +1045,55 @@
 
             try {
                 if (teamId) {
+                    // Update: ensure clubId is present for validation
+                    try {
+                        const ctx = await apiService.getContext();
+                        const clubId = ctx?.currentGroup?.id || (window.AppState && window.AppState.currentUser && window.AppState.currentUser.clubId);
+                        if (clubId) data.clubId = String(clubId);
+                    } catch (ctxErr) { /* ignore */ }
+
+                    console.debug('DEBUG: update team payload ->', { teamId, data });
+
                     // Update
                     await apiService.put(`/teams/${teamId}`, data);
                     showNotification('Team updated successfully!', 'success');
+
+                    // After update, sync selected players to backend
+                    if (Array.isArray(data.playerIds) && data.playerIds.length) {
+                        try { await window.syncTeamPlayers(teamId, data.playerIds); } catch(e){ console.warn('Player sync failed after update', e); }
+                    }
                 } else {
                     // Create
                     const ctx = await apiService.getContext();
                     const clubId = ctx?.currentGroup?.id || (window.AppState && window.AppState.currentUser && window.AppState.currentUser.clubId);
                     if (!clubId) throw new Error('No club context available');
-                    data.clubId = clubId;
+                    // Ensure clubId is a string UUID
+                    data.clubId = String(clubId);
                     data.sport = ctx?.currentGroup?.sport || data.sport || 'football';
-                    
-                    await apiService.post('/teams', data);
+
+                    console.log('Creating team payload:', data);
+                    const created = await apiService.post('/teams', data);
+                    const createdTeamId = created && (created.id || created.teamId || created._id) || null;
                     showNotification('Team created successfully!', 'success');
+
+                    // After create, if we have selected playerIds, assign them to the newly created team
+                    if (createdTeamId && Array.isArray(data.playerIds) && data.playerIds.length) {
+                        try { await window.syncTeamPlayers(createdTeamId, data.playerIds); } catch(e){ console.warn('Player sync failed after create', e); }
+                    }
                 }
                 
                 closeModal('teamModal');
                 loadTeams();
             } catch (err) {
                 console.error("Team submit failed:", err);
-                showNotification("Failed to save team: " + (err.message || err), "error");
+                // If backend returned validation details, show them
+                if (err && err.details && Array.isArray(err.details)) {
+                    const messages = err.details.map(d => `${d.param || d.path || 'field'}: ${d.msg || d.message}`).join('\n');
+                    console.warn('Validation details:\n' + messages);
+                    showNotification('Failed to save team: ' + (err.message || 'Validation failed'), 'error');
+                } else {
+                    showNotification("Failed to save team: " + (err.message || err), "error");
+                }
             }
         };
 
@@ -805,6 +1134,91 @@
             showNotification(`Plan "${formData.get('planName')}" created successfully!`, "success");
             closeModal('createPlanModal');
         }
+
+        // Sync selected player IDs with backend for a given team
+        window.syncTeamPlayers = async function(teamId, selectedIds) {
+            if (!teamId) throw new Error('Missing teamId for sync');
+            // Normalize
+            const desired = new Set((selectedIds || []).map(String));
+
+            // Get current assignments from admin dashboard (best-effort)
+            let current = [];
+            try {
+                if (typeof apiService.getTeamDetails === 'function') {
+                    const details = await apiService.getTeamDetails(teamId).catch(()=>null);
+                    if (details && Array.isArray(details.players) && details.players.length) {
+                        current = details.players.map(p => String(p.id || p.player_id || p.user_id || p.member_id));
+                    }
+                }
+            } catch (e) { /* ignore */ }
+
+            // Fallback to admin dashboard players
+            if (!current.length && typeof apiService.getAdminDashboardData === 'function') {
+                try {
+                    const dash = await apiService.getAdminDashboardData();
+                    const allPlayers = dash.players || dash.members || [];
+                    current = allPlayers.filter(p => String(p.team_id || p.teamId || p.team || '') === String(teamId)).map(p => String(p.id || p.player_id || p.user_id || p.member_id));
+                } catch (e) { /* ignore */ }
+            }
+
+            const currentSet = new Set(current);
+
+            // Compute adds and removes
+            const toAdd = Array.from(desired).filter(id => !currentSet.has(id));
+            const toRemove = Array.from(currentSet).filter(id => !desired.has(id));
+
+            // Perform adds
+            for (const pid of toAdd) {
+                try {
+                    if (typeof apiService.assignPlayerToTeam === 'function') {
+                        await apiService.assignPlayerToTeam(teamId, { playerId: pid });
+                    } else {
+                        // Primary fallback: old-style team add endpoint
+                        try {
+                            await apiService.post(`/teams/${teamId}/add-player`, { playerId: pid });
+                        } catch (inner) {
+                            // Secondary fallback: some backends allow updating the member record
+                            // to set `teamId`/`team_id` directly (used by legacy member APIs).
+                            try {
+                                if (typeof apiService.post === 'function') {
+                                    await apiService.post(`/members/${pid}/update`, { teamId: String(teamId) });
+                                }
+                            } catch (memberUpdateErr) {
+                                console.warn('Member-update fallback failed for add', pid, memberUpdateErr);
+                            }
+                        }
+                    }
+                } catch (e) { console.warn('Failed to assign player', pid, e); }
+            }
+
+            // Perform removes
+            for (const pid of toRemove) {
+                try {
+                    if (typeof apiService.removePlayerFromTeam === 'function') {
+                        await apiService.removePlayerFromTeam(teamId, pid);
+                    } else {
+                        // Primary fallback: old-style team remove endpoint
+                        try {
+                            await apiService.post(`/teams/${teamId}/remove-player`, { playerId: pid });
+                        } catch (inner) {
+                            // Secondary fallback: update member record to clear team association
+                            try {
+                                if (typeof apiService.post === 'function') {
+                                    await apiService.post(`/members/${pid}/update`, { teamId: null });
+                                }
+                            } catch (memberUpdateErr) {
+                                console.warn('Member-update fallback failed for remove', pid, memberUpdateErr);
+                            }
+                        }
+                    }
+                } catch (e) { console.warn('Failed to remove player', pid, e); }
+            }
+
+            // Refresh team view if currently viewing
+            if (window.currentViewedTeamId && String(window.currentViewedTeamId) === String(teamId)) {
+                try { viewTeam(teamId, document.getElementById('detailTeamName')?.textContent); } catch(e){}
+            }
+        };
 
         function editPlan(id) {
             showNotification("Edit Plan: " + id, "info");

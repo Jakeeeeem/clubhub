@@ -22,63 +22,132 @@ router.get("/", authenticateToken, injectOrgContext, async (req, res) => {
     
     let queryText = `
       SELECT 
-        u.id, 
-        u.id as user_id,
-        u.first_name, 
-        u.last_name, 
-        u.email, 
-        om.role,
-        om.status
-      FROM organization_members om
-      INNER JOIN users u ON om.user_id = u.id
-      WHERE om.organization_id = $1 AND om.status = 'active'
-    `;
-    
-    const params = [orgId];
-    
-    if (role) {
-      queryText += " AND om.role = $2";
-      params.push(role);
-    }
-    
-    queryText += " ORDER BY u.first_name, u.last_name";
-    
-    const result = await pool.query(queryText, params);
+        /**
+         * Update a member's details across users and role-specific tables.
+         * Supports both POST /api/members/:id/update and POST /api/members/:id
+         */
+        async function updateMemberHandler(req, res) {
+          const targetUserId = req.params.id;
+          const orgId = req.user.organization_id;
 
-    // Also include active players from the players table (covers cases where organization_members row is missing)
-    const playersResult = await pool.query(
-      `SELECT p.id as player_id, p.user_id, p.first_name, p.last_name, p.email, p.club_id
-       FROM players p
-       WHERE p.club_id = $1`,
-      [orgId]
-    );
+          // Accept multiple field names from clients
+          const first_name = req.body.first_name || req.body.firstName || null;
+          const last_name = req.body.last_name || req.body.lastName || null;
+          const email = req.body.email || null;
+          const role = req.body.role || null;
+          const dateOfBirth = req.body.dateOfBirth || req.body.date_of_birth || req.body.dob || null;
+          const position = req.body.position || req.body.team_position || null;
+          const teamId = req.body.teamId || req.body.team_id || null;
 
-    // Merge rows, preferring organization_members rows, but add any players missing from org members
-    const membersByKey = new Map();
-    function addMemberRow(r) {
-      const key = r.user_id || r.email || r.id || r.player_id;
-      if (!key) return;
-      if (!membersByKey.has(String(key))) membersByKey.set(String(key), r);
-      else {
-        const existing = membersByKey.get(String(key));
-        // Prefer existing data (from organization_members) to preserve roles like 'owner'
-        membersByKey.set(String(key), Object.assign({}, r, existing));
-      }
-    }
+          try {
+            console.debug(`Member update request for targetUserId=${targetUserId}, orgId=${orgId}`, req.body);
+            if (!orgId) return res.status(403).json({ error: 'No active organization' });
 
-    result.rows.forEach(addMemberRow);
-    playersResult.rows.forEach(r => {
-      // Normalize shape similar to org members
-      const normalized = {
-        id: r.user_id || r.player_id,
-        user_id: r.user_id,
-        first_name: r.first_name,
-        last_name: r.last_name,
-        email: r.email,
-        role: 'player',
-        status: 'active'
-      };
+            // If this looks like an invite id, instruct client to use invites endpoints
+            if (String(targetUserId).startsWith('invite-')) {
+              return res.status(400).json({ error: 'Use invites endpoints to update pending invites' });
+            }
+
+            // 1. Protection for owner
+            const orgRes = await pool.query('SELECT owner_id FROM organizations WHERE id = $1', [orgId]);
+            if (orgRes.rows.length === 0) return res.status(404).json({ error: 'Organization not found' });
+            const isOwner = String(orgRes.rows[0].owner_id) === String(targetUserId);
+
+            // If target is owner, prevent changing role or removing them
+            if (isOwner && role && role !== 'owner') {
+              return res.status(403).json({ error: 'Cannot change owner role' });
+            }
+
+            await withTransaction(async (client) => {
+              // 2. Update user basic info (only if user exists)
+              await client.query(
+                'UPDATE users SET first_name = $1, last_name = $2, email = $3 WHERE id = $4',
+                [first_name, last_name, email, targetUserId],
+              );
+
+              // 3. Update organization member role
+              await client.query(
+                'UPDATE organization_members SET role = $1 WHERE organization_id = $2 AND user_id = $3',
+                [role, orgId, targetUserId],
+              );
+
+              // 4. Update role-specific tables
+              if ((role || '').toString().toLowerCase() === 'player') {
+                const playerRes = await client.query('SELECT id FROM players WHERE user_id = $1 AND club_id = $2', [targetUserId, orgId]);
+                let playerId = null;
+
+                if (playerRes.rows.length > 0) {
+                  playerId = playerRes.rows[0].id;
+                  await client.query(
+                    'UPDATE players SET first_name = $1, last_name = $2, email = $3, date_of_birth = $4, position = $5 WHERE id = $6',
+                    [first_name, last_name, email, dateOfBirth, position, playerId],
+                  );
+                } else {
+                  const newPlayer = await client.query(
+                    'INSERT INTO players (user_id, club_id, first_name, last_name, email, date_of_birth, position) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id',
+                    [targetUserId, orgId, first_name, last_name, email, dateOfBirth, position],
+                  );
+                  playerId = newPlayer.rows[0].id;
+                }
+
+                // Handle squad assignment
+                if (playerId) {
+                  if (teamId) {
+                    await client.query('DELETE FROM team_players WHERE player_id = $1 AND team_id IN (SELECT id FROM teams WHERE club_id = $2)', [playerId, orgId]);
+                    await client.query('INSERT INTO team_players (team_id, player_id, position) VALUES ($1, $2, $3)', [teamId, playerId, position]);
+                  } else {
+                    await client.query('DELETE FROM team_players WHERE player_id = $1 AND team_id IN (SELECT id FROM teams WHERE club_id = $2)', [playerId, orgId]);
+                  }
+                }
+              } else if (['staff', 'coach', 'admin', 'owner'].includes((role || '').toString().toLowerCase())) {
+                await client.query(
+                  'INSERT INTO staff (user_id, club_id, role, first_name, last_name, email) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (user_id, club_id) DO UPDATE SET role = $3, first_name = $4, last_name = $5, email = $6',
+                  [targetUserId, orgId, role, first_name, last_name, email],
+                );
+              }
+            });
+
+            res.json({ success: true, message: 'Member updated successfully' });
+          } catch (err) {
+            console.error('Update member error:', err);
+            if (err && err.code) {
+              if (err.code === '23505') {
+                return res.status(400).json({ error: 'Unique constraint violation', detail: err.detail || err.message });
+              }
+              if (err.code === '23503') {
+                return res.status(400).json({ error: 'Foreign key violation', detail: err.detail || err.message });
+              }
+            }
+            res.status(500).json({ error: err && err.message ? err.message : 'Failed to update member' });
+          }
+        }
+
+        // Register both /:id/update and /:id for compatibility with older frontends
+        router.post('/:id/update', authenticateToken, injectOrgContext, requireOrganization, updateMemberHandler);
+        router.post('/:id', authenticateToken, injectOrgContext, requireOrganization, updateMemberHandler);
       addMemberRow(normalized);
+    });
+
+    // Add pending invites as pseudo-members so the admin UI can show "Pending" status rows
+    invitesResult.rows.forEach(inv => {
+      const normalizedInvite = {
+        id: `invite-${inv.invite_id}`,
+        invite_id: inv.invite_id,
+        user_id: null,
+        first_name: inv.first_name || null,
+        last_name: inv.last_name || null,
+        email: inv.email || null,
+        role: inv.invite_role || 'player',
+        status: 'pending',
+        source: 'invite',
+        team_id: inv.team_id || null,
+        plan_name: inv.plan_name || null,
+        plan_amount: inv.plan_amount || null,
+        plan_interval: inv.plan_interval || null,
+        payment_status: inv.plan_name ? 'due' : 'n/a',
+        join_status: 'invited'
+      };
+      addMemberRow(normalizedInvite);
     });
 
     const members = Array.from(membersByKey.values());
@@ -111,6 +180,7 @@ router.post('/:id/update', authenticateToken, injectOrgContext, requireOrganizat
   const { first_name, last_name, email, role, dateOfBirth, position, teamId } = req.body;
 
   try {
+    console.debug(`Member update request for targetUserId=${targetUserId}, orgId=${orgId}`, req.body);
     if (!orgId) return res.status(403).json({ error: "No active organization" });
 
     // 1. Protection for owner
@@ -174,8 +244,19 @@ router.post('/:id/update', authenticateToken, injectOrgContext, requireOrganizat
 
     res.json({ success: true, message: 'Member updated successfully' });
   } catch (err) {
+    // Surface database errors (unique constraint, FK violations) to the client for easier debugging in dev.
     console.error('Update member error:', err);
-    res.status(500).json({ error: 'Failed to update member' });
+    if (err && err.code) {
+      // Postgres unique violation
+      if (err.code === '23505') {
+        return res.status(400).json({ error: 'Unique constraint violation', detail: err.detail || err.message });
+      }
+      // Foreign key violation
+      if (err.code === '23503') {
+        return res.status(400).json({ error: 'Foreign key violation', detail: err.detail || err.message });
+      }
+    }
+    res.status(500).json({ error: err && err.message ? err.message : 'Failed to update member' });
   }
 });
 
