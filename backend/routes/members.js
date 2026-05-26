@@ -185,8 +185,32 @@ async function updateMemberHandler(req, res) {
         );
       }
 
-      // Role-specific table updates
-      const normalizedRole = (role || '').toString().toLowerCase();
+      // Fetch user info from DB if fields are missing in body
+      let finalFirstName = first_name;
+      let finalLastName = last_name;
+      let finalEmail = email;
+
+      if (!finalFirstName || !finalLastName || !finalEmail) {
+        const userRes = await client.query('SELECT first_name, last_name, email FROM users WHERE id = $1', [targetUserId]);
+        if (userRes.rows.length > 0) {
+          if (!finalFirstName) finalFirstName = userRes.rows[0].first_name;
+          if (!finalLastName) finalLastName = userRes.rows[0].last_name;
+          if (!finalEmail) finalEmail = userRes.rows[0].email;
+        }
+      }
+
+      // Resolve the member's role (current or new)
+      let memberRole = role;
+      if (!memberRole) {
+        const roleRes = await client.query(
+          'SELECT role FROM organization_members WHERE organization_id = $1 AND user_id = $2',
+          [orgId, targetUserId]
+        );
+        if (roleRes.rows.length > 0) {
+          memberRole = roleRes.rows[0].role;
+        }
+      }
+      const normalizedRole = (memberRole || '').toString().toLowerCase();
 
       if (normalizedRole === 'player') {
         const playerRes = await client.query(
@@ -205,13 +229,13 @@ async function updateMemberHandler(req, res) {
                  date_of_birth = COALESCE($4, date_of_birth),
                  position      = COALESCE($5, position)
              WHERE id = $6`,
-            [first_name || null, last_name || null, email || null, dob, position || null, playerId]
+            [finalFirstName || null, finalLastName || null, finalEmail || null, dob, position || null, playerId]
           );
         } else {
           const newPlayer = await client.query(
             `INSERT INTO players (user_id, club_id, first_name, last_name, email, date_of_birth, position)
              VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
-            [targetUserId, orgId, first_name, last_name, email, dob, position]
+            [targetUserId, orgId, finalFirstName, finalLastName, finalEmail, dob, position]
           );
           playerId = newPlayer.rows[0].id;
         }
@@ -230,12 +254,26 @@ async function updateMemberHandler(req, res) {
           }
         }
       } else if (['staff', 'coach', 'admin', 'owner'].includes(normalizedRole)) {
-        // Use SELECT + INSERT/UPDATE to avoid ON CONFLICT needing a unique constraint
+        // Map role to valid check constraint value on staff.role:
+        // 'coach', 'assistant-coach', 'treasurer', 'coaching-supervisor', 'referee', 'administrator'
+        let staffRole = null;
+        if (normalizedRole === 'coach') {
+          staffRole = 'coach';
+        } else if (normalizedRole === 'assistant-coach' || normalizedRole === 'assistant_coach') {
+          staffRole = 'assistant-coach';
+        } else if (normalizedRole === 'admin' || normalizedRole === 'administrator') {
+          staffRole = 'administrator';
+        } else if (normalizedRole === 'staff') {
+          staffRole = 'coach'; // default fallback if inserting new staff, otherwise keep existing
+        }
+
         const existingStaff = await client.query(
-          'SELECT id FROM staff WHERE user_id = $1 AND club_id = $2',
+          'SELECT id, role FROM staff WHERE user_id = $1 AND club_id = $2',
           [targetUserId, orgId]
         );
         if (existingStaff.rows.length > 0) {
+          const currentStaffRole = existingStaff.rows[0].role;
+          const finalRole = staffRole || currentStaffRole;
           await client.query(
             `UPDATE staff
              SET role       = COALESCE($1, role),
@@ -243,13 +281,14 @@ async function updateMemberHandler(req, res) {
                  last_name  = COALESCE($3, last_name),
                  email      = COALESCE($4, email)
              WHERE user_id = $5 AND club_id = $6`,
-            [role || null, first_name || null, last_name || null, email || null, targetUserId, orgId]
+            [finalRole, finalFirstName || null, finalLastName || null, finalEmail || null, targetUserId, orgId]
           );
-        } else {
+        } else if (staffRole) {
+          // Only insert if we have a valid staffRole (e.g. skip for 'owner' who isn't staff by default)
           await client.query(
             `INSERT INTO staff (user_id, club_id, role, first_name, last_name, email)
              VALUES ($1, $2, $3, $4, $5, $6)`,
-            [targetUserId, orgId, role, first_name, last_name, email]
+            [targetUserId, orgId, staffRole, finalFirstName, finalLastName, finalEmail]
           );
         }
       }

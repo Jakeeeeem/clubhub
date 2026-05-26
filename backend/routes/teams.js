@@ -20,6 +20,15 @@ const teamValidation = [
   body("clubId").isUUID().withMessage("Valid club ID is required"),
 ];
 
+const teamUpdateValidation = [
+  body("name").trim().isLength({ min: 1 }).withMessage("Team name is required"),
+  body("ageGroup").optional().trim(),
+  body("sport").trim().isLength({ min: 1 }).withMessage("Sport is required"),
+  body("description").optional().trim(),
+  body("coachId").optional({ checkFalsy: true }).isUUID().withMessage("Valid coach ID required"),
+  body("clubId").optional().isUUID().withMessage("Valid club ID is required"),
+];
+
 // Get all teams (with optional club filter)
 const { optionalAuth } = require("../middleware/auth");
 router.get("/", optionalAuth, async (req, res) => {
@@ -425,7 +434,7 @@ router.put(
   "/:id",
   authenticateToken,
   requireOrganization,
-  teamValidation,
+  teamUpdateValidation,
   async (req, res) => {
     try {
       const errors = validationResult(req);
