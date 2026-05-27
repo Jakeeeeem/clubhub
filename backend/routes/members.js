@@ -111,14 +111,30 @@ router.get("/", authenticateToken, injectOrgContext, async (req, res) => {
     });
 
     const members = Array.from(membersByKey.values());
-    const players = members.filter(m => (m.role || '').toString().toLowerCase() === 'player');
+
+    // Players = members whose role is 'player' OR who have a linked player record (player_id)
+    // This ensures group members who were added as players (via invite/join) always appear in team pickers.
+    const players = members.filter(m => {
+      const role = (m.role || '').toString().toLowerCase();
+      return role === 'player' || (m.player_id && role !== 'owner');
+    });
+
     const staff = members.filter(m =>
       ['coach', 'assistant-coach', 'staff', 'admin', 'owner', 'manager'].includes(
         (m.role || '').toString().toLowerCase()
       )
     );
 
-    res.json({ success: true, members, players, staff });
+    // Support optional ?role= filter (used by coaches picker etc.)
+    const roleFilter = req.query.role ? req.query.role.toString().toLowerCase() : null;
+    if (roleFilter) {
+      const filtered = members.filter(m => (m.role || '').toString().toLowerCase() === roleFilter);
+      const coaches = members.filter(m => ['coach', 'assistant-coach', 'coaching-supervisor'].includes((m.role || '').toString().toLowerCase()));
+      return res.json({ success: true, members: filtered, players, staff, coaches });
+    }
+
+    const coaches = members.filter(m => ['coach', 'assistant-coach', 'coaching-supervisor'].includes((m.role || '').toString().toLowerCase()));
+    res.json({ success: true, members, players, staff, coaches });
   } catch (error) {
     console.error("Failed to fetch members:", error);
     res.status(500).json({ error: "Internal server error", detail: error.message });
@@ -212,7 +228,10 @@ async function updateMemberHandler(req, res) {
       }
       const normalizedRole = (memberRole || '').toString().toLowerCase();
 
-      if (normalizedRole === 'player') {
+      // Always attempt to update/create player record if DOB or position is provided
+      // (or if the user is a player role)
+      const hasPlayerFields = dob || position || normalizedRole === 'player';
+      if (hasPlayerFields) {
         const playerRes = await client.query(
           'SELECT id FROM players WHERE user_id = $1 AND club_id = $2',
           [targetUserId, orgId]
@@ -232,10 +251,14 @@ async function updateMemberHandler(req, res) {
             [finalFirstName || null, finalLastName || null, finalEmail || null, dob, position || null, playerId]
           );
         } else {
+          // Create a player record if DOB or position is explicitly provided,
+          // even for non-player roles (owner/admin/parent may need player metadata)
+          // date_of_birth has a NOT NULL constraint, so use a fallback if not provided
+          const playerDob = dob || '2000-01-01';
           const newPlayer = await client.query(
             `INSERT INTO players (user_id, club_id, first_name, last_name, email, date_of_birth, position)
              VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
-            [targetUserId, orgId, finalFirstName, finalLastName, finalEmail, dob, position]
+            [targetUserId, orgId, finalFirstName, finalLastName, finalEmail, playerDob, position || null]
           );
           playerId = newPlayer.rows[0].id;
         }

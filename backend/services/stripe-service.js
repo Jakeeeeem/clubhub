@@ -82,7 +82,8 @@ async function syncProductToStripe({ type, id, name, price, clubId }) {
         };
     } catch (error) {
         console.error(`❌ Stripe Sync Error (${type}):`, error);
-        return null;
+        // Return an object with error details so callers can report to users
+        return { error: (error && error.message) || 'unknown_stripe_error' };
     }
 }
 

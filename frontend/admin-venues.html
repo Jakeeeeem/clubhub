@@ -11,6 +11,13 @@
     <link rel="stylesheet" href="quick-fixes.css?v=20260502">
     <link rel="stylesheet" href="unified-nav.css?v=20260429_v18">
     <link rel="stylesheet" href="group-switcher.css?v=20260429_v18">
+    <style>
+        .venue-image-preview { width:100%; max-height:160px; object-fit:cover; border-radius:10px; display:block; margin-top:0.5rem; }
+        .weekday-checkboxes { display:flex; gap:0.5rem; flex-wrap:wrap; }
+        /* Premium close button for venue modal */
+        .modal .modal-content { padding: 1.25rem; border-radius: 12px; position: relative; }
+        .modal .modal-close { position: absolute; top: 12px; right: 12px; cursor: pointer; font-size: 1.2rem; background: rgba(0,0,0,0.15); padding:6px 10px; border-radius:8px; }
+    </style>
 </head>
 
 <body class="clubhub-unified dashboard-page">
@@ -25,7 +32,7 @@
                         <h1 class="neon-text" style="font-size: 2rem; margin: 0;">🏟️ Venue Manager</h1>
                         <p style="color: var(--text-muted); margin-top: 0.5rem;">Manage your club's pitches, courts, and training facilities.</p>
                     </div>
-                    <button class="btn btn-primary" onclick="openModal('addVenueModal')" style="white-space: nowrap;">+ Add New Venue</button>
+                    <button class="btn btn-primary" onclick="prepareVenueModal(); openModal('addVenueModal')" style="white-space: nowrap;">+ Add New Venue</button>
                 </div>
 
                 <!-- Venue Cards -->
@@ -40,12 +47,12 @@
         </div>
     </main>
 
-    <!-- Add Venue Modal -->
+    <!-- Add / Edit Venue Modal (premium styling matching create team) -->
     <div id="addVenueModal" class="modal" style="display:none;">
-        <div class="modal-content glass-card" style="max-width: 500px;">
+        <div class="modal-content" style="max-width:640px;">
             <div class="modal-header">
-                <h2 class="neon-text">Add Club Venue</h2>
-                <span class="close" onclick="closeModal('addVenueModal')">&times;</span>
+                <h2 id="venueModalTitle" class="neon-text">Add Club Venue</h2>
+                <div class="modal-close" onclick="closeModal('addVenueModal')">&times;</div>
             </div>
             <div class="modal-body">
                 <form id="addVenueForm" onsubmit="handleAddVenue(event)">
@@ -57,87 +64,361 @@
                         <label>Address / Location</label>
                         <input type="text" id="venueAddress" placeholder="e.g. 123 Sports Way, London" required>
                     </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                        <div class="form-group">
-                            <label>Facility Type</label>
-                            <select id="venueType">
-                                <option value="pitch">Grass Pitch</option>
-                                <option value="astro">AstroTurf / 3G</option>
-                                <option value="indoor">Indoor Hall</option>
-                                <option value="gym">Gym / Studio</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Capacity</label>
-                            <input type="number" id="venueCapacity" value="22">
+                    <div class="form-group">
+                        <label>Description (optional)</label>
+                        <textarea id="venueDescription" placeholder="Short description of this venue" rows="3" style="width:100%;"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Facility Type</label>
+                        <select id="venueType">
+                            <option value="pitch">Grass Pitch</option>
+                            <option value="astro">AstroTurf / 3G</option>
+                            <option value="indoor">Indoor Hall</option>
+                            <option value="gym">Gym / Studio</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Hourly Rate (£)</label>
+                        <input type="number" id="venuePrice" placeholder="e.g. 25.00" step="0.01" min="0" oninput="validateVenuePrice()">
+                        <div id="venueStripeWarning" style="display:none;margin-top:0.5rem;padding:0.65rem;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;color:#f87171;font-size:0.78rem;line-height:1.4;">
+                            ⚠️ To charge for venues, you must connect Stripe first in the <a href="admin-events.html#finances" style="color:#60a5fa;text-decoration:underline;font-weight:600;">Finances tab</a>.
                         </div>
                     </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                        <div class="form-group">
-                            <label>Hourly Rate (£)</label>
-                            <input type="number" id="venuePrice" placeholder="e.g. 25.00" step="0.01">
+                    <input type="hidden" id="venueStripeId" value="" data-hidden="true">
+                    <div class="form-group" style="margin-top:0.8rem;">
+                        <label>Banner Image (Optional)</label>
+                        <input type="file" id="venueImageUpload" accept="image/*" style="width:100%; padding:0.6rem; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; color:#fff;">
+                        <img id="venueImagePreview" class="venue-image-preview" src="" alt="" style="display:none;" />
+                    </div>
+
+                    <!-- Opening Hours Section -->
+                    <div style="margin-top:1.5rem; padding-top:1.25rem; border-top:1px solid rgba(255,255,255,0.05);">
+                        <label style="display:block; margin-bottom:0.75rem; font-weight:600; color:#f1f5f9;">⏰ Opening Hours & Block Booking</label>
+                        
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                            <div class="form-group">
+                                <label style="font-size:0.85rem;">Open Time</label>
+                                <input type="time" id="ohOpenTime" style="width:100%;">
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size:0.85rem;">Close Time</label>
+                                <input type="time" id="ohCloseTime" style="width:100%;">
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label>Stripe Price ID (Optional)</label>
-                            <input type="text" id="venueStripeId" placeholder="price_123...">
+                        
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                            <div class="form-group">
+                                <label style="font-size:0.85rem;">Block Duration (minutes)</label>
+                                <select id="ohBlockDuration" style="width:100%;">
+                                    <option value="30">30 min</option>
+                                    <option value="60" selected>1 hour</option>
+                                    <option value="90">1.5 hours</option>
+                                    <option value="120">2 hours</option>
+                                    <option value="180">3 hours</option>
+                                    <option value="240">4 hours</option>
+                                    <option value="480">Full Day (8 hours)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size:0.85rem;">Block Type</label>
+                                <select id="ohBlockType" style="width:100%;">
+                                    <option value="fixed">Fixed Time Blocks</option>
+                                    <option value="flexible">Flexible (any time within hours)</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
-                    <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-                        <button type="button" class="btn btn-secondary" onclick="closeModal('addVenueModal')" style="flex: 1;">Cancel</button>
-                        <button type="submit" class="btn btn-primary" style="flex: 1;">Save Venue</button>
+
+                    <!-- Weekly Availability (dates & capacity only — timing from opening hours above) -->
+                    <div style="margin-top:1.5rem; padding-top:1.25rem; border-top:1px solid rgba(255,255,255,0.05);">
+                        <label style="display:block; margin-bottom:0.75rem; font-weight:600; color:#f1f5f9;">📅 Available Days & Season</label>
+                        
+                        <div class="weekday-checkboxes" style="margin-bottom:0.75rem;">
+                            <label style="display:flex; align-items:center; gap:0.3rem; font-size:0.85rem;"><input type="checkbox" class="weekday-checkbox" value="mon" style="width:16px;height:16px;"> Mon</label>
+                            <label style="display:flex; align-items:center; gap:0.3rem; font-size:0.85rem;"><input type="checkbox" class="weekday-checkbox" value="tue" style="width:16px;height:16px;"> Tue</label>
+                            <label style="display:flex; align-items:center; gap:0.3rem; font-size:0.85rem;"><input type="checkbox" class="weekday-checkbox" value="wed" style="width:16px;height:16px;"> Wed</label>
+                            <label style="display:flex; align-items:center; gap:0.3rem; font-size:0.85rem;"><input type="checkbox" class="weekday-checkbox" value="thu" style="width:16px;height:16px;"> Thu</label>
+                            <label style="display:flex; align-items:center; gap:0.3rem; font-size:0.85rem;"><input type="checkbox" class="weekday-checkbox" value="fri" style="width:16px;height:16px;"> Fri</label>
+                            <label style="display:flex; align-items:center; gap:0.3rem; font-size:0.85rem;"><input type="checkbox" class="weekday-checkbox" value="sat" style="width:16px;height:16px;"> Sat</label>
+                            <label style="display:flex; align-items:center; gap:0.3rem; font-size:0.85rem;"><input type="checkbox" class="weekday-checkbox" value="sun" style="width:16px;height:16px;"> Sun</label>
+                        </div>
+                        
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                            <div class="form-group">
+                                <label style="font-size:0.85rem;">Season Start Date</label>
+                                <input type="date" id="tbStartDate" style="width:100%;">
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size:0.85rem;">Season End Date</label>
+                                <input type="date" id="tbEndDate" style="width:100%;">
+                            </div>
+                        </div>
+                        
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-top:0.75rem;">
+                            <div class="form-group">
+                                <label style="font-size:0.85rem;">Block Capacity</label>
+                                <input type="number" id="tbCapacity" placeholder="e.g. 22" style="width:100%;">
+                            </div>
+                            <div class="form-group">
+                                <label style="font-size:0.85rem;">Excluded Dates</label>
+                                <div style="display:flex; gap:0.5rem;">
+                                    <input type="date" id="tbExcludedDate" style="flex:1;">
+                                    <button type="button" class="btn btn-secondary" id="tbAddExcludedBtn" style="white-space:nowrap;">Add</button>
+                                </div>
+                                <div id="tbExcludedList" style="margin-top:0.5rem; display:flex; gap:0.4rem; flex-wrap:wrap; min-height:2rem;"></div>
+                            </div>
+                        </div>
                     </div>
                 </form>
+            </div>
+            <div class="modal-footer" style="display:flex; gap:1rem; padding:1rem 1.25rem 1.25rem;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('addVenueModal')" style="flex:1;">Cancel</button>
+                <button type="submit" class="btn btn-primary" form="addVenueForm" id="venueSubmitBtn" style="flex:1;">Save Venue</button>
             </div>
         </div>
     </div>
 
-    <script src="app-state.js?v=20260429_v18"></script>
+    <script src="app-state.js?v=20260429_v16"></script>
     <script src="api-service.js?v=20260429_v18"></script>
     <script src="unified-nav.js?v=20260429_v18"></script>
     <script src="group-switcher.js?v=20260429_v18"></script>
     <script src="stripe-service.js?v=20260429_v18"></script>
+    <script src="image-compress.js?v=20260502"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             loadVenues();
+            const imgInput = document.getElementById('venueImageUpload');
+            if (imgInput) imgInput.addEventListener('change', (ev) => {
+                const f = ev.target.files && ev.target.files[0];
+                const preview = document.getElementById('venueImagePreview');
+                if (f && preview) {
+                    preview.src = URL.createObjectURL(f);
+                    preview.style.display = 'block';
+                } else if (preview) { preview.style.display = 'none'; }
+            });
+            // Wire excluded date add button
+            const addExBtn = document.getElementById('tbAddExcludedBtn');
+            if (addExBtn) addExBtn.addEventListener('click', () => addExcludedDate());
         });
+
+        // Resolve upload URLs returned by backend (may be stored like '/uploads/...')
+        function resolveUploadUrl(path) {
+            if (!path) return path;
+            if (/^https?:\/\//i.test(path)) return path;
+            if (path.startsWith('/')) {
+                try {
+                    const backendBase = (typeof apiService !== 'undefined' && apiService.baseURL)
+                        ? apiService.baseURL.replace(/\/api\/?$/i, '')
+                        : `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':'+window.location.port : ''}`;
+                    return `${backendBase}${path}`;
+                } catch (e) {
+                    return path;
+                }
+            }
+            return path;
+        }
+
+        // Utility: truncate words and add ellipsis
+        function truncateWords(text, limit) {
+            if (!text) return '';
+            const parts = text.split(/\s+/);
+            if (parts.length <= limit) return escapeHtml(text);
+            return escapeHtml(parts.slice(0, limit).join(' ')) + '... <a href="#" class="read-more-link">Read more</a>';
+        }
+
+        function escapeHtml(str) {
+            return String(str).replace(/[&<>\"]/g, function(s) {
+                return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[s]);
+            });
+        }
+
+        // Event delegation for read-more links in venue cards
+        document.addEventListener('click', function(ev) {
+            const target = ev.target;
+            if (target && target.classList && target.classList.contains('read-more-link')) {
+                ev.preventDefault();
+                const p = target.closest('.venue-desc') || target.closest('.event-desc');
+                if (!p) return;
+                const full = p.getAttribute('data-full') || '';
+                if (p.classList.contains('expanded')) {
+                    // collapse
+                    const limit = p.classList.contains('event-desc') ? 22 : 18;
+                    p.innerHTML = truncateWords(full, limit);
+                    p.classList.remove('expanded');
+                } else {
+                    p.textContent = full;
+                    p.classList.add('expanded');
+                }
+            }
+        });
+
+        // Prepare modal on open: reset form, check stripe status, clear excluded list
+        function prepareVenueModal(isEditing) {
+            const form = document.getElementById('addVenueForm');
+            const title = document.getElementById('venueModalTitle');
+            const submitBtn = document.getElementById('venueSubmitBtn');
+            if (form) {
+                form.reset();
+                // Reset submit button
+                if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Save Venue'; submitBtn.style.opacity = '1'; submitBtn.style.pointerEvents = 'auto'; }
+            }
+            if (title) title.textContent = isEditing ? 'Edit Venue' : 'Add Club Venue';
+            renderExcludedDates([]);
+            checkStripeConnectionForVenues();
+        }
+
+
+        // Safe price formatter for venue hourly/entry rates
+        function formatPrice(p) {
+            const n = Number(p);
+            return (Number.isFinite(n) ? n.toFixed(2) : '0.00');
+        }
+
+        // ---------------- Excluded Dates Multi-picker ----------------
+        function _getExcludedDatesFromUI() {
+            const nodes = Array.from(document.querySelectorAll('#tbExcludedList .excluded-date-item'));
+            return nodes.map(n => n.getAttribute('data-date'));
+        }
+
+        function renderExcludedDates(dates) {
+            const container = document.getElementById('tbExcludedList');
+            if (!container) return;
+            container.innerHTML = '';
+            if (!dates || dates.length === 0) {
+                container.innerHTML = '<span style="color:var(--text-muted);font-size:0.8rem;">No dates excluded</span>';
+                return;
+            }
+            (dates || []).forEach(d => {
+                const el = document.createElement('div');
+                el.className = 'excluded-date-item';
+                el.setAttribute('data-date', d);
+                el.style.cssText = 'display:inline-flex;align-items:center;gap:0.4rem;background:rgba(255,255,255,0.04);padding:0.3rem 0.6rem;border-radius:6px;font-size:0.85rem;';
+                el.innerHTML = `<span style="font-weight:600;">${d}</span><button type="button" class="btn btn-text" style="padding:0 0.25rem;margin-left:0.25rem;color:#f87171;font-size:0.85rem;line-height:1;" onclick="removeExcludedDate('${d}')">✕</button>`;
+                container.appendChild(el);
+            });
+        }
+
+        function addExcludedDate() {
+            const input = document.getElementById('tbExcludedDate');
+            if (!input) return;
+            const v = input.value;
+            if (!v) return;
+            const existing = _getExcludedDatesFromUI();
+            if (existing.includes(v)) {
+                showNotification('Date already excluded', 'warning');
+                return;
+            }
+            existing.push(v);
+            renderExcludedDates(existing);
+            input.value = '';
+        }
+
+        function removeExcludedDate(date) {
+            const existing = _getExcludedDatesFromUI().filter(d => d !== date);
+            renderExcludedDates(existing);
+        }
+
+        // ---------------- Stripe connection helpers for Venues (matches events pattern) ----------------
+        async function checkStripeConnectionForVenues() {
+            try {
+                const data = await apiService.makeRequest('/payments/stripe/connect/status');
+                window.venueStripeConnected = !!(data && data.connected);
+            } catch (err) {
+                window.venueStripeConnected = false;
+            }
+            const warning = document.getElementById('venueStripeWarning');
+            const submitBtn = document.getElementById('venueSubmitBtn');
+
+            if (window.venueStripeConnected) {
+                // Stripe connected: auto-generate on backend
+                if (warning) warning.style.display = 'none';
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.style.opacity = '1';
+                    submitBtn.style.pointerEvents = 'auto';
+                    submitBtn.textContent = 'Save Venue';
+                }
+            } else {
+                if (warning) warning.style.display = 'none';
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.style.opacity = '1';
+                    submitBtn.style.pointerEvents = 'auto';
+                    submitBtn.textContent = 'Save Venue';
+                }
+                // Re-validate price
+                validateVenuePrice();
+            }
+        }
+
+        function validateVenuePrice() {
+            const price = parseFloat(document.getElementById('venuePrice')?.value || 0) || 0;
+            const warning = document.getElementById('venueStripeWarning');
+            const submitBtn = document.getElementById('venueSubmitBtn');
+            const stripeId = document.getElementById('venueStripeId')?.value || '';
+
+            if (price > 0 && !window.venueStripeConnected && !stripeId) {
+                if (warning) warning.style.display = 'block';
+                if (submitBtn) { submitBtn.disabled = true; submitBtn.style.opacity = '0.5'; submitBtn.style.pointerEvents = 'none'; submitBtn.textContent = 'Stripe Connection Required'; }
+            } else {
+                if (warning) warning.style.display = 'none';
+                if (submitBtn) { submitBtn.disabled = false; submitBtn.style.opacity = '1'; submitBtn.style.pointerEvents = 'auto'; submitBtn.textContent = 'Save Venue'; }
+            }
+        }
 
         async function loadVenues() {
             const container = document.getElementById('venueGrid');
             try {
-                // Real API call
-                const venues = await apiService.get('/api/venues');
-                
+                const ctx = await apiService.getContext();
+                const orgId = ctx?.currentOrganization?.id || localStorage.getItem('activeOrganizationId') || null;
+                const endpoint = orgId ? `/venues?organizationId=${orgId}` : '/venues';
+                const venues = await apiService.get(endpoint);
+
                 if (!venues || venues.length === 0) {
                     container.innerHTML = renderEmptyState('️ No venues created yet. Create Your First Venue', '🏟️');
                     return;
                 }
 
-                container.innerHTML = venues.map(v => `
-                    <div class="glass-card" style="padding: 1.5rem; display: flex; flex-direction: column; border: 1px solid rgba(255,255,255,0.05); transition: transform 0.2s;">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                container.innerHTML = venues.map(v => {
+                    // Get capacity from time block if available, else from venue-level
+                    const capacityDisplay = (v.time_blocks && v.time_blocks[0] && v.time_blocks[0].capacity) || v.capacity || 'N/A';
+                    const bannerBg = v.image_url 
+                        ? `background:url('${resolveUploadUrl(v.image_url)}') center/cover` 
+                        : `background:linear-gradient(135deg,#b91c1c,#7f1d1d)`;
+                    const shortDesc = v.description || '';
+                    return `
+                    <div class="glass-card" style="padding:0;border:1px solid rgba(255,255,255,0.05);overflow:hidden;transition: transform 0.2s;">
+                        <div style="height:120px;${bannerBg};display:flex;align-items:center;justify-content:center;font-size:2.5rem;position:relative;">
+                            ${!v.image_url ? '🏟️' : ''}
+                        </div>
+                        <div style="padding: 1.25rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
                             <div>
                                 <h3 style="margin: 0; font-size: 1.25rem;">${v.name}</h3>
                                 <div style="display:flex; gap:0.5rem; align-items:center; margin-top:0.25rem;">
                                     <span class="badge" style="background: rgba(220,38,38,0.1); color: var(--primary); font-size: 0.7rem; text-transform: uppercase;">${v.type || 'Facility'}</span>
-                                    <span style="font-size: 0.8rem; color: #4ade80; font-weight: 700;">£${(v.price || 0).toFixed(2)}/hr</span>
+                                    <span style="font-size: 0.8rem; color: #4ade80; font-weight: 700;">£${formatPrice(v.hourly_rate || v.price || 0)}/hr</span>
                                 </div>
                             </div>
                             <div style="font-size: 0.75rem; color: var(--text-muted); text-align: right;">
-                                👥 Cap: ${v.capacity || 'N/A'}<br>
+                                👥 Cap: ${capacityDisplay}<br>
                                 ${v.stripe_price_id ? '<span style="color:#6366f1; font-size:0.65rem;">✓ Linked to Stripe</span>' : ''}
                             </div>
                         </div>
-                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem; flex: 1;">📍 ${v.address}</p>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">📍 ${v.location || v.address || ''}</p>
+                        ${shortDesc ? `<p class="venue-desc" data-full="${(shortDesc||'').replace(/"/g,'&quot;')}" style="font-size:0.85rem;color:var(--text-muted);margin:0 0 0.75rem;">${truncateWords(shortDesc,18)}</p>` : ''}
                         <div style="display: flex; gap: 0.5rem; margin-top: auto;">
-                            <button class="btn btn-primary btn-small" style="flex: 2;" onclick="testVenuePayment('${v.id}', ${v.price || 25})">Test Booking</button>
+                            <button class="btn btn-primary btn-small" style="flex: 2;" onclick="viewVenueBookings('${v.id}')">View</button>
                             <button class="btn btn-secondary btn-small" style="flex: 1;" onclick="editVenue('${v.id}')">Edit</button>
                             <button class="btn btn-text btn-small" onclick="deleteVenue('${v.id}')">🗑️</button>
                         </div>
+                        </div>
                     </div>
-                `).join('');
+                    `;
+                }).join('');
             } catch (err) {
-                console.warn("Venue load failed, using fallbacks");
+                console.warn("Venue load failed, using fallbacks", err);
                 container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: #f87171;">Failed to load live venues.</div>`;
             }
         }
@@ -155,25 +436,76 @@
 
         async function handleAddVenue(e) {
             e.preventDefault();
-            const btn = e.target.querySelector('button[type="submit"]');
+            const btn = document.getElementById('venueSubmitBtn');
             const ctx = await apiService.getContext();
             const orgId = ctx?.currentOrganization?.id || (window.AppState && window.AppState.currentUser && (window.AppState.currentUser.clubId || window.AppState.currentUser.currentOrganizationId));
 
+            // collect optional image, opening hours, and time-block
+            const imageFile = document.getElementById('venueImageUpload')?.files?.[0];
+            const days = Array.from(document.querySelectorAll('.weekday-checkbox')).filter(cb => cb.checked).map(cb=>cb.value);
+            const timeBlock = {
+                days,
+                capacity: parseInt(document.getElementById('tbCapacity')?.value) || null,
+                start_date: document.getElementById('tbStartDate')?.value || null,
+                end_date: document.getElementById('tbEndDate')?.value || null,
+                excluded_dates: _getExcludedDatesFromUI()
+            };
+
+            const openingHours = {
+                open_time: document.getElementById('ohOpenTime')?.value || null,
+                close_time: document.getElementById('ohCloseTime')?.value || null,
+                block_duration: parseInt(document.getElementById('ohBlockDuration')?.value) || 60,
+                block_type: document.getElementById('ohBlockType')?.value || 'fixed'
+            };
+
             const data = {
                 name: document.getElementById('venueName').value,
+                description: document.getElementById('venueDescription')?.value || undefined,
                 location: document.getElementById('venueAddress').value,
                 type: document.getElementById('venueType').value,
-                capacity: parseInt(document.getElementById('venueCapacity').value),
                 hourlyRate: parseFloat(document.getElementById('venuePrice').value || 0),
                 entryPrice: parseFloat(document.getElementById('venuePrice').value || 0),
                 stripe_price_id: document.getElementById('venueStripeId').value,
+                time_blocks: [timeBlock],
+                opening_hours: openingHours,
                 organizationId: orgId
             };
+
+            // Stripe validation: if a price is provided but stripe is not connected and no stripe id supplied, block create
+            const priceVal = parseFloat(document.getElementById('venuePrice')?.value || 0) || 0;
+            const suppliedStripeId = document.getElementById('venueStripeId')?.value || '';
+            if (priceVal > 0 && !window.venueStripeConnected && !suppliedStripeId) {
+                showNotification('Please connect Stripe or provide a Stripe Price ID to add a paid venue.', 'error');
+                return;
+            }
+            // If Stripe is connected, allow backend to auto-generate price if none supplied
+            if (window.venueStripeConnected) {
+                delete data.stripe_price_id;
+            }
 
             try {
                 btn.disabled = true;
                 btn.textContent = 'Saving...';
-                await apiService.post('/api/venues', data);
+                const saved = await apiService.post('/venues', data);
+                const newVenue = saved && saved.id ? saved : (saved.venue || (Array.isArray(saved) && saved[0]));
+
+                // non-fatal image upload
+                if (imageFile && newVenue && newVenue.id) {
+                    try {
+                        const maxSizeMB = 2;
+                        if (imageFile.size > maxSizeMB * 1024 * 1024) {
+                            showNotification(`Image too large. Max size ${maxSizeMB}MB`, 'error');
+                        } else {
+                            let uploadFile = imageFile;
+                            if (imageFile.size > 1024*1024 && window.compressImage) uploadFile = await window.compressImage(imageFile, maxSizeMB);
+                            const fd = new FormData(); fd.append('image', uploadFile);
+                            await apiService.makeRequest(`/venues/${newVenue.id}/upload-image`, { method: 'POST', body: fd });
+                        }
+                    } catch (imgErr) {
+                        console.warn('Venue image upload failed (non-fatal):', imgErr);
+                    }
+                }
+
                 closeModal('addVenueModal');
                 loadVenues();
                 if (window.showNotification) showNotification('Venue added successfully', 'success');
@@ -187,7 +519,139 @@
 
         function deleteVenue(id) {
             if (confirm("Delete this venue?")) {
-                apiService.delete(`/api/venues/${id}`).then(() => loadVenues());
+                apiService.delete(`/venues/${id}`).then(() => loadVenues());
+            }
+        }
+
+        async function viewVenueBookings(id) {
+            try {
+                const bookings = await apiService.get(`/venues/${id}/bookings`);
+                const html = bookings.length === 0 ? renderEmptyState('No bookings yet for this venue', '📭') : bookings.map(b => `
+                    <div style="padding:0.6rem;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;justify-content:space-between;align-items:center;">
+                        <div>
+                            <div style="font-weight:700;">${b.first_name ? b.first_name + ' ' + (b.last_name || '') : (b.guest_email || 'Guest')}</div>
+                            <div style="color:var(--text-muted); font-size:0.85rem;">${new Date(b.start_time).toLocaleString()} → ${new Date(b.end_time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
+                        </div>
+                        <div style="text-align:right; font-size:0.85rem; color:var(--text-muted);">${b.status}</div>
+                    </div>
+                `).join('');
+
+                const modalId = 'venueBookingsModal';
+                let modal = document.getElementById(modalId);
+                if (!modal) {
+                    modal = document.createElement('div'); modal.id = modalId; modal.className = 'modal'; modal.style.display='none';
+                    modal.innerHTML = `<div class="modal-content glass-card" style="max-width:700px;"><div class="modal-header"><h2 class="neon-text">Venue Bookings</h2><div class="modal-close" onclick="document.getElementById('${modalId}').style.display='none'">&times;</div></div><div class="modal-body" id="${modalId}-body"></div></div>`;
+                    document.body.appendChild(modal);
+                }
+                document.getElementById(`${modalId}-body`).innerHTML = html;
+                modal.style.display = 'block';
+            } catch (err) {
+                showNotification('Failed to load bookings: ' + (err.message || ''), 'error');
+            }
+        }
+
+        async function editVenue(id) {
+            try {
+                const v = await apiService.get(`/venues/${id}`);
+                // Prepare modal state then open
+                prepareVenueModal(true);
+                openModal('addVenueModal');
+                const form = document.getElementById('addVenueForm');
+                document.getElementById('venueName').value = v.name || '';
+                document.getElementById('venueAddress').value = v.location || v.address || '';
+                document.getElementById('venueType').value = v.type || 'pitch';
+                document.getElementById('venuePrice').value = v.hourly_rate || v.price || '';
+                document.getElementById('venueStripeId').value = v.stripe_price_id || '';
+                if (v.image_url) {
+                    const prev = document.getElementById('venueImagePreview');
+                    if (prev) { prev.src = resolveUploadUrl(v.image_url); prev.style.display = 'block'; }
+                }
+
+                // Prefill time block fields if present
+                const tb = (v.time_blocks && v.time_blocks.length) ? v.time_blocks[0] : null;
+                if (tb) {
+                    try {
+                        document.getElementById('tbStartDate').value = tb.start_date ? tb.start_date.split('T')[0] : '';
+                        document.getElementById('tbEndDate').value = tb.end_date ? tb.end_date.split('T')[0] : '';
+                        document.getElementById('tbCapacity').value = tb.capacity || '';
+                        // Weekday checkboxes
+                        Array.from(document.querySelectorAll('.weekday-checkbox')).forEach(cb => cb.checked = (tb.days || []).includes(cb.value));
+                        // Excluded dates
+                        renderExcludedDates(tb.excluded_dates || []);
+                    } catch (e) { /* ignore prefilling errors */ }
+                } else {
+                    renderExcludedDates([]);
+                }
+
+                // Prefill opening hours
+                if (v.opening_hours) {
+                    try {
+                        if (v.opening_hours.open_time) document.getElementById('ohOpenTime').value = v.opening_hours.open_time;
+                        if (v.opening_hours.close_time) document.getElementById('ohCloseTime').value = v.opening_hours.close_time;
+                        if (v.opening_hours.block_duration) document.getElementById('ohBlockDuration').value = v.opening_hours.block_duration;
+                        if (v.opening_hours.block_type) document.getElementById('ohBlockType').value = v.opening_hours.block_type;
+                    } catch (e) { /* ignore */ }
+                }
+
+                // Override submit to perform update
+                form.onsubmit = async function(ev) {
+                    ev.preventDefault();
+                    const btn = document.getElementById('venueSubmitBtn');
+                            // Collect time block & opening hours for update as well
+                            const days = Array.from(document.querySelectorAll('.weekday-checkbox')).filter(cb => cb.checked).map(cb=>cb.value);
+                            const timeBlock = {
+                                days,
+                                capacity: parseInt(document.getElementById('tbCapacity')?.value) || null,
+                                start_date: document.getElementById('tbStartDate')?.value || null,
+                                end_date: document.getElementById('tbEndDate')?.value || null,
+                                excluded_dates: _getExcludedDatesFromUI()
+                            };
+                            const openingHours = {
+                                open_time: document.getElementById('ohOpenTime')?.value || null,
+                                close_time: document.getElementById('ohCloseTime')?.value || null,
+                                block_duration: parseInt(document.getElementById('ohBlockDuration')?.value) || 60,
+                                block_type: document.getElementById('ohBlockType')?.value || 'fixed'
+                            };
+
+                            const data = {
+                                name: document.getElementById('venueName').value,
+                                description: document.getElementById('venueDescription')?.value || undefined,
+                                location: document.getElementById('venueAddress').value,
+                                type: document.getElementById('venueType').value,
+                                hourlyRate: parseFloat(document.getElementById('venuePrice').value) || 0,
+                                stripe_price_id: document.getElementById('venueStripeId').value || null,
+                                time_blocks: [timeBlock],
+                                opening_hours: openingHours
+                            };
+                    try {
+                        btn.disabled = true;
+                        btn.textContent = 'Saving...';
+                        await apiService.put(`/venues/${id}`, data);
+                        const file = document.getElementById('venueImageUpload')?.files?.[0];
+                        if (file) {
+                            const maxSizeMB = 2;
+                            if (file.size > maxSizeMB * 1024 * 1024) {
+                                showNotification(`Image too large. Max ${maxSizeMB}MB`, 'error');
+                            } else {
+                                let uploadFile = file;
+                                if (file.size > 1024*1024 && window.compressImage) uploadFile = await window.compressImage(file, maxSizeMB);
+                                const fd = new FormData(); fd.append('image', uploadFile);
+                                await apiService.makeRequest(`/venues/${id}/upload-image`, { method: 'POST', body: fd });
+                            }
+                        }
+                        showNotification('Venue updated', 'success');
+                        closeModal('addVenueModal');
+                        form.onsubmit = handleAddVenue;
+                        loadVenues();
+                    } catch (err) {
+                        showNotification('Update failed: ' + (err.message||''), 'error');
+                    } finally {
+                        btn.disabled = false;
+                        btn.textContent = 'Save Changes';
+                    }
+                };
+            } catch (err) {
+                showNotification('Failed to load venue: ' + (err.message || ''), 'error');
             }
         }
     </script>

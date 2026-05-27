@@ -139,6 +139,21 @@
                 grid-template-columns: 1fr 1fr !important;
             }
         }
+        /* Event card ribbons */
+        .ribbon {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            padding: 0.2rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            z-index: 5;
+        }
+        .ribbon-green { background: linear-gradient(90deg,#16a34a,#4ade80); }
+        .ribbon-red { background: linear-gradient(90deg,#dc2626,#f87171); }
         /* Modal standardization for dashboard modals */
         .modal .modal-content { padding: 1.25rem; border-radius: 12px; position: relative; }
         .modal .close { position: absolute; top: 12px; right: 12px; cursor: pointer; font-size: 1.2rem; background: rgba(0,0,0,0.15); padding:6px 10px; border-radius:8px; }
@@ -335,8 +350,23 @@
 
             <!-- Events Section -->
             <div id="events" class="dashboard-section active" style="display:none; padding:1.5rem;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
-                    <div class="section-title" style="margin:0;">📅 Events Manager</div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; gap:1rem;">
+                    <div style="display:flex; align-items:center; gap:1rem;">
+                        <div class="section-title" style="margin:0;">📅 Events Manager</div>
+                        <div id="eventsControls" style="display:flex; gap:0.5rem; align-items:center;">
+                            <label style="color:var(--text-muted);font-size:0.85rem;margin:0 0.25rem 0 0;">Filter</label>
+                            <select id="eventsFilter" style="padding:0.35rem;border-radius:8px;background:rgba(0,0,0,0.25);color:#fff;border:1px solid rgba(255,255,255,0.06);">
+                                <option value="all">All</option>
+                                <option value="upcoming">Upcoming</option>
+                                <option value="past">Past</option>
+                            </select>
+                            <label style="color:var(--text-muted);font-size:0.85rem;margin:0 0.25rem 0 0;">Sort</label>
+                            <select id="eventsSort" style="padding:0.35rem;border-radius:8px;background:rgba(0,0,0,0.25);color:#fff;border:1px solid rgba(255,255,255,0.06);">
+                                <option value="date_desc">Date: New → Old</option>
+                                <option value="date_asc">Date: Old → New</option>
+                            </select>
+                        </div>
+                    </div>
                     <div style="display:flex; gap:0.75rem;">
                         <button class="btn btn-secondary btn-small" onclick="loadAdminEvents()">🔄 Refresh</button>
                         <button class="btn btn-primary btn-small" onclick="openModal('addEventModal')">+ Create Event</button>
@@ -587,100 +617,112 @@
         </div>
     </div>
 
-    <!-- Add Event Modal -->
+    <!-- Add Event Modal (premium styling matching create team) -->
     <div id="addEventModal" class="modal" style="display:none;">
-        <div class="modal-content glass-card" style="max-width:700px;">
+        <div class="modal-content" style="max-width:640px;">
             <div class="modal-header">
-                <h2 class="neon-text" style="font-size:1.4rem; margin:0;">Create New Event</h2>
+                <h2 id="eventModalTitle">Create New Event</h2>
                 <div class="modal-close" onclick="closeModal('addEventModal')">&times;</div>
             </div>
-            <form id="addEventForm" onsubmit="handleAdminCreateEvent(event)">
-                <div class="modal-body" style="padding: 1.5rem; max-height: 60vh; overflow-y: auto;">
-                    <div class="event-modal-grid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:1.5rem;">
-                        <div>
-                            <div class="form-group">
-                                <label>Event Title</label>
-                                <input type="text" name="title" placeholder="e.g. Academy Training Session" required style="width:100%; padding:0.75rem; background:rgba(0,0,0,0.3); border:1px solid var(--border-color); color:#fff; border-radius:8px;">
-                            </div>
-                            <div class="form-group">
-                                <label>Description (Optional)</label>
-                                <textarea name="description" placeholder="Details about requirements, kit, etc." style="width:100%; height:120px; background:rgba(0,0,0,0.3); border:1px solid var(--border-color); color:#fff; border-radius:8px; padding:0.75rem; font-family: inherit;"></textarea>
-                            </div>
-                            <div class="form-group">
-                                <label>Place / Venue Name</label>
-                                <input type="text" name="location" placeholder="e.g. Main Stadium Pitch 3" required style="width:100%; padding:0.75rem; background:rgba(0,0,0,0.3); border:1px solid var(--border-color); color:#fff; border-radius:8px;">
-                            </div>
+            <div class="modal-body">
+                <form id="addEventForm" onsubmit="handleAdminCreateEvent(event)">
+                    <div class="form-group">
+                        <label>Event Title</label>
+                        <input type="text" name="title" placeholder="e.g. Academy Training Session" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Description (Optional)</label>
+                        <textarea name="description" placeholder="Details about requirements, kit, etc." style="width:100%;min-height:80px;"></textarea>
+                    </div>
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:1.25rem;">
+                        <div class="form-group">
+                            <label>Place / Venue Name</label>
+                            <input type="text" name="location" placeholder="e.g. Main Stadium Pitch 3" required>
                         </div>
-                        <div>
-                            <div class="form-group">
-                                <label>Event Type</label>
-                                <select name="type" required style="width:100%; padding:0.75rem; background:rgba(0,0,0,0.3); border:1px solid var(--border-color); color:#fff; border-radius:8px;">
-                                    <option value="training">Training</option>
-                                    <option value="match">Match</option>
-                                    <option value="social">Social</option>
-                                    <option value="tournament">Tournament</option>
-                                    <option value="other">Other</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                               <label>Target Audience</label>
-                               <select name="target" id="eventTargetSelect" required style="width:100%; padding:0.75rem; background:rgba(0,0,0,0.3); border:1px solid var(--border-color); color:#fff; border-radius:8px;">
-                                   <option value="open">Open event (Whole club)</option>
-                                   <option value="group">Group event (Choose teams)</option>
-                               </select>
-
-                               <div id="eventTeamChooser" style="display:none; margin-top:0.75rem;">
-                                   <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.5rem;">
-                                       <input type="checkbox" id="eventTeamAll" />
-                                       <label for="eventTeamAll" style="margin:0; font-size:0.9rem;">All teams (open to whole group)</label>
-                                   </div>
-                                   <div id="eventTeamSelected" style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.5rem;"></div>
-                                   <div id="eventTeamList" style="display:flex; flex-direction:column; gap:0.4rem; max-height:140px; overflow:auto; padding:0.5rem; background:rgba(255,255,255,0.02); border-radius:8px; border:1px solid rgba(255,255,255,0.03);">
-                                       <!-- Team checkboxes populated dynamically -->
-                                   </div>
-                               </div>
-                            </div>
-                            <div class="form-group">
-                                <label>Capacity (Places)</label>
-                                <input type="number" name="capacity" placeholder="0 for unlimited" style="width:100%; padding:0.75rem; background:rgba(0,0,0,0.3); border:1px solid var(--border-color); color:#fff; border-radius:8px;">
-                            </div>
-                            <div class="form-group">
-                                <label>Price (£)</label>
-                                <input type="number" name="price" id="eventPriceInput" step="0.01" min="0" placeholder="0 for Free" style="width:100%; padding:0.75rem; background:rgba(0,0,0,0.3); border:1px solid var(--border-color); color:#fff; border-radius:8px;" oninput="validateEventPrice()">
-                                <div id="stripeConnectionWarning" style="display:none; margin-top:0.5rem; padding:0.65rem; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:8px; color:#f87171; font-size:0.78rem; line-height:1.4;">
-                                    ⚠️ To charge for events, you must connect Stripe first in the <a href="#finances" onclick="closeModal('addEventModal'); showSection('finances');" style="color:#60a5fa; text-decoration:underline; font-weight:600;">Finances tab</a>.
-                                </div>
-                            </div>
-                            <div style="background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 12px; margin-top: 1rem;">
-                                <div class="form-group" style="display:flex; align-items:center; gap:0.5rem;">
-                                    <input type="checkbox" name="sendEmail" id="sendEmailCheckbox" style="width:18px; height:18px;">
-                                    <label for="sendEmailCheckbox" style="margin:0; font-size:0.85rem;">Send email to participants now</label>
-                                </div>
-                                <div class="form-group" style="display:flex; align-items:center; gap:0.5rem; margin-top:0.75rem;">
-                                    <input type="checkbox" name="bib_management" id="event-bib-mgmt" style="width:18px; height:18px;">
-                                    <label for="event-bib-mgmt" style="margin:0; font-size:0.85rem; color: #4ade80; font-weight: 600;">Enable Bib Management</label>
-                                </div>
+                        <div class="form-group">
+                            <label>Event Type</label>
+                            <select name="type" required>
+                                <option value="training">Training</option>
+                                <option value="match">Match</option>
+                                <option value="social">Social</option>
+                                <option value="tournament">Tournament</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:1.25rem;">
+                        <div class="form-group">
+                            <label>Capacity (Places)</label>
+                            <input type="number" name="capacity" placeholder="0 for unlimited">
+                        </div>
+                        <div class="form-group">
+                            <label>Price (£)</label>
+                            <input type="number" name="price" id="eventPriceInput" step="0.01" min="0" placeholder="0 for Free" oninput="validateEventPrice()">
+                            <div id="stripeConnectionWarning" style="display:none;margin-top:0.5rem;padding:0.65rem;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;color:#f87171;font-size:0.78rem;line-height:1.4;">
+                                ⚠️ To charge for events, you must connect Stripe first in the <a href="#finances" onclick="closeModal('addEventModal'); showSection('finances');" style="color:#60a5fa;text-decoration:underline;font-weight:600;">Finances tab</a>.
                             </div>
                         </div>
                     </div>
-
-                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1.5rem; margin-top:1.5rem; padding-top:1.5rem; border-top: 1px solid rgba(255,255,255,0.05);">
+                    <div class="form-group">
+                       <label>Target Audience</label>
+                       <select name="target" id="eventTargetSelect" required>
+                           <option value="public">🌍 Public — visible to anyone on Event Finder</option>
+                           <option value="group">Group — all teams in this club</option>
+                           <option value="teams">Teams — choose specific teams</option>
+                       </select>
+                       <div id="eventTeamChooser" style="display:none; margin-top:0.75rem;">
+                           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem;">
+                               <span style="font-size:0.82rem;color:var(--text-muted);">Select which teams this event is for:</span>
+                               <span id="selectedTeamsCount" style="font-size:0.75rem;background:rgba(96,165,250,0.15);color:#60a5fa;padding:0.2rem 0.5rem;border-radius:12px;font-weight:600;">0 Selected</span>
+                           </div>
+                           <div style="margin-bottom:0.5rem;">
+                               <input type="text" id="teamSearchInput" placeholder="🔍 Search teams by name..." style="width:100%;padding:0.65rem 0.85rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;color:#fff;font-size:0.85rem;" oninput="filterCustomTeams()">
+                           </div>
+                           <select id="eventTeamSelectHidden" name="teamIds" multiple style="display:none;"></select>
+                           <div id="eventTeamList" style="max-height:170px;overflow-y:auto;border:1px solid rgba(255,255,255,0.08);border-radius:12px;background:rgba(0,0,0,0.15);padding:0.35rem;">
+                               <!-- Team items populated dynamically by renderCustomTeamPicker() -->
+                           </div>
+                       </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Banner Image (Optional)</label>
+                        <input type="file" name="eventImage" id="eventImageUpload" accept="image/*" style="width:100%;padding:0.6rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;color:#fff;">
+                        <div id="imageUploadPreview" style="display:none;margin-top:0.5rem;border-radius:10px;overflow:hidden;max-height:120px;">
+                            <img id="imageUploadPreviewSrc" src="" alt="Preview" style="width:100%;object-fit:cover;max-height:120px;border-radius:10px;">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Registration Form (Optional)</label>
+                        <select name="formId" id="eventFormSelect">
+                            <option value="">-- No custom form --</option>
+                        </select>
+                    </div>
+                    <div style="background:rgba(255,255,255,0.03);padding:0.75rem;border-radius:10px;margin-top:0.5rem;">
+                        <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;">
+                            <input type="checkbox" name="sendEmail" id="sendEmailCheckbox" style="width:16px;height:16px;">
+                            <label for="sendEmailCheckbox" style="margin:0;font-size:0.85rem;">Send email to participants</label>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:0.5rem;">
+                            <input type="checkbox" name="bib_management" id="event-bib-mgmt" style="width:16px;height:16px;">
+                            <label for="event-bib-mgmt" style="margin:0;font-size:0.85rem;color:#4ade80;font-weight:600;">Enable Bib Management</label>
+                        </div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid rgba(255,255,255,0.05);">
                         <div class="form-group">
                             <label>Date</label>
-                            <input type="date" name="date" required style="width:100%; padding:0.75rem; background:rgba(0,0,0,0.3); border:1px solid var(--border-color); color:#fff; border-radius:8px;">
+                            <input type="date" name="date" required>
                         </div>
                         <div class="form-group">
                             <label>Time</label>
-                            <input type="time" name="time" required style="width:100%; padding:0.75rem; background:rgba(0,0,0,0.3); border:1px solid var(--border-color); color:#fff; border-radius:8px;">
+                            <input type="time" name="time" required>
                         </div>
                     </div>
-                </div>
-
-                <div class="modal-footer" style="padding: 1.5rem; border-top: 1px solid rgba(255,255,255,0.05); display:flex; gap:1rem;">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('addEventModal')" style="flex:1;">Cancel</button>
-                    <button type="submit" class="btn btn-primary" style="flex:1;">Create & Publish Event</button>
-                </div>
-            </form>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('addEventModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary" form="addEventForm" id="eventSubmitBtn">Create Event</button>
+            </div>
         </div>
     </div>
 
@@ -709,6 +751,8 @@
                             <button class="btn btn-primary btn-small" id="btnSendReminder" onclick="sendEventReminder()">📧 Send Reminder</button>
                             <button class="btn btn-secondary btn-small" onclick="showNotification('Export CSV coming soon', 'info')">📊 Export List</button>
                             <div style="height:1px; background:rgba(255,255,255,0.1); margin:0.5rem 0;"></div>
+                            <button class="btn btn-secondary btn-small" id="btnEditEvent" onclick="handleEditEvent()">✏️ Edit Event</button>
+                            <div style="height:1px; background:rgba(255,255,255,0.1); margin:0.5rem 0;"></div>
                             <button class="btn btn-text btn-small" style="color:#f87171;" id="btnDeleteEvent" onclick="handleDeleteEvent()">🗑️ Delete Event</button>
                         </div>
                     </div>
@@ -736,6 +780,55 @@
     <script src="squad-messenger.js"></script>
 
     <script>
+        // Resolve upload URLs returned by backend (which may be stored as '/uploads/...')
+        function resolveUploadUrl(path) {
+            if (!path) return path;
+            if (/^https?:\/\//i.test(path)) return path;
+            if (path.startsWith('/')) {
+                try {
+                    const backendBase = (typeof apiService !== 'undefined' && apiService.baseURL)
+                        ? apiService.baseURL.replace(/\/api\/?$/i, '')
+                        : `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':'+window.location.port : ''}`;
+                    return `${backendBase}${path}`;
+                } catch (e) {
+                    return path;
+                }
+            }
+            return path;
+        }
+        // Utility: truncate words and add ellipsis
+        function truncateWords(text, limit) {
+            if (!text) return '';
+            const parts = text.split(/\s+/);
+            if (parts.length <= limit) return escapeHtml(text);
+            return escapeHtml(parts.slice(0, limit).join(' ')) + '... <a href="#" class="read-more-link">Read more</a>';
+        }
+
+        function escapeHtml(str) {
+            return String(str).replace(/[&<>\"]/g, function(s) {
+                return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[s]);
+            });
+        }
+
+        // Delegate read-more clicks shared with venues
+        document.addEventListener('click', function(ev) {
+            const target = ev.target;
+            if (target && target.classList && target.classList.contains('read-more-link')) {
+                ev.preventDefault();
+                const p = target.closest('.event-desc') || target.closest('.venue-desc');
+                if (!p) return;
+                const full = p.getAttribute('data-full') || '';
+                if (p.classList.contains('expanded')) {
+                    // collapse
+                    const limit = p.classList.contains('event-desc') ? 22 : 18;
+                    p.innerHTML = truncateWords(full, limit);
+                    p.classList.remove('expanded');
+                } else {
+                    p.textContent = full;
+                    p.classList.add('expanded');
+                }
+            }
+        });
         async function loadDashboardStats() {
             if (typeof apiService === 'undefined') return;
             try {
@@ -761,7 +854,7 @@
         window.validateEventPrice = function() {
             const priceInput = document.getElementById('eventPriceInput');
             const warning = document.getElementById('stripeConnectionWarning');
-            const submitBtn = document.querySelector('#addEventForm button[type="submit"]');
+            const submitBtn = document.getElementById('eventSubmitBtn');
             if (!priceInput) return;
 
             const val = parseFloat(priceInput.value) || 0;
@@ -779,14 +872,13 @@
                     submitBtn.disabled = false;
                     submitBtn.style.opacity = '1';
                     submitBtn.style.pointerEvents = 'auto';
-                    submitBtn.textContent = 'Create & Publish Event';
+                    submitBtn.textContent = 'Create Event';
                 }
             }
         };
 
         // Hook window.openModal to reset form and query latest Stripe status in real-time
-        const originalOpenModal = window.openModal;
-        window.openModal = function(id) {
+        window.openModal = async function(id) {
             if (id === 'addEventModal') {
                 const form = document.getElementById('addEventForm');
                 if (form) form.reset();
@@ -794,12 +886,12 @@
                 const warning = document.getElementById('stripeConnectionWarning');
                 if (warning) warning.style.display = 'none';
                 
-                const submitBtn = document.querySelector('#addEventForm button[type="submit"]');
-                if (submitBtn) {
-                    submitBtn.disabled = false;
-                    submitBtn.style.opacity = '1';
-                    submitBtn.style.pointerEvents = 'auto';
-                    submitBtn.textContent = 'Create & Publish Event';
+                const submitBtn2 = document.getElementById('eventSubmitBtn');
+                if (submitBtn2) {
+                    submitBtn2.disabled = false;
+                    submitBtn2.style.opacity = '1';
+                    submitBtn2.style.pointerEvents = 'auto';
+                    submitBtn2.textContent = 'Create Event';
                 }
                 
                 if (typeof checkStripeConnectionForEvents === 'function') {
@@ -807,10 +899,9 @@
                 }
                 // Ensure club context header is available for API calls
                 try {
-                    apiService.getContext().then(ctx => {
-                        const clubId = ctx?.currentOrganization?.id || ctx?.currentGroup?.id || null;
-                        if (clubId) localStorage.setItem('clubId', clubId);
-                    }).catch(()=>{});
+                    const ctx = await apiService.getContext();
+                    const clubId = ctx?.currentOrganization?.id || ctx?.currentGroup?.id || null;
+                    if (clubId) localStorage.setItem('clubId', clubId);
                 } catch(e) {}
                 // Populate teams for chooser in case modal is opened standalone
                 try {
@@ -840,10 +931,27 @@
                     if (titleInput) setTimeout(()=> titleInput.focus(), 50);
                 } catch (e) { /* ignore */ }
             }
-            if (typeof originalOpenModal === 'function') {
-                originalOpenModal(id);
+            // Call original modal opener for backdrop/show
+            const modal = document.getElementById(id);
+            if (modal) {
+                modal.style.display = 'block';
             }
         };
+
+        async function loadAvailableForms() {
+            const select = document.getElementById('eventFormSelect');
+            if (!select) return;
+            try {
+                const { forms } = await apiService.get('/forms');
+                select.innerHTML = '<option value="">-- No custom form --</option>';
+                (forms||[]).forEach(f => {
+                    const opt = document.createElement('option');
+                    opt.value = f.id;
+                    opt.textContent = f.title;
+                    select.appendChild(opt);
+                });
+            } catch (e) {}
+        }
 
         document.addEventListener('DOMContentLoaded', async () => {
             // Auth check
@@ -868,8 +976,33 @@
             // Check stripe connection status for paid events
             await checkStripeConnectionForEvents();
 
+            // Always ensure clubId is set in localStorage from the context
+            try {
+                const ctx = await apiService.getContext();
+                const clubId = ctx?.currentOrganization?.id || ctx?.currentGroup?.id || null;
+                if (clubId) {
+                    localStorage.setItem('clubId', clubId);
+                    localStorage.setItem('activeOrganizationId', clubId);
+                }
+            } catch(e) {}
+
+            // Show events section and make section visible
+            const evSection = document.getElementById('events');
+            if (evSection) evSection.style.display = 'block';
+            
+            // Load events directly (don't go through showSection which adds extra calls)
+            try {
+                await loadAdminEvents();
+            } catch(e) {
+                setTimeout(() => loadAdminEvents(), 1000);
+            }
+
             // default tab
             const tp = document.getElementById('tabPlatform'); if (tp) tp.classList.add('active');
+
+            // Wire events filter/sort controls to reload the list
+            document.getElementById('eventsFilter')?.addEventListener('change', () => loadAdminEvents());
+            document.getElementById('eventsSort')?.addEventListener('change', () => loadAdminEvents());
         });
 
         // --- Events Manager Logic ---
@@ -880,8 +1013,17 @@
             if (!list || typeof apiService === 'undefined') return;
 
             try {
-                const { events } = await apiService.getEvents();
-                let eventsToRender = events || [];
+                // Fetch ALL events (no upcoming filter - admin needs to see everything)
+                let eventsResult;
+                try {
+                    const cId = localStorage.getItem('clubId') || localStorage.getItem('activeOrganizationId');
+                    // Try with club context first, else just get all events
+                    const endpoint = cId ? `/events?clubId=${cId}` : '/events';
+                    eventsResult = await apiService.get(endpoint);
+                } catch(e) {
+                    eventsResult = [];
+                }
+                let eventsToRender = Array.isArray(eventsResult) ? eventsResult : (eventsResult?.events || []);
 
                 // Filter for upcoming events for the stats
                 const now = new Date();
@@ -894,29 +1036,70 @@
                    return;
                 }
 
+                // Apply client-side filtering and sorting
+                const filterOpt = document.getElementById('eventsFilter')?.value || 'all';
+                const sortOpt = document.getElementById('eventsSort')?.value || 'date_desc';
+                // Parse an event's full datetime (combines event_date and event_time when needed)
+                function parseEventDateTime(ev) {
+                    if (!ev || !ev.event_date) return new Date(NaN);
+                    // If event_date already contains time info, trust it
+                    if (ev.event_date.includes && ev.event_date.includes('T')) return new Date(ev.event_date);
+                    // If there's an explicit time, normalize to HH:MM and combine
+                    if (ev.event_time) {
+                        let t = ev.event_time;
+                        if (t.split(':').length === 3) t = t.slice(0,5);
+                        return new Date(ev.event_date + 'T' + t);
+                    }
+                    // Fallback to start of day
+                    return new Date(ev.event_date + 'T00:00:00');
+                }
+                // Use full datetime comparisons so "Upcoming" excludes past times earlier today
+                if (filterOpt === 'upcoming') {
+                    eventsToRender = eventsToRender.filter(ev => parseEventDateTime(ev) > now);
+                } else if (filterOpt === 'past') {
+                    eventsToRender = eventsToRender.filter(ev => parseEventDateTime(ev) <= now);
+                }
+                // Sorting
+                eventsToRender.sort((a,b) => {
+                    const da = new Date(a.event_date).getTime() || 0;
+                    const db = new Date(b.event_date).getTime() || 0;
+                    return sortOpt === 'date_asc' ? da - db : db - da;
+                });
+
                 list.innerHTML = eventsToRender.map(e => {
                     const date = new Date(e.event_date).toLocaleDateString();
                     const time = e.event_time || 'All Day';
-                    const capacityText = e.capacity ? `${e.joined_count || 0}/${e.capacity}` : 'Unlimited';
-                    const joinedPercent = e.capacity ? Math.min(100, ((e.joined_count || 0) / e.capacity) * 100) : 100;
-                    const typeColor = e.type === 'match' ? '#f87171' : (e.type === 'training' ? '#60a5fa' : '#4ade80');
+                    const bookingCount = e.booking_count || e.joined_count || 0;
+                    const capacityText = e.capacity ? `${bookingCount}/${e.capacity}` : 'Unlimited';
+                    const joinedPercent = e.capacity ? Math.min(100, (bookingCount / e.capacity) * 100) : 100;
+                    const eventType = e.event_type || e.type || 'training';
+                    const typeColor = eventType === 'match' ? '#f87171' : (eventType === 'training' ? '#60a5fa' : '#4ade80');
+                    const bannerBg = e.image_url ? `background:url('${resolveUploadUrl(e.image_url)}') center/cover` : `background:linear-gradient(135deg,#b91c1c,#7f1d1d)`;
+                    const isPast = (typeof parseEventDateTime === 'function') ? parseEventDateTime(e) <= now : (new Date(e.event_date) < now);
+                    const ribbonHtml = isPast ? `<span class="ribbon ribbon-red">Past</span>` : `<span class="ribbon ribbon-green">Upcoming</span>`;
                     
                     return `
-                    <div class="glass-card" style="padding:1.5rem; border:1px solid rgba(255,255,255,0.05); cursor:pointer;" onclick="viewEventDetails('${e.id}')">
-                        <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:1rem;">
-                            <span class="badge" style="background:rgba(${typeColor.replace('#','')}, 0.1); color:${typeColor}; text-transform:capitalize;">${e.type}</span>
-                            <span style="font-size:0.75rem; color:var(--text-muted);">${date} @ ${time}</span>
+                    <div class="glass-card" style="padding:0;border:1px solid rgba(255,255,255,0.05);cursor:pointer;overflow:hidden;" onclick="viewEventDetails('${e.id}')">
+                        <div style="height:120px;${bannerBg};display:flex;align-items:center;justify-content:center;font-size:2.5rem;position:relative;">
+                            ${ribbonHtml}
+                            ${!e.image_url ? '🏆' : ''}
+                            <span style="position:absolute;top:0.5rem;right:0.5rem;background:rgba(255,255,255,0.1);color:${typeColor};padding:0.2rem 0.6rem;border-radius:12px;text-transform:capitalize;font-size:0.7rem;font-weight:600;">${eventType}</span>
                         </div>
-                        <h3 style="font-size:1.1rem; margin-bottom:0.4rem;">${e.title}</h3>
-                        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1.25rem;">📍 ${e.location}</p>
-                        
-                        <div style="margin-top:auto;">
-                            <div style="display:flex; justify-content:space-between; font-size:0.75rem; margin-bottom:0.4rem;">
-                                <span>Attendance</span>
-                                <span style="font-weight:700;">${capacityText}</span>
+                        <div style="padding:1rem 1.25rem;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+                                <h3 style="font-size:1rem;margin:0;">${e.title}</h3>
+                                <span style="font-size:0.95rem;color:#ffffff;white-space:nowrap;font-weight:600;">${date} · ${time}</span>
                             </div>
-                            <div style="height:6px; background:rgba(255,255,255,0.05); border-radius:3px; overflow:hidden;">
-                                <div style="height:100%; width:${joinedPercent}%; background:${typeColor}; box-shadow:0 0 10px ${typeColor}66;"></div>
+                            <p style="font-size:0.82rem;color:var(--text-muted);margin:0 0 0.5rem;">📍 ${e.location}</p>
+                            ${e.description ? `<p class="event-desc" data-full="${(e.description||'').replace(/"/g,'&quot;')}" style="font-size:0.82rem;color:var(--text-muted);margin:0 0 0.75rem;">${truncateWords(e.description,22)}</p>` : ''}
+                            <div>
+                                <div style="display:flex;justify-content:space-between;font-size:0.72rem;margin-bottom:0.3rem;">
+                                    <span>Attendance</span>
+                                    <span style="font-weight:700;">${capacityText}</span>
+                                </div>
+                                <div style="height:5px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;">
+                                    <div style="height:100%;width:${joinedPercent}%;background:${typeColor};box-shadow:0 0 8px ${typeColor}66;"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -930,37 +1113,44 @@
 
         async function handleAdminCreateEvent(e) {
             e.preventDefault();
-            const formData = new FormData(e.target);
+            const form = e.target;
+            const formData = new FormData(form);
+            const imageFile = document.getElementById('eventImageUpload')?.files?.[0];
             
             const ctx = await apiService.getContext();
-            const clubId = ctx?.currentOrganization?.id || (window.AppState && window.AppState.currentUser && (window.AppState.currentUser.clubId || window.AppState.currentUser.currentOrganizationId));
+            const clubId = ctx?.currentOrganization?.id || ctx?.currentGroup?.id || localStorage.getItem('clubId') || localStorage.getItem('activeOrganizationId');
 
             const capacityVal = parseInt(formData.get('capacity'));
             const priceVal = parseFloat(formData.get('price')) || 0;
+
+            // Normalize time to HH:MM (strip seconds if present)
+            let timeVal = formData.get('time') || '';
+            if (timeVal && timeVal.split(':').length === 3) timeVal = timeVal.slice(0,5);
 
             const data = {
                 title: formData.get('title'),
                 description: formData.get('description'),
                 eventDate: formData.get('date'),
-                eventTime: formData.get('time'),
+                eventTime: timeVal,
                 location: formData.get('location'),
                 eventType: formData.get('type'),
                 price: priceVal,
+                capacity: capacityVal && capacityVal > 0 ? capacityVal : undefined,
+                formId: formData.get('formId') || undefined,
                 sendEmail: formData.get('sendEmail') === 'on',
+                bib_management: formData.get('bib_management') === 'on',
                 clubId: clubId
             };
 
-            // Attach team selection only when Group event is chosen. 'open' means whole club.
+            // Attach team selection only when Group event is chosen.
             const target = formData.get('target');
             if (target === 'group') {
-                // If 'All teams' selected, mark scope as all; otherwise collect chosen team ids
                 const allCheckbox = document.getElementById('eventTeamAll');
-                const teamList = document.getElementById('eventTeamList');
+                const hiddenSelect = document.getElementById('eventTeamSelectHidden');
                 if (allCheckbox && allCheckbox.checked) {
                     data.teamScope = 'all';
-                } else if (teamList) {
-                    const selected = [];
-                    teamList.querySelectorAll('input[type="checkbox"]:checked').forEach(cb => selected.push(cb.value));
+                } else if (hiddenSelect) {
+                    const selected = Array.from(hiddenSelect.selectedOptions).map(o => o.value);
                     if (selected.length === 1) {
                         data.teamId = selected[0];
                     } else if (selected.length > 1) {
@@ -969,39 +1159,61 @@
                 }
             }
 
-            // Only include capacity if it is a positive integer >= 1
-            if (capacityVal && capacityVal > 0) {
-                data.capacity = capacityVal;
-            }
-
+            const submitBtn = document.getElementById('eventSubmitBtn');
+            if (!submitBtn) return;
+            
             try {
-                const btn = e.target.querySelector('button[type="submit"]');
-                btn.disabled = true;
-                btn.textContent = 'Publishing...';
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Publishing...';
 
-                await apiService.createEvent(data);
+                // Step 1: Create the event
+                const result = await apiService.createEvent(data);
+                const newEvent = result.event || (Array.isArray(result.events) && result.events[0]) || result;
+                console.log('Event created:', result);
+
+
+                // Step 2: If there's an image file, check size, compress, and upload
+                if (imageFile && newEvent && newEvent.id) {
+                    const maxSizeMB = 2;
+                    if (imageFile.size > maxSizeMB * 1024 * 1024) {
+                        showNotification(`Image too large. Max size is ${maxSizeMB}MB.`, 'error');
+                    } else {
+                        try {
+                            let uploadFile = imageFile;
+                            if (imageFile.size > 1024 * 1024 && window.compressImage) {
+                                uploadFile = await window.compressImage(imageFile, maxSizeMB);
+                            }
+                            const imgFormData = new FormData();
+                            imgFormData.append('image', uploadFile);
+                            const uploadResult = await apiService.makeRequest(`/events/${newEvent.id}/upload-image`, {
+                                method: 'POST',
+                                body: imgFormData
+                            });
+                            console.log('Image uploaded:', uploadResult);
+                        } catch (imgErr) {
+                            console.warn('Image upload failed (non-fatal):', imgErr);
+                            showNotification('Image upload failed: ' + (imgErr.message || 'Error'), 'error');
+                        }
+                    }
+                }
+
                 showNotification("Event created and published!", "success");
                 closeModal('addEventModal');
-                e.target.reset();
-                loadAdminEvents();
+                form.reset();
+                // Reload events after a brief delay so the image URL is saved
+                setTimeout(() => loadAdminEvents(), 500);
             } catch (err) {
-                // Log full error for debugging (includes validation details from backend)
                 console.error('Create event failed:', err);
-
-                // If backend returned validation details, show them to the admin
                 if (err && err.details && Array.isArray(err.details)) {
                     const messages = err.details.map(d => `${d.param || d.path || 'field'}: ${d.msg || d.message}`).join('\n');
                     showNotification("Failed to create event: " + (err.message || 'Validation failed'), "error");
-                    // Also show a detailed console warning to help local devs
                     console.warn('Validation details:\n' + messages);
                 } else {
                     showNotification("Failed to create event: " + (err.message || 'Unknown error'), "error");
                 }
             } finally {
-                const btn = e.target.querySelector('button[type="submit"]');
-                btn.disabled = false;
-                // Keep button text aligned with other modals
-                btn.textContent = 'Create & Publish Event';
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Create Event';
             }
         }
 
@@ -1023,6 +1235,22 @@
 
                 title.textContent = event.title;
                 meta.textContent = `${new Date(event.event_date).toLocaleDateString()} · ${event.event_time} · ${event.location}`;
+                
+                // Show banner image in detail view
+                const detailHeader = document.getElementById('eventDetailHeader');
+                let bannerHtml = '';
+                if (event.image_url) {
+                    bannerHtml = `<div style="border-radius:12px;overflow:hidden;max-height:180px;margin-bottom:1rem;"><img src="${resolveUploadUrl(event.image_url)}" alt="${event.title}" style="width:100%;object-fit:cover;max-height:180px;"></div>`;
+                }
+                // Insert banner before the meta text
+                const existingBanner = detailHeader.querySelector('.event-banner');
+                if (bannerHtml) {
+                    if (!existingBanner) {
+                        detailHeader.insertAdjacentHTML('afterbegin', `<div class="event-banner">${bannerHtml}</div>`);
+                    }
+                } else if (existingBanner) {
+                    existingBanner.remove();
+                }
                 capacity.textContent = event.capacity || 'Unlimited';
                 remaining.textContent = event.capacity ? (event.capacity - (event.joined_count || 0)) : 'N/A';
 
@@ -1063,6 +1291,105 @@
             } finally {
                 btn.disabled = false;
                 btn.textContent = originalText;
+            }
+        }
+
+        async function handleEditEvent() {
+            if (!currentEditingEventId) return;
+            try {
+                const event = await apiService.getEventById(currentEditingEventId);
+                closeModal('eventDetailModal');
+                // Reuse the create modal with pre-filled values
+                const form = document.getElementById('addEventForm');
+                if (!form) return;
+                form.reset();
+                form.dataset.editId = currentEditingEventId;
+                document.getElementById('eventModalTitle').textContent = 'Edit Event';
+                document.getElementById('eventSubmitBtn').textContent = 'Save Changes';
+                form.querySelector('[name="title"]').value = event.title || '';
+                form.querySelector('[name="description"]').value = event.description || '';
+                form.querySelector('[name="location"]').value = event.location || '';
+                form.querySelector('[name="type"]').value = event.event_type || 'training';
+                form.querySelector('[name="capacity"]').value = event.capacity || '';
+                form.querySelector('[name="price"]').value = event.price || '';
+                form.querySelector('[name="date"]').value = event.event_date ? event.event_date.split('T')[0] : '';
+                // Ensure time is in HH:MM format for input and backend
+                let timeValue = event.event_time || '';
+                if (timeValue && timeValue.length === 8 && timeValue.split(':').length === 3) {
+                    // Convert 'HH:MM:SS' to 'HH:MM'
+                    timeValue = timeValue.slice(0,5);
+                }
+                form.querySelector('[name="time"]').value = timeValue;
+                form.querySelector('[name="formId"]').value = event.custom_form_id || event.formId || '';
+                if (event.sendEmail) form.querySelector('[name="sendEmail"]').checked = true;
+                if (event.bib_management) form.querySelector('[name="bib_management"]').checked = true;
+                // Override submit to update instead of create
+                form.onsubmit = async function(ev) {
+                    ev.preventDefault();
+                    const fd = new FormData(ev.target);
+                    const capVal = parseInt(fd.get('capacity'));
+                    // Normalize time to HH:MM when updating
+                    let newTime = fd.get('time') || '';
+                    if (newTime && newTime.split(':').length === 3) newTime = newTime.slice(0,5);
+
+                    const data = {
+                        title: fd.get('title'),
+                        description: fd.get('description'),
+                        eventDate: fd.get('date'),
+                        eventTime: newTime,
+                        location: fd.get('location'),
+                        eventType: fd.get('type'),
+                        price: parseFloat(fd.get('price')) || 0
+                    };
+                    if (capVal > 0) data.capacity = capVal;
+                    const btn = document.getElementById('eventSubmitBtn');
+                    btn.disabled = true;
+                    btn.textContent = 'Saving...';
+                    try {
+                        await apiService.updateEvent(currentEditingEventId, data);
+                        // Handle image upload for edit if a new file was selected
+                        const imgFile = document.getElementById('eventImageUpload')?.files?.[0];
+                        if (imgFile) {
+                            const maxSizeMB = 2;
+                            if (imgFile.size > maxSizeMB * 1024 * 1024) {
+                                showNotification(`Image too large. Max size is ${maxSizeMB}MB.`, 'error');
+                            } else {
+                                try {
+                                    // Try compressing if >1MB
+                                    let uploadFile = imgFile;
+                                    if (imgFile.size > 1024 * 1024 && window.compressImage) {
+                                        uploadFile = await window.compressImage(imgFile, maxSizeMB);
+                                    }
+                                    const imgFd = new FormData();
+                                    imgFd.append('image', uploadFile);
+                                    await apiService.makeRequest(`/events/${currentEditingEventId}/upload-image`, {
+                                        method: 'POST',
+                                        body: imgFd
+                                    });
+                                } catch(imgErr) {
+                                    console.warn('Image upload on edit failed:', imgErr);
+                                    showNotification('Image upload failed: ' + (imgErr.message || 'Error'), 'error');
+                                }
+                            }
+                        }
+                        showNotification("Event updated!", "success");
+                        closeModal('addEventModal');
+                        form.dataset.editId = '';
+                        form.onsubmit = handleAdminCreateEvent;
+                        document.getElementById('eventModalTitle').textContent = 'Create New Event';
+                        document.getElementById('eventSubmitBtn').textContent = 'Create Event';
+                        loadAdminEvents();
+                    } catch (err) {
+                        showNotification("Failed to update: " + (err.message || 'Error'), "error");
+                    } finally {
+                        btn.disabled = false;
+                        btn.textContent = 'Save Changes';
+                    }
+                };
+                const modal = document.getElementById('addEventModal');
+                if (modal) modal.style.display = 'block';
+            } catch (err) {
+                showNotification("Failed to load event details: " + (err.message || 'Error'), "error");
             }
         }
 
@@ -1142,71 +1469,158 @@
             });
         }
 
+        // --- Premium Custom Team Selector (matches Create Team player picker) ---
+        window.selectedTeamIds = new Set();
+        
+        window.renderCustomTeamPicker = function() {
+            const select = document.getElementById('eventTeamSelectHidden');
+            const customList = document.getElementById('eventTeamList');
+            if (!select || !customList) return;
+            
+            customList.innerHTML = '';
+            const options = Array.from(select.options);
+            if (options.length === 0 || (options.length === 1 && !options[0].value)) {
+                customList.innerHTML = '<div style="padding:1rem;text-align:center;color:var(--text-muted);font-size:0.85rem;">No teams available</div>';
+                return;
+            }
+            
+            options.forEach(opt => {
+                if (!opt.value) return;
+                const name = opt.textContent || '';
+                const initials = name.split(' ').map(n => n[0]||'').join('').substring(0,2).toUpperCase() || 'T';
+                
+                const div = document.createElement('div');
+                div.className = 'custom-team-item';
+                div.setAttribute('data-value', opt.value);
+                div.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0.75rem;border-radius:8px;margin-bottom:0.25rem;cursor:pointer;transition:all 0.15s;border:1px solid transparent;';
+                
+                div.innerHTML = `
+                    <div style="display:flex;align-items:center;gap:0.65rem;">
+                        <div class="team-avatar" style="width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,0.05);color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;border:1px solid rgba(255,255,255,0.1);transition:all 0.15s;">
+                            ${initials}
+                        </div>
+                        <span style="font-size:0.85rem;color:#f1f5f9;font-weight:500;transition:color 0.15s;">${name}</span>
+                    </div>
+                    <div class="team-checkbox-indicator" style="width:16px;height:16px;border-radius:4px;border:1.5px solid rgba(255,255,255,0.25);display:flex;align-items:center;justify-content:center;font-size:0.65rem;transition:all 0.15s;color:#fff;font-weight:bold;"></div>
+                `;
+                
+                div.addEventListener('click', () => toggleCustomTeam(opt.value));
+                customList.appendChild(div);
+            });
+            
+            updateCustomTeamPickerUI();
+        };
+        
+        window.toggleCustomTeam = function(value) {
+            const select = document.getElementById('eventTeamSelectHidden');
+            if (!select) return;
+            const opt = Array.from(select.options).find(o => o.value === value);
+            if (opt) {
+                opt.selected = !opt.selected;
+                select.dispatchEvent(new Event('change'));
+                updateCustomTeamPickerUI();
+            }
+        };
+        
+        window.updateCustomTeamPickerUI = function() {
+            const select = document.getElementById('eventTeamSelectHidden');
+            const customList = document.getElementById('eventTeamList');
+            const countBadge = document.getElementById('selectedTeamsCount');
+            if (!select || !customList) return;
+            
+            const selectedValues = new Set(Array.from(select.selectedOptions).map(o => o.value));
+            
+            const items = customList.querySelectorAll('.custom-team-item');
+            items.forEach(item => {
+                const val = item.getAttribute('data-value');
+                const isSelected = selectedValues.has(val);
+                const avatar = item.querySelector('.team-avatar');
+                const nameSpan = item.querySelector('span');
+                const indicator = item.querySelector('.team-checkbox-indicator');
+                
+                if (isSelected) {
+                    item.style.background = 'rgba(96,165,250,0.08)';
+                    item.style.borderColor = 'rgba(96,165,250,0.2)';
+                    if (avatar) {
+                        avatar.style.background = 'linear-gradient(135deg, var(--accent-cyan), #3b82f6)';
+                        avatar.style.borderColor = 'transparent';
+                    }
+                    if (nameSpan) nameSpan.style.color = '#fff';
+                    if (indicator) {
+                        indicator.style.background = '#60a5fa';
+                        indicator.style.borderColor = '#60a5fa';
+                        indicator.innerHTML = '✓';
+                    }
+                } else {
+                    item.style.background = 'transparent';
+                    item.style.borderColor = 'transparent';
+                    if (avatar) {
+                        avatar.style.background = 'rgba(255,255,255,0.05)';
+                        avatar.style.borderColor = 'rgba(255,255,255,0.1)';
+                    }
+                    if (nameSpan) nameSpan.style.color = '#c8d2df';
+                    if (indicator) {
+                        indicator.style.background = 'transparent';
+                        indicator.style.borderColor = 'rgba(255,255,255,0.25)';
+                        indicator.innerHTML = '';
+                    }
+                }
+            });
+            
+            if (countBadge) countBadge.textContent = `${selectedValues.size} Selected`;
+        };
+        
+        window.filterCustomTeams = function() {
+            const query = (document.getElementById('teamSearchInput')?.value || '').toLowerCase().trim();
+            const customList = document.getElementById('eventTeamList');
+            if (!customList) return;
+            const items = customList.querySelectorAll('.custom-team-item');
+            items.forEach(item => {
+                const name = (item.querySelector('span')?.textContent || '').toLowerCase();
+                item.style.display = name.includes(query) ? 'flex' : 'none';
+            });
+        };
+        
         async function loadTargetTeams() {
             const select = document.getElementById('eventTargetSelect');
             const chooser = document.getElementById('eventTeamChooser');
             const teamList = document.getElementById('eventTeamList');
             const teamAll = document.getElementById('eventTeamAll');
+            const hiddenSelect = document.getElementById('eventTeamSelectHidden');
             if (!select) return;
             try {
                 const { teams } = await apiService.get('/teams');
-                // Provide Open vs Group options
-                select.innerHTML = '<option value="open">Open event (Whole club)</option><option value="group">Group event (Choose teams)</option>';
+                // Provide Public, Open, Group options
+                select.innerHTML = '<option value="public">🌍 Public / Global — visible to anyone on Event Finder</option><option value="open">Group event (Club members)</option><option value="group">Team event (Choose specific teams)</option>';
 
-                // Populate team chooser checkboxes
-                if (teamList) {
-                    teamList.innerHTML = '';
+                // Populate hidden select and render custom picker
+                if (hiddenSelect) {
+                    hiddenSelect.innerHTML = '';
                     (teams||[]).forEach(t => {
-                        const id = `team-checkbox-${t.id}`;
-                        const wrapper = document.createElement('label');
-                        wrapper.style = 'display:flex; align-items:center; gap:0.5rem; font-size:0.9rem;';
-                        const cb = document.createElement('input');
-                        cb.type = 'checkbox';
-                        cb.value = t.id;
-                        cb.id = id;
-                        wrapper.appendChild(cb);
-                        const span = document.createElement('span');
-                        span.textContent = ` ${t.name}`;
-                        wrapper.appendChild(span);
-                        teamList.appendChild(wrapper);
+                        const opt = document.createElement('option');
+                        opt.value = t.id;
+                        opt.textContent = t.name;
+                        hiddenSelect.appendChild(opt);
                     });
                 }
-
-                // Update selected teams display (used by multiple handlers)
-                function updateSelectedTeamsDisplay() {
-                    const sel = document.getElementById('eventTeamSelected');
-                    if (!sel || !teamList) return;
-                    sel.innerHTML = '';
-                    const checked = teamList.querySelectorAll('input[type="checkbox"]:checked');
-                    checked.forEach(cb => {
-                        const name = cb.parentElement?.textContent?.trim() || cb.value;
-                        const chip = document.createElement('div');
-                        chip.style = 'background:rgba(96,165,250,0.12); color:#60a5fa; padding:0.25rem 0.6rem; border-radius:999px; display:inline-flex; align-items:center; gap:0.5rem; font-size:0.85rem; cursor:pointer;';
-                        chip.textContent = name;
-                        const remove = document.createElement('span');
-                        remove.textContent = '×';
-                        remove.style = 'margin-left:0.4rem; font-weight:700;';
-                        remove.addEventListener('click', (ev) => {
-                            ev.stopPropagation();
-                            cb.checked = false;
-                            updateSelectedTeamsDisplay();
-                        });
-                        chip.appendChild(remove);
-                        sel.appendChild(chip);
-                    });
+                
+                // Render the custom team picker (avatar circles, checkboxes, etc.)
+                if (typeof window.renderCustomTeamPicker === 'function') {
+                    window.renderCustomTeamPicker();
                 }
 
                 // Show/hide chooser when selecting Group event
                 select.addEventListener('change', () => {
-                    if (select.value === 'group') {
-                        if (chooser) chooser.style.display = 'block';
-                    } else {
-                        if (chooser) chooser.style.display = 'none';
+                    if (chooser) {
+                        chooser.style.display = (select.value === 'group') ? 'block' : 'none';
+                    }
+                    if (select.value !== 'group') {
                         if (teamAll) teamAll.checked = false;
-                        if (teamList) {
-                            teamList.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+                        if (hiddenSelect) {
+                            Array.from(hiddenSelect.options).forEach(o => o.selected = false);
+                            hiddenSelect.dispatchEvent(new Event('change'));
+                            if (typeof window.updateCustomTeamPickerUI === 'function') window.updateCustomTeamPickerUI();
                         }
-                        updateSelectedTeamsDisplay();
                     }
                 });
 
@@ -1214,22 +1628,17 @@
                 if (teamAll) {
                     teamAll.addEventListener('change', () => {
                         const checked = teamAll.checked;
-                        teamList.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = checked);
-                        updateSelectedTeamsDisplay();
+                        if (hiddenSelect) {
+                            Array.from(hiddenSelect.options).forEach(o => o.selected = checked);
+                            hiddenSelect.dispatchEvent(new Event('change'));
+                            if (typeof window.updateCustomTeamPickerUI === 'function') window.updateCustomTeamPickerUI();
+                        }
                     });
                 }
-
-                // Wire checkbox change handlers to update selected chips
-                (function wireCheckboxes() {
-                    if (!teamList) return;
-                    teamList.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-                        cb.addEventListener('change', updateSelectedTeamsDisplay);
-                    });
-                    // initial render
-                    updateSelectedTeamsDisplay();
-                })();
             } catch (e) {}
         }
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
+    <script src="image-compress.js"></script>
 </body>
 </html>

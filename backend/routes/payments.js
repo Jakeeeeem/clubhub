@@ -162,7 +162,15 @@ async function getOrCreateStripeConnectAccount(user) {
 // GET /api/payments/stripe/connect/status
 router.get("/stripe/connect/status", authenticateToken, async (req, res) => {
   try {
-    const account = await getOrCreateStripeConnectAccount(req.user);
+    let account;
+    try {
+      account = await getOrCreateStripeConnectAccount(req.user);
+    } catch (err) {
+      console.warn('Stripe Connect account error (handled):', err && err.message);
+      // If Stripe auth fails (invalid/missing key), return a safe response
+      return res.json({ connected: false, linked: false, error: 'stripe_unavailable' });
+    }
+
     const isConnected = !!(account.details_submitted && account.payouts_enabled);
     
     const response = {

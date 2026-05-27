@@ -11,6 +11,18 @@ async function clearDemoDataOnly() {
 
     await client.query("BEGIN");
 
+    // Helper to run deletes safely when optional tables may not exist in all schemas
+    const safeDel = async (sql, params) => {
+      try {
+        await client.query('BEGIN');
+        await client.query(sql, params);
+        await client.query('COMMIT');
+      } catch (e) {
+        try { await client.query('ROLLBACK'); } catch(_) {}
+        console.log('  ⚠️  Skipping (table may be missing or error):', e.message);
+      }
+    };
+
     // Get list of demo organizations (created by seed script)
     const demoOrgs = await client.query(`
       SELECT id, name FROM organizations 
@@ -27,48 +39,48 @@ async function clearDemoDataOnly() {
     if (demoOrgs.rows.length > 0) {
       const demoOrgIds = demoOrgs.rows.map((o) => o.id);
 
-      // Delete related data for demo orgs
+      // Delete related data for demo orgs (use safeDel for optional tables)
       console.log("Deleting demo organization data...");
 
-      await client.query(
+      await safeDel(
         `DELETE FROM player_stats WHERE player_id IN (SELECT id FROM players WHERE club_id = ANY($1))`,
         [demoOrgIds],
       );
-      await client.query(
+      await safeDel(
         `DELETE FROM payments WHERE player_id IN (SELECT id FROM players WHERE club_id = ANY($1))`,
         [demoOrgIds],
       );
-      await client.query(
+      await safeDel(
         `DELETE FROM subscriptions WHERE organization_id = ANY($1)`,
         [demoOrgIds],
       );
-      await client.query(`DELETE FROM events WHERE club_id = ANY($1)`, [
+      await safeDel(`DELETE FROM events WHERE club_id = ANY($1)`, [
         demoOrgIds,
       ]);
-      await client.query(`DELETE FROM staff WHERE club_id = ANY($1)`, [
+      await safeDel(`DELETE FROM staff WHERE club_id = ANY($1)`, [
         demoOrgIds,
       ]);
-      await client.query(`DELETE FROM players WHERE club_id = ANY($1)`, [
+      await safeDel(`DELETE FROM players WHERE club_id = ANY($1)`, [
         demoOrgIds,
       ]);
-      await client.query(`DELETE FROM teams WHERE club_id = ANY($1)`, [
+      await safeDel(`DELETE FROM teams WHERE club_id = ANY($1)`, [
         demoOrgIds,
       ]);
-      await client.query(`DELETE FROM plans WHERE organization_id = ANY($1)`, [
+      await safeDel(`DELETE FROM plans WHERE organization_id = ANY($1)`, [
         demoOrgIds,
       ]);
-      await client.query(
+      await safeDel(
         `DELETE FROM invitations WHERE organization_id = ANY($1)`,
         [demoOrgIds],
       );
-      await client.query(
+      await safeDel(
         `DELETE FROM organization_members WHERE organization_id = ANY($1)`,
         [demoOrgIds],
       );
-      await client.query(`DELETE FROM organizations WHERE id = ANY($1)`, [
+      await safeDel(`DELETE FROM organizations WHERE id = ANY($1)`, [
         demoOrgIds,
       ]);
-      await client.query(`DELETE FROM clubs WHERE id = ANY($1)`, [demoOrgIds]);
+      await safeDel(`DELETE FROM clubs WHERE id = ANY($1)`, [demoOrgIds]);
     }
 
     // Delete demo users (but keep real users and super admin)

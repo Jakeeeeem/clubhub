@@ -85,6 +85,52 @@ const eventValidation = [
     .withMessage("Assigned players must be an array of IDs"),
 ];
 
+// Normalize incoming request bodies to support snake_case or camelCase
+function normalizeEventBody(req, res, next) {
+  const b = req.body || {};
+  // simple mappings
+  if (b.event_type && !b.eventType) b.eventType = b.event_type;
+  if (b.event_date && !b.eventDate) b.eventDate = b.event_date;
+  if (b.event_time && !b.eventTime) b.eventTime = b.event_time;
+  // Normalize eventTime: accept HH:MM:SS -> convert to HH:MM
+  if (b.eventTime && typeof b.eventTime === 'string') {
+    const m = b.eventTime.match(/^([0-2]?\d:[0-5]\d)(?::[0-5]\d)?$/);
+    if (m) b.eventTime = m[1];
+  }
+  if (b.club_id && !b.clubId) b.clubId = b.club_id;
+  if (b.team_id && !b.teamId) b.teamId = b.team_id;
+  if (b.team_ids && !b.teamIds) b.teamIds = b.team_ids;
+  if (typeof b.require_decline_reason !== 'undefined' && typeof b.requireDeclineReason === 'undefined')
+    b.requireDeclineReason = b.require_decline_reason;
+  if (b.notification_schedule && !b.notificationSchedule) b.notificationSchedule = b.notification_schedule;
+  if (b.tournament_settings && !b.tournamentSettings) b.tournamentSettings = b.tournament_settings;
+  if (b.image_url && !b.imageUrl) b.imageUrl = b.image_url;
+  // ensure body is updated
+  req.body = b;
+  next();
+}
+
+// Validation for updates (allow partial updates)
+const updateEventValidation = [
+  body("title").optional({ checkFalsy: true }).trim().isLength({ min: 1 }).withMessage("Event title is required"),
+  body("eventType").optional({ checkFalsy: true }).isIn(["training", "match", "tournament", "camp", "social", "talent-id", "other"]).withMessage("Invalid event type"),
+  body("eventDate").optional({ checkFalsy: true }).isISO8601().withMessage("Please provide a valid event date"),
+  body("eventTime").optional({ checkFalsy: true }).matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/).withMessage("Please provide a valid time (HH:MM)"),
+  body("location").optional({ checkFalsy: true }).trim(),
+  body("price").optional({ checkFalsy: true }).isNumeric().withMessage("Price must be a number"),
+  body("capacity").optional({ checkFalsy: true }).isInt({ min: 1 }).withMessage("Capacity must be a positive number"),
+  body("clubId").optional({ checkFalsy: true }).isUUID().withMessage("Valid club ID required"),
+  body("teamId").optional({ checkFalsy: true }).isUUID().withMessage("Valid team ID required"),
+  body("teamIds").optional({ checkFalsy: true }).isArray().withMessage("teamIds must be an array of UUIDs"),
+  body("teamIds.*").optional({ checkFalsy: true }).isUUID().withMessage("Each team ID must be a valid UUID"),
+  body("teamScope").optional({ checkFalsy: true }).isIn(["all"]).withMessage("Invalid teamScope"),
+  body("recurrencePattern").optional({ checkFalsy: true }).isIn(["daily", "weekly", "monthly", "none"]).withMessage("Invalid recurrence pattern"),
+  body("recurrenceEndDate").optional({ checkFalsy: true }).isISO8601().withMessage("Invalid recurrence end date"),
+  body("requireDeclineReason").optional({ checkFalsy: true }).isBoolean().withMessage("Must be a boolean"),
+  body("notificationSchedule").optional({ checkFalsy: true }).isArray().withMessage("Notification schedule must be an array"),
+  body("assignedPlayers").optional({ checkFalsy: true }).isArray().withMessage("Assigned players must be an array of IDs"),
+];
+
 // Get all events (public with optional authentication)
 router.get("/", optionalAuth, async (req, res) => {
   try {
@@ -315,11 +361,13 @@ router.post(
   "/",
   authenticateToken,
   requireOrganization,
+  normalizeEventBody,
   eventValidation,
   async (req, res) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
+        console.error("Update event validation failed:", { body: req.body, errors: errors.array() });
         return res.status(400).json({
           error: "Validation failed",
           details: errors.array(),
@@ -508,20 +556,32 @@ router.post(
         }
       });
       
-      // Sync each event with Stripe if price is set
+      // Sync each event with Stripe if price is set; collect errors/results
+      const stripeSyncResults = [];
       for (const ev of createdEvents) {
           if (ev.price > 0) {
-              await syncProductToStripe({
+              const syncResult = await syncProductToStripe({
                   type: 'event',
                   id: ev.id,
                   name: ev.title,
                   price: ev.price,
                   clubId: ev.club_id
               });
+
+              if (syncResult && syncResult.error) {
+                stripeSyncResults.push({ eventId: ev.id, error: syncResult.error });
+              } else if (syncResult && syncResult.priceId) {
+                stripeSyncResults.push({ eventId: ev.id, productId: syncResult.productId, priceId: syncResult.priceId });
+                try {
+                  await query(`UPDATE events SET stripe_product_id = $1, stripe_price_id = $2 WHERE id = $3`, [syncResult.productId, syncResult.priceId, ev.id]);
+                } catch (pErr) {
+                  console.warn('Could not persist stripe ids to events table:', pErr.message);
+                }
+              }
           }
       }
 
-      res.status(201).json({
+      const response = {
         message:
           createdEvents.length > 1
             ? `Created ${createdEvents.length} recurring events`
@@ -529,7 +589,11 @@ router.post(
         events: createdEvents,
         event: createdEvents[0],
         count: createdEvents.length,
-      });
+      };
+
+      if (stripeSyncResults.length > 0) response.stripeSync = stripeSyncResults;
+
+      res.status(201).json(response);
 
       // Email Notifications (Primary event only for now to avoid spam)
       if (createdEvents[0].team_id) {
@@ -551,7 +615,8 @@ router.put(
   "/:id",
   authenticateToken,
   requireOrganization,
-  eventValidation,
+  normalizeEventBody,
+  updateEventValidation,
   async (req, res) => {
     try {
       const errors = validationResult(req);
@@ -2830,6 +2895,64 @@ router.post(
     } catch (err) {
       console.error("Match stats recording error:", err);
       res.status(500).json({ error: "Failed to record player match stats" });
+    }
+  },
+);
+
+// 📸 POST /api/events/:id/upload-image — Upload event banner image
+const eventImgDir = path.join(__dirname, "..", "uploads", "event-images");
+if (!fs.existsSync(eventImgDir)) {
+  fs.mkdirSync(eventImgDir, { recursive: true });
+}
+
+const imgStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, eventImgDir),
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, "event-" + uniqueSuffix + path.extname(file.originalname));
+  },
+});
+
+const imgUpload = multer({
+  storage: imgStorage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith("image/")) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only images are allowed"));
+    }
+  },
+});
+
+router.post(
+  "/:id/upload-image",
+  authenticateToken,
+  imgUpload.single("image"),
+  async (req, res) => {
+    try {
+      console.log('Upload image request received for event:', req.params.id, 'filePresent:', !!req.file);
+      console.log('Upload request body keys:', Object.keys(req.body || {}));
+      if (!req.file) {
+        return res.status(400).json({ error: "No image uploaded" });
+      }
+
+      const imageUrl = `/uploads/event-images/${req.file.filename}`;
+
+      // Update the event's image_url
+      const result = await query(
+        `UPDATE events SET image_url = $1, updated_at = NOW() WHERE id = $2 RETURNING image_url`,
+        [imageUrl, req.params.id],
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: "Event not found" });
+      }
+
+      res.json({ message: "Image uploaded", imageUrl: result.rows[0].image_url });
+    } catch (err) {
+      console.error("Upload event image error:", err);
+      res.status(500).json({ error: "Failed to upload image" });
     }
   },
 );

@@ -257,6 +257,50 @@ router.get("/:id", authenticateToken, async (req, res) => {
     });
   }
 });
+// GET /:id/details – returns team info plus current roster
+router.get('/:id/details', authenticateToken, requireOrganization, async (req, res) => {
+  try {
+    const teamResult = await query(
+      `SELECT t.*, c.owner_id FROM teams t JOIN organizations c ON t.club_id = c.id WHERE t.id = $1`,
+      [req.params.id]
+    );
+    if (teamResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Team not found' });
+    }
+    const team = teamResult.rows[0];
+    const playersResult = await query(
+      `SELECT p.* FROM players p JOIN team_players tp ON p.id = tp.player_id WHERE tp.team_id = $1`,
+      [req.params.id]
+    );
+    team.players = playersResult.rows;
+    res.json(team);
+  } catch (err) {
+    console.error('Get team details error:', err);
+    res.status(500).json({ error: 'Failed to fetch team details' });
+  }
+});
+
+// GET /:id/players – list all club players not already on the team (for picker UI)
+router.get('/:id/players', authenticateToken, requireOrganization, async (req, res) => {
+  try {
+    // Fetch the team to obtain club_id
+    const teamRes = await query(`SELECT club_id FROM teams WHERE id = $1`, [req.params.id]);
+    if (teamRes.rows.length === 0) {
+      return res.status(404).json({ error: 'Team not found' });
+    }
+    const clubId = teamRes.rows[0].club_id;
+    // All players in the club
+    const allPlayers = await query(`SELECT * FROM players WHERE club_id = $1`, [clubId]);
+    // Players already assigned to this team
+    const assigned = await query(`SELECT player_id FROM team_players WHERE team_id = $1`, [req.params.id]);
+    const assignedIds = new Set(assigned.rows.map(r => r.player_id));
+    const available = allPlayers.rows.filter(p => !assignedIds.has(p.id));
+    res.json({ available_players: available });
+  } catch (err) {
+    console.error('Get team players error:', err);
+    res.status(500).json({ error: 'Failed to fetch players for team' });
+  }
+});
 
 // Create new team
 router.post(

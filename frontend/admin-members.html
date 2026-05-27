@@ -3,6 +3,9 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <script>
         // Ensure legacy pages referencing bare `isPlayer` won't throw during dev/runtime.
         window.isPlayer = window.isPlayer || false;
@@ -20,10 +23,10 @@
     <link rel="icon" type="image/png" href="/images/logo.png">
     <link rel="apple-touch-icon" href="/images/logo.png">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" crossorigin="anonymous">
-    <link rel="stylesheet" href="styles.css?v=20260502">
-    <link rel="stylesheet" href="design-system.css?v=20260502">
-    <link rel="stylesheet" href="unified-nav.css?v=20260502">
-    <link rel="stylesheet" href="quick-fixes.css?v=20260502">
+    <link rel="stylesheet" href="styles.css?v=20260526">
+    <link rel="stylesheet" href="design-system.css?v=20260526">
+    <link rel="stylesheet" href="unified-nav.css?v=20260526">
+    <link rel="stylesheet" href="quick-fixes.css?v=20260526">
     <style id="ch-inline-overrides">
         /* Immediate overrides to ensure mobile card and search layout updates without waiting for cached CSS */
         .dashboard-container, .container { padding-left: 0.6rem !important; padding-right: 0.6rem !important; }
@@ -484,7 +487,7 @@
                     </div>
                     <div id="membersListContainer">
                         <div class="table-responsive">
-                            <table id="adminMembersTable" class="data-table">
+                            <table id="adminMembersTable" class="data-table" data-actions-injected="1">
                                 <thead>
                                     <tr>
                                         <th>Name</th>
@@ -907,18 +910,16 @@
                             <option value="">-- No Squad --</option>
                         </select>
                     </div>
-                    </div>
                     <!-- Debug dump for troubleshooting prefill issues -->
                     <div id="editMemberDebugWrap" style="margin-top:1rem; display:none;">
                         <label style="font-size:0.75rem; color:var(--text-muted);">Debug: member payload</label>
                         <pre id="editMemberDebug" style="max-height:180px; overflow:auto; background:rgba(0,0,0,0.25); color:#d1d5db; padding:0.75rem; border-radius:8px; font-size:0.75rem;"></pre>
                     </div>
                 </form>
-            
+            </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" onclick="closeModal('editMemberModal')">Cancel</button>
                 <button type="submit" class="btn btn-primary" form="editMemberForm">Save Changes</button>
-            </div>
             </div>
         </div>
     </div>
@@ -1130,7 +1131,7 @@
 
                     const tdName = document.createElement('td'); tdName.setAttribute('data-label','Name'); tdName.style.padding = '1rem 0.5rem';
                     const fullName = ((m.first_name || '') + (m.last_name ? (' ' + m.last_name) : '')).trim();
-                    const nameDiv = document.createElement('div'); nameDiv.style.fontWeight = '700'; nameDiv.style.color = '#fff'; nameDiv.textContent = fullName || m.email || 'Pending Invitation';
+                    const nameDiv = document.createElement('div'); nameDiv.style.fontWeight = '700'; nameDiv.style.color = '#fff'; nameDiv.textContent = fullName || 'Unnamed Member';
                     const emailDiv = document.createElement('div'); emailDiv.style.fontSize = '0.75rem'; emailDiv.style.color = 'var(--text-muted)'; emailDiv.textContent = m.email || '';
                     tdName.appendChild(nameDiv); tdName.appendChild(emailDiv);
 
@@ -1165,27 +1166,38 @@
                     const tdActions = document.createElement('td'); tdActions.setAttribute('data-label','Actions'); tdActions.style.padding = '1rem 0.5rem'; tdActions.style.textAlign = 'right';
                     const actionsDiv = document.createElement('div'); actionsDiv.style.display = 'flex'; actionsDiv.style.gap = '0.5rem'; actionsDiv.style.justifyContent = 'flex-end';
 
-                    if (!isInvite && isRegisteredPlayer && !isOwner) {
-                        const assignBtn = document.createElement('button'); assignBtn.className = 'btn btn-text btn-small'; assignBtn.style.color = 'var(--accent-cyan)'; assignBtn.textContent = 'Assign Plan';
-                        assignBtn.addEventListener('click', () => openAssignPlanModal(m.id, (m.first_name||'') + ' ' + (m.last_name||''), m.email));
-                        actionsDiv.appendChild(assignBtn);
-                    }
-
-                    const editBtn = document.createElement('button'); editBtn.className = 'btn btn-text btn-small'; editBtn.textContent = 'Edit';
-                    editBtn.addEventListener('click', () => openEditMemberModal(m.id, m));
-                    actionsDiv.appendChild(editBtn);
-
                     if (isInvite) {
+                        // Pending invite actions: Approve, Edit, Resend, Delete
+                        const approveBtn = document.createElement('button'); approveBtn.className = 'btn btn-text btn-small'; approveBtn.style.color = '#4ade80'; approveBtn.textContent = 'Approve';
+                        approveBtn.addEventListener('click', () => approveInvite(m.id, m));
+                        actionsDiv.appendChild(approveBtn);
+
+                        const editBtn = document.createElement('button'); editBtn.className = 'btn btn-text btn-small'; editBtn.textContent = 'Edit';
+                        editBtn.addEventListener('click', () => openEditMemberModal(m.id, m));
+                        actionsDiv.appendChild(editBtn);
+
                         const resendBtn = document.createElement('button'); resendBtn.className = 'btn btn-text btn-small'; resendBtn.style.color = '#f59e0b'; resendBtn.textContent = 'Resend';
                         resendBtn.addEventListener('click', () => resendInvite(m.id));
                         actionsDiv.appendChild(resendBtn);
-                        const cancelBtn = document.createElement('button'); cancelBtn.className = 'btn btn-text btn-small'; cancelBtn.style.color = '#f87171'; cancelBtn.textContent = 'Cancel';
+
+                        const cancelBtn = document.createElement('button'); cancelBtn.className = 'btn btn-text btn-small'; cancelBtn.style.color = '#f87171'; cancelBtn.textContent = 'Delete';
                         cancelBtn.addEventListener('click', () => deleteMember(m.id, m.role || 'player'));
                         actionsDiv.appendChild(cancelBtn);
                     } else if (isOwner) {
                         const ownerBtn = document.createElement('button'); ownerBtn.className = 'btn btn-text btn-small'; ownerBtn.style.opacity = '0.5'; ownerBtn.style.pointerEvents = 'none'; ownerBtn.textContent = 'Owner';
                         actionsDiv.appendChild(ownerBtn);
                     } else {
+                        // Active member actions: Edit, Delete (no Assign Plan unless registered player)
+                        const editBtn = document.createElement('button'); editBtn.className = 'btn btn-text btn-small'; editBtn.textContent = 'Edit';
+                        editBtn.addEventListener('click', () => openEditMemberModal(m.id, m));
+                        actionsDiv.appendChild(editBtn);
+
+                        if (!isOwner) {
+                            const assignBtn = document.createElement('button'); assignBtn.className = 'btn btn-text btn-small'; assignBtn.style.color = 'var(--accent-cyan)'; assignBtn.textContent = 'Assign Plan';
+                            assignBtn.addEventListener('click', () => openAssignPlanModal(m.id, (m.first_name||'') + ' ' + (m.last_name||''), m.email));
+                            actionsDiv.appendChild(assignBtn);
+                        }
+
                         const delBtn = document.createElement('button'); delBtn.className = 'btn btn-text btn-small'; delBtn.style.color = '#f87171'; delBtn.textContent = '🗑️';
                         delBtn.addEventListener('click', () => deleteMember(m.id, m.role || 'player'));
                         actionsDiv.appendChild(delBtn);
@@ -1201,6 +1213,12 @@
                     frag.appendChild(tr);
                 }
                 tbody.appendChild(frag);
+                // Mark table as already having action buttons so unified-nav.js doesn't override them
+                const adminTable = document.getElementById('adminMembersTable');
+                if (adminTable) adminTable.dataset.actionsInjected = "1";
+                // Re-apply after a brief delay to fight off the unified-nav MutationObserver
+                setTimeout(() => { if (adminTable) adminTable.dataset.actionsInjected = "1"; }, 50);
+                setTimeout(() => { if (adminTable) adminTable.dataset.actionsInjected = "1"; }, 300);
             } catch (err) {
                 console.error("renderMembersTable error:", err);
                 tbody.innerHTML = '<tr><td colspan="6" style="padding:2rem; text-align:center; color:var(--accent-red);">Failed to render members.</td></tr>';
@@ -1516,19 +1534,43 @@
                 }
             } catch (e) { console.warn('Debug panel update failed', e); }
 
-            // If caller provided only an ID or we still have a non-object, attempt to fetch full member details
-            if (!member || typeof member !== 'object') {
+            // Attempt to fetch full member details including player-specific fields (date_of_birth, position)
+            // The member object passed from the table may be sparse (e.g. from dashboard data or invites merge).
+            // Since there's no GET /api/members/:id endpoint, we fetch the full members list and find the member.
+            // Enrichment needed when player-specific fields are missing (null/undefined/empty)
+            const hasDob = member && (member.date_of_birth || member.dob || member.date);
+            const hasPos = member && (member.position || member.team_position);
+            const hasPlayerId = member && (member.player_id);
+            const needsEnrichment = !member || typeof member !== 'object' ||
+                !hasDob || !hasPos || !hasPlayerId;
+            if (needsEnrichment) {
                 try {
-                    const fetched = await apiService.get(`/members/${id}`);
-                    if (fetched && typeof fetched === 'object') member = fetched;
+                    const membersResp = await apiService.get('/members');
+                    if (membersResp && membersResp.members) {
+                        const found = membersResp.members.find(x => String(x.id || x.user_id) === String(id));
+                        if (found) {
+                            // Merge enriched fields into the member object, preserving what we have
+                            member = Object.assign({}, member, found);
+                        }
+                    }
                 } catch (err) {
+                    // Fallback: try dashboard data
                     try {
                         const dash = await apiService.getAdminDashboardData();
-                        const all = dash.players || dash.members || [];
+                        const all = dash.players || dash.members || dash.staff || [];
                         const found = all.find(x => String(x.id || x.user_id || x.player_id) === String(id));
-                        if (found) member = found;
+                        if (found) member = Object.assign({}, member, found);
                     } catch (e) { /* ignore */ }
                 }
+                // Update debug panel with enriched data
+                try {
+                    const dbg = document.getElementById('editMemberDebug');
+                    const dbgWrap = document.getElementById('editMemberDebugWrap');
+                    if (dbg && dbgWrap) {
+                        dbg.textContent = JSON.stringify(member || { id }, null, 2);
+                        dbgWrap.style.display = 'block';
+                    }
+                } catch (e) { /* ignore */ }
             }
 
             document.getElementById('editMemberId').value = id || member.id || member.user_id || '';
@@ -1547,22 +1589,9 @@
                 document.getElementById('editPosition').value = member.position || member.team_position || '';
             }
             if (document.getElementById('editSquadSelect')) {
-                // Ensure squads are loaded then set value
-                try {
-                    const data = await apiService.getAdminDashboardData();
-                    const teams = data.teams || [];
-                    const sel = document.getElementById('editSquadSelect');
-                    sel.innerHTML = '<option value="">-- No Squad --</option>';
-                    teams.forEach(t => {
-                        const o = document.createElement('option');
-                        o.value = t.id;
-                        o.textContent = t.name;
-                        sel.appendChild(o);
-                    });
-                    sel.value = member.team_id || member.teamId || '';
-                } catch (e) {
-                    // leave as-is
-                }
+                // Set the team/squad value from the member data (dropdown already populated by loadTeamsForDropdown)
+                const sel = document.getElementById('editSquadSelect');
+                sel.value = member.team_id || member.teamId || '';
             }
 
             // Force modal overlay centering and sizing to avoid layout conflicts
@@ -1599,19 +1628,24 @@
         window.handleEditMember = async function(e) {
             e.preventDefault();
             const id = document.getElementById('editMemberId').value;
+            // Helper: convert empty string to null so the backend's COALESCE works correctly
+            const toNull = (val) => (val === '' || val === undefined) ? null : val;
+            const dobVal = document.getElementById('editDOB') ? toNull(document.getElementById('editDOB').value) : null;
+            const posVal = document.getElementById('editPosition') ? toNull(document.getElementById('editPosition').value) : null;
+            const squadVal = document.getElementById('editSquadSelect') ? toNull(document.getElementById('editSquadSelect').value) : null;
             const data = {
                 first_name: document.getElementById('editFirstName').value,
                 last_name: document.getElementById('editLastName').value,
                 email: document.getElementById('editEmail').value,
                 role: document.getElementById('editRole').value,
                 // Provide multiple date field names to match varying backend expectations
-                dateOfBirth: document.getElementById('editDOB') ? document.getElementById('editDOB').value : null,
-                date_of_birth: document.getElementById('editDOB') ? document.getElementById('editDOB').value : null,
-                dob: document.getElementById('editDOB') ? document.getElementById('editDOB').value : null,
+                dateOfBirth: dobVal,
+                date_of_birth: dobVal,
+                dob: dobVal,
                 // Position mappings
-                position: document.getElementById('editPosition') ? document.getElementById('editPosition').value : null,
-                teamId: document.getElementById('editSquadSelect') ? document.getElementById('editSquadSelect').value : null,
-                team_id: document.getElementById('editSquadSelect') ? document.getElementById('editSquadSelect').value : null
+                position: posVal,
+                teamId: squadVal,
+                team_id: squadVal
             };
 
             // If editing an invite id, try invite endpoints first (they often error on /members/:id)
@@ -1670,21 +1704,6 @@
             }
         };
 
-        window.deleteMember = async function(id, role) {
-            // Prevent deleting the owner
-            if (role && String(role).toLowerCase() === 'owner') {
-                return showNotification('Cannot remove the owner of the group', 'error');
-            }
-            if (!confirm("Are you sure you want to remove this member?")) return;
-            try {
-                await apiService.delete(`/members/${id}`);
-                showNotification("Member removed", "success");
-                loadMembers();
-            } catch (err) {
-                showNotification("Failed to remove member", "error");
-            }
-        };
-
         window.resendInvite = async function(id) {
             if (!confirm('Resend this invite email?')) return;
             try {
@@ -1693,6 +1712,152 @@
             } catch (err) {
                 console.error('Resend invite error', err);
                 showNotification('Failed to resend invite', 'error');
+            }
+        };
+
+        // Patch the unified-nav MutationObserver to skip our adminMembersTable
+        // This prevents it from overriding the custom action buttons we render.
+        (function patchUnifiedNavObserver() {
+            try {
+                const patchObserver = () => {
+                    const obs = window.__tableObserver;
+                    if (!obs) return setTimeout(patchObserver, 200);
+                    // Disconnect and re-create with a filter that ignores adminMembersTable
+                    obs.disconnect();
+                    const origCallback = obs._callback || (() => {});
+                    const newObs = new MutationObserver((mutations) => {
+                        let needsUpdate = false;
+                        mutations.forEach(m => {
+                            if (m.type === 'childList' && m.addedNodes.length > 0) {
+                                let target = m.target;
+                                if (target.tagName === 'TBODY' || target.tagName === 'TR') {
+                                    const table = target.closest('table');
+                                    if (table) {
+                                        // Skip our admin members table
+                                        if (table.id === 'adminMembersTable') return;
+                                        table.removeAttribute('data-actions-injected');
+                                        needsUpdate = true;
+                                    }
+                                } else if (target.tagName === 'TABLE') {
+                                    if (target.id === 'adminMembersTable') return;
+                                    needsUpdate = true;
+                                } else if (target.querySelector && target.querySelector('table')) {
+                                    if (target.querySelector('#adminMembersTable')) return;
+                                    needsUpdate = true;
+                                }
+                            }
+                        });
+                        // Rest of original logic runs only for non-adminMembersTable
+                        if (needsUpdate || document.querySelector("table:not([data-actions-injected])")) {
+                            document.querySelectorAll("table").forEach((table) => {
+                                if (table.dataset.actionsInjected || table.id === 'adminMembersTable') return;
+                                // Re-run label logic + injectActionButtons (original code in unified-nav)
+                                const headers = Array.from(table.querySelectorAll("thead th")).map((th) => th.textContent.trim());
+                                if (headers.length > 0) {
+                                    table.querySelectorAll("tbody tr").forEach((row) => {
+                                        row.querySelectorAll("td").forEach((td, index) => {
+                                            if (headers[index] && !td.getAttribute("data-label")) {
+                                                td.setAttribute("data-label", headers[index]);
+                                            }
+                                        });
+                                    });
+                                }
+                                if (typeof window.__injectActionButtons === 'function') {
+                                    window.__injectActionButtons(table);
+                                }
+                            });
+                        }
+                    });
+                    newObs._callback = origCallback;
+                    newObs.observe(document.body, { childList: true, subtree: true });
+                    window.__tableObserver = newObs;
+                    // Also ensure adminMembersTable always has the guard
+                    const adminTbl = document.getElementById('adminMembersTable');
+                    if (adminTbl) adminTbl.dataset.actionsInjected = "1";
+                };
+                // Wait for unified-nav to set up its observer
+                if (window.__tableObserver) {
+                    patchObserver();
+                } else {
+                    const iv = setInterval(() => {
+                        if (window.__tableObserver) {
+                            clearInterval(iv);
+                            patchObserver();
+                        }
+                    }, 50);
+                }
+            } catch (e) {
+                console.warn('Failed to patch unified-nav observer:', e);
+            }
+        })();
+
+        window.approveInvite = async function(id, member) {
+            // Extract the numeric invite ID if passed as "invite-123"
+            const inviteId = String(id).replace(/^invite-/, '');
+            const name = (member && (member.first_name || '') + ' ' + (member.last_name || '')).trim() || 'this member';
+            
+            // Use a styled confirmation modal instead of browser confirm
+            const existing = document.getElementById('__ch-confirm-approve-modal');
+            if (existing) existing.remove();
+            
+            const modal = document.createElement('div');
+            modal.id = '__ch-confirm-approve-modal';
+            modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:99999;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.15s ease;';
+            modal.innerHTML = `
+              <div style="background:#1a1a1c;border:1px solid rgba(74,222,128,0.3);border-radius:20px;padding:2rem;max-width:420px;width:90%;box-shadow:0 25px 60px rgba(0,0,0,0.6);animation:slideUp 0.2s ease;">
+                <div style="width:56px;height:56px;border-radius:16px;background:rgba(74,222,128,0.15);border:1px solid rgba(74,222,128,0.3);display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:1.25rem;">✅</div>
+                <h3 style="margin:0 0 0.5rem;font-size:1.15rem;font-weight:800;color:#fff;">Approve Member</h3>
+                <p style="margin:0 0 1.5rem;color:rgba(255,255,255,0.55);font-size:0.88rem;line-height:1.5;">Approve <strong style="color:#f1f5f9;">${name}</strong> as a member? Their invite will be accepted and they will be added to the club.</p>
+                <div style="display:flex;gap:0.75rem;">
+                  <button id="__ch-approve-cancel" style="flex:1;padding:0.75rem;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#fff;font-size:0.88rem;font-weight:600;cursor:pointer;">Cancel</button>
+                  <button id="__ch-approve-confirm" style="flex:1;padding:0.75rem;background:rgba(74,222,128,0.85);border:none;border-radius:10px;color:#fff;font-size:0.88rem;font-weight:700;cursor:pointer;box-shadow:0 4px 15px rgba(74,222,128,0.3);">Approve</button>
+                </div>
+              </div>
+              <style>@keyframes fadeIn{from{opacity:0}to{opacity:1}}@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}</style>
+            `;
+            document.body.appendChild(modal);
+            
+            // Close handlers
+            modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+            document.getElementById('__ch-approve-cancel').onclick = () => modal.remove();
+            
+            // Confirm action
+            document.getElementById('__ch-approve-confirm').onclick = async () => {
+                modal.remove();
+                try {
+                    const result = await apiService.post(`/invites/${inviteId}/approve`, {});
+                    showNotification(`✅ ${name} approved and added as member`, 'success');
+                    loadMembers();
+                } catch (err) {
+                    console.error('Approve invite error', err);
+                    let msg = 'Failed to approve invite';
+                    if (err && err.error) msg = err.error;
+                    else if (err && err.message) msg = err.message;
+                    showNotification('❌ ' + msg, 'error');
+                }
+            };
+        };
+
+        window.deleteMember = async function(id, role) {
+            // For invite IDs, use the invites delete endpoint
+            const isInviteId = String(id).startsWith('invite-');
+            // Prevent deleting the owner
+            if (role && String(role).toLowerCase() === 'owner') {
+                return showNotification('Cannot remove the owner of the group', 'error');
+            }
+            if (!confirm("Are you sure you want to remove this member?")) return;
+            try {
+                if (isInviteId) {
+                    const inviteId = String(id).replace(/^invite-/, '');
+                    await apiService.delete(`/invites/${inviteId}`);
+                    showNotification("Invite deleted", "success");
+                } else {
+                    await apiService.delete(`/members/${id}`);
+                    showNotification("Member removed", "success");
+                }
+                loadMembers();
+            } catch (err) {
+                showNotification("Failed to remove member", "error");
             }
         };
 

@@ -360,6 +360,177 @@ router.post('/:id/resend', authenticateToken, injectOrgContext, requireOrganizat
   }
 });
 
+// 🔥 ADMIN APPROVE INVITE - Convert a pending invite into an active member
+router.post('/:id/approve', authenticateToken, injectOrgContext, requireOrganization, async (req, res) => {
+  try {
+    const inviteId = req.params.id;
+
+    // Fetch the invite - use the org from the invite itself
+    const inviteRes = await query(
+      `SELECT i.*, c.name as club_name
+       FROM invitations i
+       JOIN organizations c ON c.id = i.organization_id
+       WHERE i.id = $1`,
+      [inviteId]
+    );
+    if (inviteRes.rows.length === 0) return res.status(404).json({ error: 'Invite not found' });
+    const invite = inviteRes.rows[0];
+    const orgId = invite.organization_id;
+
+    if (invite.status !== 'pending') return res.status(400).json({ error: 'Invite is not pending, already ' + invite.status });
+
+    // Verify caller is admin/owner
+    const permCheck = await query(
+      `SELECT role FROM organization_members WHERE organization_id = $1 AND user_id = $2 AND status = 'active'`,
+      [orgId, req.user.id]
+    );
+    if (permCheck.rows.length === 0) return res.status(403).json({ error: 'Not authorized' });
+    const callerRole = permCheck.rows[0].role;
+    if (!['owner', 'admin'].includes(callerRole)) return res.status(403).json({ error: 'Only owners and admins can approve invites' });
+
+    const result = await withTransaction(async (client) => {
+      // 1. Find or create user account
+      const email = invite.email || `invited-${invite.id}@clubhub.local`;
+      const firstName = invite.first_name || 'Invited';
+      const lastName = invite.last_name || 'Member';
+      const role = invite.role || 'player';
+
+      let userId = null;
+      const existingUser = await client.query(
+        'SELECT id FROM users WHERE email = $1',
+        [email]
+      );
+      if (existingUser.rows.length > 0) {
+        userId = existingUser.rows[0].id;
+      } else {
+        const newUser = await client.query(
+          `INSERT INTO users (email, first_name, last_name, password_hash, account_type)
+           VALUES ($1, $2, $3, 'approved-invite-no-password', 'adult')
+           RETURNING id`,
+          [email, firstName, lastName]
+        );
+        userId = newUser.rows[0].id;
+      }
+
+      // 2. Add to organization_members so the member appears in the list
+      const existingMember = await client.query(
+        'SELECT id FROM organization_members WHERE user_id = $1 AND organization_id = $2',
+        [userId, orgId]
+      );
+      if (existingMember.rows.length === 0) {
+        await client.query(
+          `INSERT INTO organization_members (user_id, organization_id, role, status, joined_at)
+           VALUES ($1, $2, $3, 'active', NOW())`,
+          [userId, orgId, role]
+        );
+      }
+
+      // 3. Mark invite as accepted
+      await client.query(
+        `UPDATE invitations SET status = 'accepted', accepted_at = NOW(), accepted_by = $1 WHERE id = $2`,
+        [req.user.id, invite.id]
+      );
+
+      // 4. Create or update player record
+      const existingPlayer = await client.query(
+        'SELECT id FROM players WHERE user_id = $1 AND club_id = $2',
+        [userId, orgId]
+      );
+      let playerId;
+      if (existingPlayer.rows.length > 0) {
+        playerId = existingPlayer.rows[0].id;
+        await client.query(
+          `UPDATE players SET first_name = $1, last_name = $2, email = $3,
+           date_of_birth = COALESCE($4, date_of_birth), position = COALESCE($5, position)
+           WHERE id = $6`,
+          [firstName, lastName, email, invite.date_of_birth || null, invite.position || null, playerId]
+        );
+      } else {
+        const newPlayer = await client.query(
+          `INSERT INTO players (user_id, club_id, first_name, last_name, email, date_of_birth, position)
+           VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+          [userId, orgId, firstName, lastName, email, invite.date_of_birth || null, invite.position || null]
+        );
+        playerId = newPlayer.rows[0].id;
+      }
+
+      // 5. Assign to team if specified
+      if (invite.team_id) {
+        await client.query('DELETE FROM team_players WHERE player_id = $1', [playerId]);
+        await client.query(
+          `INSERT INTO team_players (team_id, player_id, position) VALUES ($1, $2, $3)`,
+          [invite.team_id, playerId, invite.position || null]
+        );
+      }
+
+      return { playerId, firstName, lastName };
+    });
+
+    res.json({
+      success: true,
+      message: `Invite for ${result.firstName} ${result.lastName} approved and added as member`,
+      player: { id: result.playerId }
+    });
+  } catch (err) {
+    console.error('Approve invite error:', err);
+    if (err && err.code === '23505') {
+      return res.status(400).json({ error: 'Member already exists with this email', detail: err.detail || err.message });
+    }
+    res.status(500).json({ error: 'Failed to approve invite', detail: err && err.message ? err.message : String(err) });
+  }
+});
+
+// 🔥 ADMIN UPDATE INVITE - Update a pending invite's details
+router.post('/:id/update', authenticateToken, injectOrgContext, requireOrganization, async (req, res) => {
+  try {
+    const inviteId = req.params.id;
+    const orgId = req.user.organization_id;
+    const { first_name, last_name, email, role, dateOfBirth, date_of_birth, position, teamId, team_id } = req.body;
+
+    const inviteRes = await query('SELECT * FROM invitations WHERE id = $1 AND organization_id = $2', [inviteId, orgId]);
+    if (inviteRes.rows.length === 0) return res.status(404).json({ error: 'Invite not found' });
+
+    const dob = dateOfBirth || date_of_birth || null;
+    const squadTeamId = teamId || team_id || null;
+
+    await query(
+      `UPDATE invitations SET
+        first_name = COALESCE($1, first_name),
+        last_name = COALESCE($2, last_name),
+        email = COALESCE($3, email),
+        role = COALESCE($4, role),
+        date_of_birth = COALESCE($5, date_of_birth),
+        position = COALESCE($6, position),
+        team_id = COALESCE($7, team_id)
+       WHERE id = $8 AND organization_id = $9`,
+      [first_name || null, last_name || null, email || null, role || null, dob, position || null, squadTeamId, inviteId, orgId]
+    );
+
+    res.json({ success: true, message: 'Invite updated successfully' });
+  } catch (err) {
+    console.error('Update invite error:', err);
+    res.status(500).json({ error: 'Failed to update invite', detail: err && err.message ? err.message : String(err) });
+  }
+});
+
+// 🔥 DELETE INVITE
+router.delete('/:id', authenticateToken, injectOrgContext, requireOrganization, async (req, res) => {
+  try {
+    const inviteId = req.params.id;
+    const orgId = req.user.organization_id;
+
+    const inviteRes = await query('SELECT * FROM invitations WHERE id = $1 AND organization_id = $2', [inviteId, orgId]);
+    if (inviteRes.rows.length === 0) return res.status(404).json({ error: 'Invite not found' });
+
+    await query('DELETE FROM invitations WHERE id = $1', [inviteId]);
+
+    res.json({ success: true, message: 'Invite deleted successfully' });
+  } catch (err) {
+    console.error('Delete invite error:', err);
+    res.status(500).json({ error: 'Failed to delete invite' });
+  }
+});
+
 // 🔥 GET INVITE DETAILS (PUBLIC)
 router.get("/details/:token", async (req, res) => {
   try {

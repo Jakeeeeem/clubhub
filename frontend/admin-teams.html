@@ -648,15 +648,19 @@
             const select = document.getElementById('teamCoachSelect');
             if (!select) return;
             try {
-                const { coaches } = await apiService.get('/members?role=coach');
+                const resp = await apiService.get('/members');
+                // coaches key is now returned by the backend; fallback to staff filtered by role
+                const coachList = resp.coaches || (resp.staff || []).filter(s =>
+                    ['coach', 'assistant-coach', 'coaching-supervisor'].includes((s.role || '').toLowerCase())
+                );
                 select.innerHTML = '<option value="">-- Select Coach --</option>';
-                coaches.forEach(c => {
+                coachList.forEach(c => {
                     const opt = document.createElement('option');
-                    opt.value = c.id;
-                    opt.textContent = `${c.first_name} ${c.last_name}`;
+                    opt.value = c.player_id || c.user_id || c.id || '';
+                    opt.textContent = `${c.first_name || ''} ${c.last_name || ''}`.trim();
                     select.appendChild(opt);
                 });
-            } catch (e) { }
+            } catch (e) { console.warn('loadAvailableCoaches failed', e); }
         }
 
         async function loadAvailablePlayers() {
@@ -664,23 +668,50 @@
             if (!select) return;
             select.innerHTML = '<option value="">Loading players...</option>';
             try {
-                const { players } = await apiService.get('/members');
+                const resp = await apiService.get('/members');
+
+                // Use the full members list (same as the Members page) and filter locally
+                // so that anyone the admin sees in Members also appears here.
+                const allMembers = resp.members || [];
+                const playersFromApi = resp.players || [];
+
+                // Build a de-duplicated player list:
+                // - Anyone in the players[] array (role=player) from the API
+                // - Anyone in members[] with role='player' (catches mismatched casing)
+                // - Anyone in members[] who has a player_id (linked player record)
+                const seenIds = new Set();
+                const playerList = [];
+                const addToList = (p) => {
+                    const key = String(p.player_id || p.user_id || p.id || p.email || '');
+                    if (!key || seenIds.has(key)) return;
+                    seenIds.add(key);
+                    playerList.push(p);
+                };
+
+                playersFromApi.forEach(addToList);
+                allMembers.forEach(m => {
+                    const role = (m.role || '').toString().toLowerCase();
+                    if (role === 'player' || m.player_id) addToList(m);
+                });
+
                 select.innerHTML = '';
-                if (!players || players.length === 0) {
+                if (playerList.length === 0) {
                     select.innerHTML = '<option value="">No players found</option>';
                     if (window.syncCustomPlayerPicker) window.syncCustomPlayerPicker();
                     return;
                 }
-                players.forEach(p => {
+                playerList.forEach(p => {
                     const opt = document.createElement('option');
-                    opt.value = p.id || p.user_id || p.player_id || '';
-                    opt.textContent = `${p.first_name || ''} ${p.last_name || ''} ${p.email ? '• ' + p.email : ''}`;
+                    // Prefer player_id so team_players joins work correctly; fall back to user_id
+                    opt.value = p.player_id || p.user_id || p.id || '';
+                    opt.textContent = `${p.first_name || ''} ${p.last_name || ''}`.trim() + (p.email ? ' • ' + p.email : '');
                     select.appendChild(opt);
                 });
                 
                 // Sync the custom visual picker
                 if (window.syncCustomPlayerPicker) window.syncCustomPlayerPicker();
             } catch (e) {
+                console.error('loadAvailablePlayers failed', e);
                 select.innerHTML = '<option value="">Failed to load players</option>';
                 if (window.syncCustomPlayerPicker) window.syncCustomPlayerPicker();
             }
@@ -837,7 +868,7 @@
             });
         };
 
-        window.openCreateTeamModal = function() {
+        window.openCreateTeamModal = async function() {
             document.getElementById('teamModalTitle').textContent = 'Create New Team';
             document.getElementById('teamSubmitBtn').textContent = 'Create Team';
             document.getElementById('teamId').value = '';
@@ -848,9 +879,9 @@
             if (searchInput) searchInput.value = '';
             
             // Populate coach and player selects if not already done
-            loadAvailableCoaches();
-            loadAvailablePlayers();
-            loadAvailableForms();
+            await loadAvailableCoaches();
+            await loadAvailablePlayers();
+            await loadAvailableForms();
             
             openModal('teamModal');
         };
@@ -924,7 +955,26 @@
                 if (playersSelect) {
                     playersSelect.innerHTML = '<option value="">Loading players...</option>';
                     try {
-                        const { players } = await apiService.get('/members');
+                        const resp = await apiService.get('/members');
+
+                        // Mirror the same logic as loadAvailablePlayers():
+                        // combine API players[] + members filtered by role/player_id
+                        const allMembers = resp.members || [];
+                        const playersFromApi = resp.players || [];
+                        const seenIds = new Set();
+                        const playerList = [];
+                        const addToList = (p) => {
+                            const key = String(p.player_id || p.user_id || p.id || p.email || '');
+                            if (!key || seenIds.has(key)) return;
+                            seenIds.add(key);
+                            playerList.push(p);
+                        };
+                        playersFromApi.forEach(addToList);
+                        allMembers.forEach(m => {
+                            const role = (m.role || '').toString().toLowerCase();
+                            if (role === 'player' || m.player_id) addToList(m);
+                        });
+
                                 // Build team identifier sets from possible shapes: players array, playerIds, emails, names
                                 const teamPlayerIds = new Set();
                                 const teamEmails = new Set();
@@ -956,17 +1006,15 @@
                                 // also accept comma-separated string
                                 if (typeof team.playerIds === 'string' && team.playerIds.includes(',')) team.playerIds.split(',').forEach(s => addTeamPerson(s.trim()));
 
-                                console.debug('DEBUG: available players count=', players.length, 'team.players count=', (team.players||[]).length);
-                                console.debug('DEBUG: sample available players ids=', players.slice(0,6).map(x=>x.id||x.user_id||x.player_id));
-                                console.debug('DEBUG: sample team players samples=', (team.players||[]).slice(0,6));
+                                console.debug('DEBUG: available players count=', playerList.length, 'team.players count=', (team.players||[]).length);
 
                                 playersSelect.innerHTML = '';
-                                players.forEach(p => {
+                                playerList.forEach(p => {
                                     const opt = document.createElement('option');
-                                    const val = p.id || p.user_id || p.player_id || p.member_id || '';
+                                    const val = p.player_id || p.user_id || p.id || '';
                                     opt.value = val;
                                     const namePart = `${p.first_name || p.first || ''} ${p.last_name || p.last || ''}`.trim();
-                                    opt.textContent = `${namePart} ${p.email ? '• ' + p.email : ''}`;
+                                    opt.textContent = `${namePart}${p.email ? ' • ' + p.email : ''}`;
 
                                     // Match by id first
                                     if (val && teamPlayerIds.has(String(val))) {
@@ -993,7 +1041,7 @@
                                 // DEBUG: log which player option values are selected
                                 try {
                                     const selected = Array.from(playersSelect.selectedOptions).map(o => o.value);
-                                    console.debug('DEBUG: edit modal selected playerIds ->', selected, 'teamPlayerIds ->', Array.from(teamPlayerIds), 'teamEmails ->', Array.from(teamEmails), 'teamNames ->', Array.from(teamNames));
+                                    console.debug('DEBUG: edit modal selected playerIds ->', selected, 'teamPlayerIds ->', Array.from(teamPlayerIds));
                                 } catch (e) { }
                     } catch (pe) {
                         playersSelect.innerHTML = '<option value="">Failed to load players</option>';
