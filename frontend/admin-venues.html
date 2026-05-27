@@ -145,11 +145,11 @@
                         
                         <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
                             <div class="form-group">
-                                <label style="font-size:0.85rem;">Season Start Date</label>
+                                <label style="font-size:0.85rem;">From Date</label>
                                 <input type="date" id="tbStartDate" style="width:100%;">
                             </div>
                             <div class="form-group">
-                                <label style="font-size:0.85rem;">Season End Date</label>
+                                <label style="font-size:0.85rem;">To Date</label>
                                 <input type="date" id="tbEndDate" style="width:100%;">
                             </div>
                         </div>
@@ -380,13 +380,20 @@
                     return;
                 }
 
-                container.innerHTML = venues.map(v => {
-                    // Get capacity from time block if available, else from venue-level
-                    const capacityDisplay = (v.time_blocks && v.time_blocks[0] && v.time_blocks[0].capacity) || v.capacity || 'N/A';
+                    container.innerHTML = venues.map(v => {
+                        // Robust capacity resolution: prefer explicit time block capacity, then venue-level capacity
+                        const tbCap = (v.time_blocks && v.time_blocks.length && (v.time_blocks[0].capacity !== null && v.time_blocks[0].capacity !== undefined)) ? v.time_blocks[0].capacity : null;
+                        const venueCap = (v.capacity !== null && v.capacity !== undefined) ? v.capacity : null;
+                        const capacityDisplay = (tbCap !== null) ? tbCap : (venueCap !== null ? venueCap : 'N/A');
                     const bannerBg = v.image_url 
                         ? `background:url('${resolveUploadUrl(v.image_url)}') center/cover` 
                         : `background:linear-gradient(135deg,#b91c1c,#7f1d1d)`;
                     const shortDesc = v.description || '';
+                    const tb = (v.time_blocks && v.time_blocks.length) ? v.time_blocks[0] : null;
+                    const availDates = tb && (tb.start_date || tb.end_date) ? `${tb.start_date ? tb.start_date.split('T')[0] : ''}${tb.start_date && tb.end_date ? ' → ' : ''}${tb.end_date ? tb.end_date.split('T')[0] : ''}` : '';
+                    const oh = v.opening_hours || null;
+                    const openingText = oh && (oh.open_time || oh.close_time) ? `${oh.open_time || ''}${oh.open_time && oh.close_time ? ' - ' : ''}${oh.close_time || ''}` : '';
+
                     return `
                     <div class="glass-card" style="padding:0;border:1px solid rgba(255,255,255,0.05);overflow:hidden;transition: transform 0.2s;">
                         <div style="height:120px;${bannerBg};display:flex;align-items:center;justify-content:center;font-size:2.5rem;position:relative;">
@@ -401,13 +408,15 @@
                                     <span style="font-size: 0.8rem; color: #4ade80; font-weight: 700;">£${formatPrice(v.hourly_rate || v.price || 0)}/hr</span>
                                 </div>
                             </div>
-                            <div style="font-size: 0.75rem; color: var(--text-muted); text-align: right;">
-                                👥 Cap: ${capacityDisplay}<br>
-                                ${v.stripe_price_id ? '<span style="color:#6366f1; font-size:0.65rem;">✓ Linked to Stripe</span>' : ''}
+                                    <div style="font-size: 0.85rem; text-align: right; display:flex; flex-direction:column; gap:0.4rem; align-items:flex-end;">
+                                        <div style="background:#ffffff;color:#111111;padding:0.25rem 0.6rem;border-radius:8px;font-weight:700;">👥 Cap: ${capacityDisplay}</div>
+                                        ${v.stripe_price_id ? '<span style="color:#6366f1; font-size:0.65rem;">✓ Linked to Stripe</span>' : ''}
                             </div>
                         </div>
                         <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">📍 ${v.location || v.address || ''}</p>
                         ${shortDesc ? `<p class="venue-desc" data-full="${(shortDesc||'').replace(/"/g,'&quot;')}" style="font-size:0.85rem;color:var(--text-muted);margin:0 0 0.75rem;">${truncateWords(shortDesc,18)}</p>` : ''}
+                        ${availDates ? `<div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:0.4rem;">📅 ${availDates}</div>` : ''}
+                        ${openingText ? `<div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:0.4rem;">⏰ ${openingText}</div>` : ''}
                         <div style="display: flex; gap: 0.5rem; margin-top: auto;">
                             <button class="btn btn-primary btn-small" style="flex: 2;" onclick="viewVenueBookings('${v.id}')">View</button>
                             <button class="btn btn-secondary btn-small" style="flex: 1;" onclick="editVenue('${v.id}')">Edit</button>
@@ -558,6 +567,7 @@
                 openModal('addVenueModal');
                 const form = document.getElementById('addVenueForm');
                 document.getElementById('venueName').value = v.name || '';
+                document.getElementById('venueDescription').value = v.description || '';
                 document.getElementById('venueAddress').value = v.location || v.address || '';
                 document.getElementById('venueType').value = v.type || 'pitch';
                 document.getElementById('venuePrice').value = v.hourly_rate || v.price || '';

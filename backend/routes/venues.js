@@ -157,7 +157,76 @@ router.put("/:id", authenticateToken, async (req, res) => {
       return res.status(404).json({ error: "Venue not found" });
     }
 
-    res.json(result.rows[0]);
+    const updatedVenue = result.rows[0];
+
+    // Replace time blocks if provided (delete existing and insert new)
+    const timeBlocks = req.body.time_blocks;
+    if (timeBlocks && Array.isArray(timeBlocks)) {
+      try {
+        await query(`DELETE FROM venue_time_blocks WHERE venue_id = $1`, [id]);
+        for (const tb of timeBlocks) {
+          await query(
+            `INSERT INTO venue_time_blocks (venue_id, days, start_time, end_time, capacity, start_date, end_date, excluded_dates)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+            [
+              id,
+              JSON.stringify(tb.days || []),
+              tb.start_time || null,
+              tb.end_time || null,
+              tb.capacity || null,
+              tb.start_date || null,
+              tb.end_date || null,
+              JSON.stringify(tb.excluded_dates || []),
+            ]
+          );
+        }
+      } catch (tbErr) {
+        console.warn('Could not save time blocks on update (table may not exist):', tbErr.message);
+      }
+    }
+
+    // Replace opening hours if provided
+    const openingHours = req.body.opening_hours;
+    if (openingHours && (openingHours.open_time || openingHours.close_time)) {
+      try {
+        // Clear existing then insert
+        await query(`DELETE FROM venue_opening_hours WHERE venue_id = $1`, [id]);
+        await query(
+          `INSERT INTO venue_opening_hours (venue_id, open_time, close_time, block_duration, block_type)
+           VALUES ($1, $2, $3, $4, $5)`,
+          [
+            id,
+            openingHours.open_time || null,
+            openingHours.close_time || null,
+            openingHours.block_duration || 60,
+            openingHours.block_type || 'fixed',
+          ]
+        );
+      } catch (ohErr) {
+        console.warn('Could not save opening hours on update (table may not exist):', ohErr.message);
+      }
+    }
+
+    // Re-fetch time blocks and opening hours to include in response
+    let timeBlocksRows = [];
+    let openingHoursRow = null;
+    try {
+      const tbRes = await query(`SELECT * FROM venue_time_blocks WHERE venue_id = $1 ORDER BY created_at ASC`, [id]);
+      timeBlocksRows = tbRes.rows;
+    } catch (e) {
+      /* ignore if table missing */
+    }
+    try {
+      const ohRes = await query(`SELECT * FROM venue_opening_hours WHERE venue_id = $1 LIMIT 1`, [id]);
+      openingHoursRow = ohRes.rows[0] || null;
+    } catch (e) {
+      /* ignore if table missing */
+    }
+
+    updatedVenue.time_blocks = timeBlocksRows;
+    updatedVenue.opening_hours = openingHoursRow;
+
+    res.json(updatedVenue);
   } catch (error) {
     console.error("Update venue error:", error);
     res.status(500).json({ error: "Failed to update venue" });
