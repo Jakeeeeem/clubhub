@@ -3047,6 +3047,13 @@ const UnifiedNav = {
   autoLabelTables() {
     const injectActionButtons = (table) => {
       if (table.dataset.actionsInjected) return;
+
+      // Skip tables inside competition detail view - they have their own Manage Match buttons
+      if (table.closest('#admin-comp-detail')) {
+        table.dataset.actionsInjected = "1";
+        return;
+      }
+
       const theadRow = table.querySelector("thead tr");
       if (!theadRow) return;
 

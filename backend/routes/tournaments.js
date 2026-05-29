@@ -234,7 +234,13 @@ router.get("/", authenticateToken, requireOrganization, async (req, res) => {
     }
 
     const result = await query(
-      "SELECT * FROM events WHERE club_id = $1 AND event_type = 'tournament' ORDER BY event_date DESC",
+      `SELECT e.*,
+              (SELECT COUNT(*) FROM tournament_teams WHERE event_id = e.id) AS teams_count,
+              (SELECT COUNT(*) FROM tournament_matches WHERE event_id = e.id) AS total_matches,
+              (SELECT COUNT(*) FROM tournament_matches WHERE event_id = e.id AND status = 'completed') AS completed_matches
+       FROM events e
+       WHERE e.club_id = $1 AND e.event_type = 'tournament'
+       ORDER BY e.event_date DESC`,
       [clubId],
     );
     res.json(result.rows);

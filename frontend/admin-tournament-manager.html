@@ -7,11 +7,11 @@
     <meta name="description" content="ClubHub - The ultimate sports group management platform">
     <meta name="theme-color" content="#dc4343">
     <link rel="icon" type="image/png" href="/images/logo.png">
-    <link rel="stylesheet" href="styles.css?v=20260529">
+    <link rel="stylesheet" href="styles.css?v=20260530">
     <link rel="stylesheet" href="design-system.css">
-    <link rel="stylesheet" href="unified-nav.css?v=20260529">
+    <link rel="stylesheet" href="unified-nav.css?v=20260530">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" crossorigin="anonymous">
-    <link rel="stylesheet" href="quick-fixes.css?v=20260529">
+    <link rel="stylesheet" href="quick-fixes.css?v=20260530">
     <style>
         :root { --admin-gold: #fbbf24; --admin-accent: rgba(251,191,36,0.1); }
         .admin-badge { background:var(--admin-accent); color:var(--admin-gold); padding:0.25rem 0.6rem; border-radius:6px; font-size:0.7rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; border:1px solid rgba(251,191,36,0.2); }
@@ -410,11 +410,11 @@
 </div>
 </div>
 
-<script src="app-state.js?v=20260529"></script>
-<script src="api-service.js?v=20260529"></script>
-<script src="tournament-ui.js?v=20260529"></script>
-<script src="unified-nav.js?v=20260529"></script>
-<script src="coach-dashboard.js"></script>
+<script src="app-state.js?v=20260530"></script>
+<script src="api-service.js?v=20260530"></script>
+<script src="tournament-ui.js?v=20260530"></script>
+<script src="unified-nav.js?v=20260530"></script>
+<script src="coach-dashboard.js?v=20260530"></script>
 <script>
 // ---------- Globals ----------
 window.currentCompId = null;
@@ -521,25 +521,26 @@ window.loadAdminCompetitions=async function(){
         const t=await apiService.getTournaments();
         if(!t||!t.length){c.innerHTML=renderEmptyState('No competitions created yet.','🏆');updateStats([]);return;}
         updateStats(t);
-        c.innerHTML=t.map(t=>{
-            let s;
-            try { s = typeof t.tournament_settings === 'string' ? JSON.parse(t.tournament_settings) : (t.tournament_settings||{}); } catch(e) { s={}; }
-            const ct=s.type||'knockout';
-            const tc=t.teams_count||0;
-            const tm=t.total_matches||0;
-            const cm=t.completed_matches||0;
-            const p=tm>0?Math.round(cm/tm*100):0;
-            return '<div class="comp-card '+ct+'" onclick="window.viewAdminCompDetail(\''+t.id+'\')" style="cursor:pointer;position:relative;z-index:10;">'+
-                '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:1rem;"><h3 style="margin:0;font-size:1.2rem;">'+(t.title||t.name||'Competition')+'</h3>'+
-                '<span style="background:'+(ct==='league'?'rgba(59,130,246,0.1)':'rgba(168,85,247,0.1)')+';color:'+(ct==='league'?'#60a5fa':'#c084fc')+';padding:0.25rem 0.6rem;border-radius:6px;font-size:0.65rem;font-weight:800;text-transform:uppercase;border:1px solid '+(ct==='league'?'rgba(59,130,246,0.2)':'rgba(168,85,247,0.2)')+';">'+ct.toUpperCase()+'</span></div>'+
-                '<p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1.5rem;">'+(t.description||'Full season competition with teams from across the region.')+'</p>'+
-                '<div class="stat-group"><div class="stat-item"><span class="stat-val">'+(tc||'--')+'</span><span class="stat-lbl">Teams</span></div><div class="stat-item"><span class="stat-val">'+(tm||'--')+'</span><span class="stat-lbl">Fixtures</span></div></div>'+
-                (tm>0?'<div style="margin-top:1.5rem;display:flex;align-items:center;gap:0.5rem;margin-bottom:1rem;"><div style="flex:1;height:4px;background:rgba(255,255,255,0.05);border-radius:2px;overflow:hidden;"><div style="width:'+p+'%;height:100%;background:var(--primary);border-radius:2px;"></div></div><span style="font-size:0.7rem;font-weight:700;color:var(--text-muted);">'+p+'%</span></div>':'')+
-                '<button class="btn btn-primary btn-small" style="width:100%;margin-top:0.5rem;">View Competition Visuals →</button></div>';
-        }).join('');
+            c.innerHTML=t.map(t=>{
+                let s;
+                try { s = typeof t.tournament_settings === 'string' ? JSON.parse(t.tournament_settings) : (t.tournament_settings||{}); } catch(e) { s={}; }
+                const ct=s.type||'knockout';
+                const tc=parseInt(t.teams_count) || 0;
+                const tm=parseInt(t.total_matches) || 0;
+                const cm=parseInt(t.completed_matches) || 0;
+                const p=tm>0?Math.round(cm/tm*100):0;
+                const escId = t.id.replace(/'/g, "\\'");
+                return '<div class="comp-card '+ct+'" onclick="window.viewAdminCompDetail(\''+escId+'\')" style="cursor:pointer;position:relative;z-index:10;">'+
+                    '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:1rem;"><h3 style="margin:0;font-size:1.2rem;">'+(t.title||t.name||'Competition')+'</h3>'+
+                    '<span style="background:'+(ct==='league'?'rgba(59,130,246,0.1)':'rgba(168,85,247,0.1)')+';color:'+(ct==='league'?'#60a5fa':'#c084fc')+';padding:0.25rem 0.6rem;border-radius:6px;font-size:0.65rem;font-weight:800;text-transform:uppercase;border:1px solid '+(ct==='league'?'rgba(59,130,246,0.2)':'rgba(168,85,247,0.2)')+';">'+ct.toUpperCase()+'</span></div>'+
+                    '<p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1.5rem;">'+(t.description||'Full season competition with teams from across the region.')+'</p>'+
+                    '<div class="stat-group"><div class="stat-item"><span class="stat-val">'+(tc > 0 ? tc : (t.teams_count !== undefined ? tc : '--'))+'</span><span class="stat-lbl">Teams</span></div><div class="stat-item"><span class="stat-val">'+(tm > 0 ? tm : (t.total_matches !== undefined ? tm : '--'))+'</span><span class="stat-lbl">Fixtures</span></div></div>'+
+                    (tm>0?'<div style="margin-top:1.5rem;display:flex;align-items:center;gap:0.5rem;margin-bottom:1rem;"><div style="flex:1;height:4px;background:rgba(255,255,255,0.05);border-radius:2px;overflow:hidden;"><div style="width:'+p+'%;height:100%;background:var(--primary);border-radius:2px;"></div></div><span style="font-size:0.7rem;font-weight:700;color:var(--text-muted);">'+p+'%</span></div>':'')+
+                    '<button class="btn btn-primary btn-small" style="width:100%;margin-top:0.5rem;">View Competition Visuals →</button></div>';
+            }).join('');
     }catch(err){console.error("loadAdminCompetitions Error:",err);c.innerHTML='<p style="color:var(--accent-red);">Failed to load competitions list.</p>';}
 };
-function updateStats(t){const total=t.length||0;let te=0,tf=0;t.forEach(t=>{te+=t.teams_count||0;tf+=t.total_matches||0;});document.getElementById('totalCompetitionsStat').textContent=total;document.getElementById('totalTeamsEnrolledStat').textContent=te;document.getElementById('totalFixturesStat').textContent=tf;}
+function updateStats(t){const total=t.length||0;let te=0,tf=0;t.forEach(t=>{te+=parseInt(t.teams_count)||0;tf+=parseInt(t.total_matches)||0;});document.getElementById('totalCompetitionsStat').textContent=total;document.getElementById('totalTeamsEnrolledStat').textContent=te;document.getElementById('totalFixturesStat').textContent=tf;}
 
 // ---------- Team Tab ----------
 async function loadParticipatingTeams(){
@@ -570,23 +571,25 @@ async function loadFixtureManagement(){
             matches.map(m=>{
                 const dateStr=m.start_time?new Date(m.start_time).toLocaleDateString('en-GB',{day:'2-digit',month:'short'}):'';
                 const timeStr=m.start_time?new Date(m.start_time).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}):'';
+                const escHome = (m.home_team_name || 'Home').replace(/'/g, "\\'");
+                const escAway = (m.away_team_name || 'Away').replace(/'/g, "\\'");
                 return '<tr><td data-label="Round">'+(m.round_number||'-')+'</td>'+
                 '<td data-label="Home" style="font-weight:600;max-width:180px;">'+
                     '<select class="form-control btn-small" style="width:100%;font-size:0.8rem;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;padding:0.3rem;" onchange="window.quickAssignTeam(\''+m.id+'\',\'home\',this.value)">'+
-                        '<option value="">'+(m.home_team_name||'TBD')+'</option>'+
-                        teamOptions.map(t => '<option value="'+t.id+'">'+t.name+'</option>').join('')+
+                        '<option value="">'+escHome+'</option>'+
+                        teamOptions.map(t => '<option value="'+t.id+'">'+t.name.replace(/'/g, "\\'")+'</option>').join('')+
                     '</select>'+
                 '</td>'+
                 '<td style="text-align:center;font-weight:700;" data-label="Score">'+(m.home_score!==null?m.home_score:'-')+' - '+(m.away_score!==null?m.away_score:'-')+'</td>'+
                 '<td data-label="Away" style="font-weight:600;max-width:180px;">'+
                     '<select class="form-control btn-small" style="width:100%;font-size:0.8rem;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#fff;padding:0.3rem;" onchange="window.quickAssignTeam(\''+m.id+'\',\'away\',this.value)">'+
-                        '<option value="">'+(m.away_team_name||'TBD')+'</option>'+
-                        teamOptions.map(t => '<option value="'+t.id+'">'+t.name+'</option>').join('')+
+                        '<option value="">'+escAway+'</option>'+
+                        teamOptions.map(t => '<option value="'+t.id+'">'+t.name.replace(/'/g, "\\'")+'</option>').join('')+
                     '</select>'+
                 '</td>'+
                 '<td data-label="Date/Time" style="font-size:0.8rem;">'+(dateStr?dateStr+' '+timeStr:'-')+'</td>'+
                 '<td data-label="Status"><span style="color:'+(m.status==='completed'?'#4ade80':m.status==='Live'?'#fbbf24':'#94a3b8')+';">'+(m.status||'scheduled')+'</span></td>'+
-                '<td style="text-align:right;" data-label="Actions"><button class="btn btn-sm btn-primary" onclick="window.viewMatchDetails(\''+m.id+'\',\''+(m.home_team_name||'Home')+'\',\''+(m.away_team_name||'Away')+'\','+JSON.stringify(m.start_time||'')+','+(m.round_number||1)+')">Manage Match</button></td></tr>';
+                '<td style="text-align:right;" data-label="Actions"><button class="btn btn-sm btn-primary" onclick="window.viewMatchDetails(\''+m.id+'\',\''+escHome+'\',\''+escAway+'\',\''+(m.start_time||'')+'\','+(m.round_number||1)+',\''+(m.home_team_id||'')+'\',\''+(m.away_team_id||'')+'\')">Manage Match</button></td></tr>';
             }).join('')+
             '</tbody></table></div>';
     }catch(e){c.innerHTML='<p style="color:var(--accent-red);">Failed to load fixtures.</p>';}
@@ -810,12 +813,14 @@ async function doGenerateFixtures(d){
 };
 
 // ---------- ENHANCED MATCH MANAGEMENT ----------
-window.viewMatchDetails=async function(matchId,home,away,dateStr,round){
+window.viewMatchDetails=async function(matchId,home,away,dateStr,round,homeTeamId,awayTeamId){
     const modal=document.getElementById('matchManageModal');if(!modal)return;
     
     // Reset state
     window._matchEvents = [];
     document.getElementById('manageMatchId').value=matchId;
+    document.getElementById('manageHomeTeamId').value=homeTeamId||'';
+    document.getElementById('manageAwayTeamId').value=awayTeamId||'';
     document.getElementById('matchHomeTeamName').textContent=home;
     document.getElementById('matchAwayTeamName').textContent=away;
     document.getElementById('matchRoundInfo').textContent='Round '+(round||1);
@@ -829,7 +834,7 @@ window.viewMatchDetails=async function(matchId,home,away,dateStr,round){
     document.getElementById('cardsTimeline').innerHTML = '<p style="color:var(--text-muted);font-size:0.8rem;text-align:center;padding:0.5rem;">No cards recorded yet. Add events below.</p>';
     
     // Parse date/time if exists
-    if(dateStr&&dateStr!=='""'&&dateStr!==''){try{const d=new Date(dateStr);if(!isNaN(d.getTime())){document.getElementById('matchDate').value=d.toISOString().split('T')[0];document.getElementById('matchTime').value=d.toTimeString().slice(0,5);}}catch(e){}}
+    if(dateStr&&dateStr!==''){try{const d=new Date(dateStr);if(!isNaN(d.getTime())){document.getElementById('matchDate').value=d.toISOString().split('T')[0];document.getElementById('matchTime').value=d.toTimeString().slice(0,5);}}catch(e){}}
     else{document.getElementById('matchDate').value='';document.getElementById('matchTime').value='';}
     document.getElementById('matchPitch').value='';
     document.getElementById('matchStatusSelect').value='scheduled';
