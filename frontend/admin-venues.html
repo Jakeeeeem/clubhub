@@ -186,6 +186,16 @@
     <script src="image-compress.js?v=20260502"></script>
 
     <script>
+        // Modal helpers
+        window.openModal = window.openModal || function(id) {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'block';
+        };
+        window.closeModal = window.closeModal || function(id) {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+        };
+
         document.addEventListener('DOMContentLoaded', () => {
             loadVenues();
             const imgInput = document.getElementById('venueImageUpload');
@@ -260,11 +270,16 @@
             const submitBtn = document.getElementById('venueSubmitBtn');
             if (form) {
                 form.reset();
+                // Restore the original submit handler for adding
+                form.onsubmit = handleAddVenue;
                 // Reset submit button
                 if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Save Venue'; submitBtn.style.opacity = '1'; submitBtn.style.pointerEvents = 'auto'; }
             }
             if (title) title.textContent = isEditing ? 'Edit Venue' : 'Add Club Venue';
             renderExcludedDates([]);
+            // Clear image preview
+            const preview = document.getElementById('venueImagePreview');
+            if (preview) { preview.src = ''; preview.style.display = 'none'; }
             checkStripeConnectionForVenues();
         }
 
@@ -534,29 +549,183 @@
 
         async function viewVenueBookings(id) {
             try {
-                const bookings = await apiService.get(`/venues/${id}/bookings`);
-                const html = bookings.length === 0 ? renderEmptyState('No bookings yet for this venue', '📭') : bookings.map(b => `
-                    <div style="padding:0.6rem;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;justify-content:space-between;align-items:center;">
-                        <div>
-                            <div style="font-weight:700;">${b.first_name ? b.first_name + ' ' + (b.last_name || '') : (b.guest_email || 'Guest')}</div>
-                            <div style="color:var(--text-muted); font-size:0.85rem;">${new Date(b.start_time).toLocaleString()} → ${new Date(b.end_time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
-                        </div>
-                        <div style="text-align:right; font-size:0.85rem; color:var(--text-muted);">${b.status}</div>
-                    </div>
-                `).join('');
+                const [v, bookings] = await Promise.all([
+                    apiService.get(`/venues/${id}`),
+                    apiService.get(`/venues/${id}/bookings`)
+                ]);
+
+                const bannerBg = v.image_url 
+                    ? `background:url('${resolveUploadUrl(v.image_url)}') center/cover no-repeat` 
+                    : `background:linear-gradient(135deg,#b91c1c,#7f1d1d)`;
+
+                const statusColors = {
+                    'pending': { bg: 'rgba(234,179,8,0.15)', color: '#eab308' },
+                    'confirmed': { bg: 'rgba(34,197,94,0.15)', color: '#22c55e' },
+                    'cancelled': { bg: 'rgba(239,68,68,0.15)', color: '#ef4444' },
+                    'completed': { bg: 'rgba(99,102,241,0.15)', color: '#6366f1' }
+                };
+
+                const tb = (v.time_blocks && v.time_blocks.length) ? v.time_blocks[0] : null;
+                const days = (tb && tb.days) ? (typeof tb.days === 'string' ? JSON.parse(tb.days) : tb.days) : [];
+                const dayLabels = { 'mon':'Mon','tue':'Tue','wed':'Wed','thu':'Thu','fri':'Fri','sat':'Sat','sun':'Sun' };
+                const daysDisplay = days.map(d => dayLabels[d] || d).join(', ') || '—';
+
+                let rowsHtml = '';
+                if (bookings.length === 0) {
+                    rowsHtml = `
+                        <tr>
+                            <td colspan="4" style="text-align:center;padding:2.5rem;color:var(--text-muted);font-size:0.9rem;">
+                                <div style="font-size:2rem;margin-bottom:0.5rem;">📭</div>
+                                <div>No bookings yet</div>
+                            </td>
+                        </tr>`;
+                } else {
+                    rowsHtml = bookings.map((b) => {
+                        const colors = statusColors[b.status] || { bg: 'rgba(255,255,255,0.08)', color: '#fff' };
+                        const customerName = b.first_name 
+                            ? `${b.first_name} ${b.last_name || ''}`.trim() 
+                            : (b.guest_first_name ? `${b.guest_first_name} ${b.guest_last_name || ''}`.trim() : (b.guest_email || 'Guest'));
+                        const startD = new Date(b.start_time);
+                        const endD = new Date(b.end_time);
+                        const dateStr = startD.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+                        const timeStr = `${startD.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})} – ${endD.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}`;
+                        const cost = b.total_cost ? `£${Number(b.total_cost).toFixed(2)}` : '—';
+                        return `
+                            <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+                                <td style="padding:0.7rem 0.4rem;">
+                                    <div style="font-weight:600;font-size:0.85rem;">${escapeHtml(customerName)}</div>
+                                </td>
+                                <td style="padding:0.7rem 0.4rem;white-space:nowrap;">
+                                    <div style="font-size:0.8rem;">${dateStr}</div>
+                                    <div style="font-size:0.7rem;color:var(--text-muted);">${timeStr}</div>
+                                </td>
+                                <td style="padding:0.7rem 0.4rem;font-size:0.82rem;font-weight:600;color:#4ade80;">${cost}</td>
+                                <td style="padding:0.7rem 0.4rem;text-align:right;">
+                                    <span style="display:inline-block;padding:0.1rem 0.5rem;border-radius:999px;font-size:0.68rem;font-weight:600;text-transform:uppercase;background:${colors.bg};color:${colors.color};">${b.status}</span>
+                                </td>
+                            </tr>`;
+                    }).join('');
+                }
+
+                // Build venue info detail chips
+                const oh = v.opening_hours;
+                const ohDisplay = oh && (oh.open_time || oh.close_time) 
+                    ? `⏰ ${oh.open_time || '—'} – ${oh.close_time || '—'}${oh.block_duration ? ` · ${oh.block_duration}min blocks` : ''}`
+                    : '';
 
                 const modalId = 'venueBookingsModal';
                 let modal = document.getElementById(modalId);
                 if (!modal) {
-                    modal = document.createElement('div'); modal.id = modalId; modal.className = 'modal'; modal.style.display='none';
-                    modal.innerHTML = `<div class="modal-content glass-card" style="max-width:700px;"><div class="modal-header"><h2 class="neon-text">Venue Bookings</h2><div class="modal-close" onclick="document.getElementById('${modalId}').style.display='none'">&times;</div></div><div class="modal-body" id="${modalId}-body"></div></div>`;
+                    modal = document.createElement('div');
+                    modal.id = modalId;
+                    modal.className = 'modal';
+                    modal.style.display = 'none';
+                    modal.innerHTML = `
+                        <div class="modal-content" style="max-width:1100px;padding:0;overflow:hidden;margin-left:auto;border-radius:14px;">
+                            <div id="vb-header" style="${bannerBg};height:130px;display:flex;flex-direction:column;justify-content:flex-end;padding:1rem 1.25rem;position:relative;">
+                                <div id="vb-overlay" style="position:absolute;inset:0;background:linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0.1) 100%);border-radius:14px 14px 0 0;z-index:1;"></div>
+                                <div id="vb-close" class="modal-close" style="cursor:pointer;z-index:3;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,0.3);">&times;</div>
+                                <div style="display:flex;align-items:flex-end;gap:0.75rem;position:relative;z-index:2;">
+                                    <div id="vb-venue-icon" style="font-size:1.8rem;width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.35);backdrop-filter:blur(8px);border-radius:10px;">🏟️</div>
+                                    <div style="flex:1;">
+                                        <h2 id="vb-title" class="neon-text" style="margin:0;font-size:1.35rem;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,0.4);">${escapeHtml(v.name || 'Venue')}</h2>
+                                        <p id="vb-subtitle" style="margin:0.15rem 0 0;font-size:0.8rem;color:rgba(255,255,255,0.85);text-shadow:0 1px 3px rgba(0,0,0,0.3);">${escapeHtml(v.type || 'Facility')} · ${escapeHtml(v.location || v.address || '')}</p>
+                                    </div>
+                                    <button id="vb-export-btn" style="background:rgba(255,255,255,0.1);border:none;color:#fff;padding:0.35rem 0.75rem;border-radius:8px;font-size:0.75rem;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:0.3rem;">📥 CSV</button>
+                                </div>
+                            </div>
+                            <div style="padding:0.25rem 1.25rem;display:flex;gap:0.5rem;flex-wrap:wrap;border-bottom:1px solid rgba(255,255,255,0.04);padding-bottom:0.6rem;">
+                                <span id="vb-days" style="font-size:0.72rem;background:rgba(255,255,255,0.06);padding:0.2rem 0.55rem;border-radius:6px;color:var(--text-muted);">📅 ${escapeHtml(daysDisplay)}</span>
+                                <span id="vb-dates" style="font-size:0.72rem;background:rgba(255,255,255,0.06);padding:0.2rem 0.55rem;border-radius:6px;color:var(--text-muted);${(tb && (tb.start_date || tb.end_date)) ? '' : 'display:none;'}">${(tb && (tb.start_date || tb.end_date)) ? `📆 ${tb.start_date ? tb.start_date.split('T')[0] : ''}${tb.start_date && tb.end_date ? ' → ' : ''}${tb.end_date ? tb.end_date.split('T')[0] : ''}` : ''}</span>
+                                <span id="vb-capacity" style="font-size:0.72rem;background:rgba(255,255,255,0.06);padding:0.2rem 0.55rem;border-radius:6px;color:var(--text-muted);${(tb && tb.capacity) || v.capacity ? '' : 'display:none;'}">${(tb && tb.capacity) ? `👥 Cap: ${tb.capacity}` : v.capacity ? `👥 Cap: ${v.capacity}` : ''}</span>
+                                <span id="vb-hours" style="font-size:0.72rem;background:rgba(255,255,255,0.06);padding:0.2rem 0.55rem;border-radius:6px;color:var(--text-muted);${ohDisplay ? '' : 'display:none;'}">${ohDisplay || ''}</span>
+                            </div>
+                            <div style="padding:0.75rem 1.25rem 1rem;">
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.6rem;">
+                                    <span style="font-size:0.78rem;color:var(--text-muted);">Bookings <strong style="color:#fff;">${bookings.length}</strong></span>
+                                </div>
+                                <div style="overflow-x:auto;border-radius:8px;border:1px solid rgba(255,255,255,0.06);">
+                                    <table style="width:100%;border-collapse:collapse;font-size:0.82rem;">
+                                        <thead>
+                                            <tr style="background:rgba(255,255,255,0.03);">
+                                                <th style="padding:0.5rem 0.4rem;text-align:left;font-weight:600;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-muted);">Customer</th>
+                                                <th style="padding:0.5rem 0.4rem;text-align:left;font-weight:600;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-muted);">Date</th>
+                                                <th style="padding:0.5rem 0.4rem;text-align:left;font-weight:600;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-muted);">Cost</th>
+                                                <th style="padding:0.5rem 0.4rem;text-align:right;font-weight:600;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-muted);">Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="vb-rows">${rowsHtml}</tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>`;
                     document.body.appendChild(modal);
+                    document.querySelector(`#${modalId} #vb-close`).onclick = () => { modal.style.display = 'none'; };
+                    document.querySelector(`#${modalId} #vb-export-btn`).onclick = () => exportVenueBookingsCSV(bookings, v);
+                } else {
+                    const head = modal.querySelector('#vb-header');
+                    if (head) head.style.background = bannerBg;
+                    const tbody = modal.querySelector('#vb-rows');
+                    if (tbody) tbody.innerHTML = rowsHtml;
+                    const countEl = modal.querySelector('div[style*="justify-content:space-between"] strong');
+                    if (countEl) countEl.textContent = bookings.length;
+                    const exportBtn = modal.querySelector('#vb-export-btn');
+                    if (exportBtn) exportBtn.onclick = () => exportVenueBookingsCSV(bookings, v);
+                    const t = modal.querySelector('#vb-title');
+                    if (t) t.textContent = v.name || 'Venue';
+                    const s = modal.querySelector('#vb-subtitle');
+                    if (s) s.textContent = `${v.type || 'Facility'} · ${v.location || v.address || ''}`;
+                    const ed = modal.querySelector('#vb-days');
+                    if (ed) ed.textContent = `📅 ${daysDisplay}`;
+                    const eD = modal.querySelector('#vb-dates');
+                    const ds = tb && (tb.start_date || tb.end_date) ? `${tb.start_date ? tb.start_date.split('T')[0] : ''}${tb.start_date && tb.end_date ? ' → ' : ''}${tb.end_date ? tb.end_date.split('T')[0] : ''}` : '';
+                    if (eD) { eD.textContent = ds ? `📆 ${ds}` : ''; eD.style.display = ds ? '' : 'none'; }
+                    const eC = modal.querySelector('#vb-capacity');
+                    const cap = (tb && tb.capacity) || v.capacity || '';
+                    if (eC) { eC.textContent = cap ? `👥 Cap: ${cap}` : ''; eC.style.display = cap ? '' : 'none'; }
+                    const eH = modal.querySelector('#vb-hours');
+                    if (eH) { eH.textContent = ohDisplay || ''; eH.style.display = ohDisplay ? '' : 'none'; }
                 }
-                document.getElementById(`${modalId}-body`).innerHTML = html;
+
                 modal.style.display = 'block';
+                modal.style.zIndex = '1050';
             } catch (err) {
                 showNotification('Failed to load bookings: ' + (err.message || ''), 'error');
             }
+        }
+
+        function exportVenueBookingsCSV(bookings, venue) {
+            if (!bookings || bookings.length === 0) {
+                showNotification('No bookings to export', 'warning');
+                return;
+            }
+            let csv = '\uFEFF';
+            csv += 'Customer,Email,Date,Start Time,End Time,Duration (hrs),Cost,Status,Notes\n';
+            bookings.forEach(b => {
+                const name = b.first_name 
+                    ? `${b.first_name} ${b.last_name || ''}`.trim() 
+                    : (b.guest_first_name ? `${b.guest_first_name} ${b.guest_last_name || ''}`.trim() : 'Guest');
+                const email = b.email || b.guest_email || '';
+                const startD = new Date(b.start_time);
+                const endD = new Date(b.end_time);
+                const dateStr = startD.toLocaleDateString('en-GB');
+                const startStr = startD.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+                const endStr = endD.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+                const hours = ((endD - startD) / (1000 * 60 * 60)).toFixed(1);
+                const cost = b.total_cost ? `£${Number(b.total_cost).toFixed(2)}` : '';
+                const notes = (b.notes || '').replace(/"/g, '""');
+                csv += `"${name}","${email}","${dateStr}","${startStr}","${endStr}","${hours}","${cost}","${b.status}","${notes}"\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            const safeName = venue ? venue.name.replace(/[^a-zA-Z0-9]/g, '_') : 'venue';
+            link.download = `${safeName}_bookings_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+            showNotification(`Exported ${bookings.length} bookings`, 'success');
         }
 
         async function editVenue(id) {
@@ -629,6 +798,7 @@
                                 location: document.getElementById('venueAddress').value,
                                 type: document.getElementById('venueType').value,
                                 hourlyRate: parseFloat(document.getElementById('venuePrice').value) || 0,
+                                entryPrice: parseFloat(document.getElementById('venuePrice').value) || 0,
                                 stripe_price_id: document.getElementById('venueStripeId').value || null,
                                 time_blocks: [timeBlock],
                                 opening_hours: openingHours

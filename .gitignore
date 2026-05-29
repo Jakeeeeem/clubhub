@@ -3,10 +3,8 @@ node_modules/
 **/node_modules/
 
 # Environments
-.env
 backend/.env
 frontend/.env
-.env.*
 
 # OS files
 .DS_Store
@@ -35,3 +33,4 @@ review_screenshots/
 
 # Operational utility scripts (contain env refs, not for version control)
 take_screenshots.js
+config.bat

@@ -50,26 +50,35 @@ const TournamentUI = {
                                 const played = m.played || m.status === 'completed';
                                 const homeWinner = played && (m.home_score > m.away_score);
                                 const awayWinner = played && (m.away_score > m.home_score);
+                                const homeName = m.home_team_name || m.home_team || 'TBD';
+                                const awayName = m.away_team_name || m.away_team || 'TBD';
+                                const dateStr = m.start_time || m.date || '';
+                                const dateDisplay = dateStr ? new Date(dateStr).toLocaleDateString('en-GB', { day:'2-digit', month:'short' }) : 'Date TBD';
                                 
-                                return `
-                                 <div class="match-wrapper">
-                                    <div class="match-card ${played ? 'played' : ''}" onclick="if(window.viewMatchDetails) viewMatchDetails('${m.id}', '${m.home_team || 'TBD'}', '${m.away_team || 'TBD'}', '${m.date || ''}')">
-                                        <div style="padding: 0.75rem 1.25rem 0.2rem;">
-                                            <div class="match-date">${m.date || 'Date TBD'}</div>
-                                        </div>
-                                        <div class="team ${homeWinner ? 'winner' : ''}">
-                                            <span class="team-name">${m.home_team || 'TBD'}</span>
-                                            <span class="score">${m.home_score ?? '-'}</span>
-                                        </div>
-                                        <div class="team ${awayWinner ? 'winner' : ''}">
-                                            <span class="team-name">${m.away_team || 'TBD'}</span>
-                                            <span class="score">${m.away_score ?? '-'}</span>
-                                        </div>
-                                        ${m.status === 'Live' ? '<div class="live-indicator">LIVE</div>' : ''}
-                                    </div>
-                                    ${idx < totalRounds - 1 ? `<div class="connector-line"></div>` : ''}
-                                </div>
-                                `;
+                    const isBye = played && m.home_team_id && !m.away_team_id;
+                    const displayHomeScore = isBye ? '-' : (m.home_score ?? '-');
+                    const displayAwayScore = isBye ? '-' : (m.away_score ?? '-');
+                    
+                    return `
+                     <div class="match-wrapper">
+                        <div class="match-card ${played && !isBye ? 'played' : ''} ${isBye ? 'bye-match' : ''}">
+                            <div style="padding: 0.75rem 1.25rem 0.2rem;display:flex;justify-content:space-between;align-items:center;">
+                                <div class="match-date">${isBye ? 'BYE' : dateDisplay}</div>
+                                ${played && !isBye ? `<span class="match-info-btn" onclick="event.stopPropagation();window.showMatchEvents('${m.id}','${homeName}','${awayName}')" title="View match events">📋</span>` : ''}
+                            </div>
+                            <div class="team ${homeWinner && !isBye ? 'winner' : ''} ${!m.home_team_id ? 'ghost-slot' : ''}" onclick="event.stopPropagation();window.fillBracketSlot('${m.id}','home',${!m.home_team_id})" title="${m.home_team_id ? homeName + ' (assigned)' : 'Click to assign a team'}">
+                                <span class="team-name">${homeName}${isBye ? ' <span style="font-size:0.65rem;color:var(--text-muted);font-weight:400;">(advances)</span>' : ''}</span>
+                                <span class="score">${displayHomeScore}</span>
+                            </div>
+                            <div class="team ${awayWinner && !isBye ? 'winner' : ''} ${!m.away_team_id ? 'ghost-slot' : ''}" onclick="event.stopPropagation();window.fillBracketSlot('${m.id}','away',${!m.away_team_id})" title="${m.away_team_id ? awayName + ' (assigned)' : 'Click to assign a team'}">
+                                <span class="team-name">${awayName}</span>
+                                <span class="score">${displayAwayScore}</span>
+                            </div>
+                            ${m.status === 'Live' ? '<div class="live-indicator">LIVE</div>' : ''}
+                        </div>
+                        ${idx < totalRounds - 1 ? `<div class="connector-line"></div>` : ''}
+                    </div>
+                    `;
                             }).join('')}
                         </div>
                     </div>

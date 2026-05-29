@@ -126,7 +126,7 @@ router.get("/:id", authenticateToken, async (req, res) => {
 router.put("/:id", authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, location, hourlyRate, entryPrice, stripe_price_id, description, capacity } = req.body;
+    const { name, location, hourlyRate, entryPrice, stripe_price_id, description, capacity, type } = req.body;
 
     // Build dynamic update query
     const fields = [];
@@ -138,6 +138,7 @@ router.put("/:id", authenticateToken, async (req, res) => {
     if (hourlyRate !== undefined) { fields.push(`hourly_rate = $${paramIdx++}`); values.push(hourlyRate); }
     if (entryPrice !== undefined) { fields.push(`entry_price = $${paramIdx++}`); values.push(entryPrice); }
     // stripe_price_id column may not exist in local dev DB; skip updating it here
+    if (type !== undefined) { fields.push(`type = $${paramIdx++}`); values.push(type); }
     if (description !== undefined) { fields.push(`description = $${paramIdx++}`); values.push(description); }
     if (capacity !== undefined) { fields.push(`capacity = $${paramIdx++}`); values.push(capacity); }
 
