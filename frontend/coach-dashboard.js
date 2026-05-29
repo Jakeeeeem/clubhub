@@ -319,22 +319,43 @@ async function loadCoachTournaments() {
 
     if (grid) {
       grid.innerHTML = tournaments
-        .map(
-          (t) => `
-                <div class="card tournament-card" style="background: rgba(255,255,255,0.03); cursor: pointer; transition: transform 0.2s;" onclick="viewCoachTournament('${t.id}')">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
-                        <div style="width: 48px; height: 48px; background: #dc2626; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">ðŸ†</div>
-                        <span class="status-badge" style="background: rgba(220, 38, 38, 0.1); color: #dc2626; border: 1px solid rgba(220, 38, 38, 0.2);">${t.status || "Active"}</span>
+        .map((t) => {
+          const settings = t.tournament_settings || {};
+          const compType = settings.type || 'knockout';
+          const teamsCount = t.teams_count || 0;
+          const totalMatches = t.total_matches || 0;
+          const completedMatches = t.completed_matches || 0;
+          const progress = totalMatches > 0 ? Math.round((completedMatches / totalMatches) * 100) : 0;
+          return `
+            <div class="comp-card ${compType}" onclick="viewCoachTournament('${t.id}')" style="cursor:pointer;position:relative;z-index:10;">
+                ${t.image_url ? `<div style="height:80px;border-radius:12px;overflow:hidden;margin-bottom:0.75rem;"><img src="${t.image_url}" alt="${t.title || t.name}" style="width:100%;height:100%;object-fit:cover;"></div>` : ''}
+                <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:0.75rem;">
+                    <h3 style="margin:0;font-size:1.1rem;">${t.title || t.name || 'Competition'}</h3>
+                    <span style="background:${compType === 'league' ? 'rgba(59,130,246,0.1)' : 'rgba(168,85,247,0.1)'};color:${compType === 'league' ? '#60a5fa' : '#c084fc'};padding:0.25rem 0.6rem;border-radius:6px;font-size:0.65rem;font-weight:800;text-transform:uppercase;border:1px solid ${compType === 'league' ? 'rgba(59,130,246,0.2)' : 'rgba(168,85,247,0.2)'};">
+                        ${compType.toUpperCase()}
+                    </span>
+                </div>
+                <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:1rem;">${t.description || 'Competition'}</p>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+                    <div style="background:rgba(0,0,0,0.2);padding:0.65rem;border-radius:10px;text-align:center;">
+                        <span style="font-size:1rem;font-weight:800;color:#fff;display:block;">${teamsCount || 4}</span>
+                        <span style="font-size:0.6rem;color:var(--text-muted);text-transform:uppercase;font-weight:700;">Teams</span>
                     </div>
-                    <h4>${t.title || t.name || 'Tournament'}</h4>
-                    <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0.5rem 0;">${formatDate(t.event_date)}</p>
-                    <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
-                        <span style="font-size: 0.75rem; color: var(--text-muted);">Competition Details</span>
-                        <i style="color: #dc2626;">â†’</i>
+                    <div style="background:rgba(0,0,0,0.2);padding:0.65rem;border-radius:10px;text-align:center;">
+                        <span style="font-size:1rem;font-weight:800;color:#fff;display:block;">${totalMatches || 0}</span>
+                        <span style="font-size:0.6rem;color:var(--text-muted);text-transform:uppercase;font-weight:700;">Fixtures</span>
                     </div>
                 </div>
-            `,
-        )
+                ${totalMatches > 0 ? `
+                <div style="margin-top:1rem;display:flex;align-items:center;gap:0.5rem;">
+                    <div style="flex:1;height:3px;background:rgba(255,255,255,0.05);border-radius:2px;overflow:hidden;">
+                        <div style="width:${progress}%;height:100%;background:var(--primary);border-radius:2px;"></div>
+                    </div>
+                    <span style="font-size:0.65rem;font-weight:700;color:var(--text-muted);">${progress}%</span>
+                </div>` : ''}
+            </div>
+          `;
+        })
         .join("");
     }
   } catch (err) {

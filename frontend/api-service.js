@@ -2477,7 +2477,7 @@ if (typeof ApiService === 'undefined') {
   }
 
   async getTournamentDetails(tournamentId) {
-    return await this.makeRequest(`/tournaments/${tournamentId}`);
+    return await this.makeRequest(`/tournaments/${tournamentId}/dashboard`);
   }
 
   async getTournamentPitches(tournamentId) {

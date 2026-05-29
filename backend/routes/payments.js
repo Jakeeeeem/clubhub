@@ -122,15 +122,15 @@ async function getOrCreateStripeConnectAccount(user) {
     // Always fetch latest status
     let account = await stripe.accounts.retrieve(accountId);
 
-    // If account exists but doesn't have the payout schedule set to monthly on the 1st, update it
+    // If account exists but doesn't have the payout schedule set to monthly on the 1st, update it in the background
     if (
       account.settings?.payouts?.schedule?.interval !== "monthly" ||
       account.settings?.payouts?.schedule?.monthly_anchor !== 1
     ) {
       console.log(
-        `Updating payout schedule for account ${accountId} to monthly on the 1st...`,
+        `Updating payout schedule for account ${accountId} to monthly on the 1st (non-blocking)...`,
       );
-      account = await stripe.accounts.update(accountId, {
+      stripe.accounts.update(accountId, {
         settings: {
           payouts: {
             schedule: {
@@ -139,6 +139,11 @@ async function getOrCreateStripeConnectAccount(user) {
             },
           },
         },
+      }).catch((updateErr) => {
+        console.warn(
+          `⚠️ Background payout schedule update failed for account ${accountId}:`,
+          updateErr.message,
+        );
       });
     }
 
@@ -206,68 +211,62 @@ router.get("/stripe/connect/status", authenticateToken, async (req, res) => {
       );
 
       if (parseInt(result.rows[0].count) === 0) {
-        console.log("🔄 Auto-syncing plans for newly connected account...");
-        // We can reuse the logic from import endpoint, or just call it if we extract it.
-        // For now, let's extract the import logic to a helper or just inline a quick sync here?
-        // Inline minimal sync to avoid code duplication is risky, let's extract or just replicate the key parts lightly.
-        // Actually, let's just make an internal function call if possible, effectively 'lazy loading' logic.
-        // Simpler: Just rely on the user clicking sync?
-        // User explicitly asked: "just happen when connecting stripe".
-        // I will implement a quick fetch here.
-
-        try {
-          const products = await stripe.products.list(
-            { active: true, limit: 100 },
-            { stripeAccount: account.id },
-          );
-          if (products.data.length > 0) {
-            const prices = await stripe.prices.list(
+        console.log("🔄 Auto-syncing plans for newly connected account (background)...");
+        // Run in background to avoid blocking the HTTP response
+        (async () => {
+          try {
+            const products = await stripe.products.list(
               { active: true, limit: 100 },
               { stripeAccount: account.id },
             );
-
-            for (const product of products.data) {
-              const price = prices.data.find((p) => p.product === product.id);
-              if (!price) continue;
-
-              const existing = await query(
-                "SELECT id FROM plans WHERE stripe_product_id = $1",
-                [product.id],
+            if (products.data.length > 0) {
+              const prices = await stripe.prices.list(
+                { active: true, limit: 100 },
+                { stripeAccount: account.id },
               );
-              if (existing.rows.length === 0) {
-                const interval = price.recurring
-                  ? price.recurring.interval
-                  : "one_time";
-                const amount = price.unit_amount / 100;
 
-                // Using orgId as club_id based on schema
-                await query(
-                  `INSERT INTO plans (
-                    club_id, name, price, interval, description, 
-                    stripe_product_id, stripe_price_id, active, 
-                    billing_anchor_type, billing_anchor_day,
-                    created_at, updated_at
-                  ) VALUES ($1, $2, $3, $4, $5, $6, $7, true, $8, $9, NOW(), NOW())`,
-                  [
-                    orgId,
-                    product.name,
-                    amount,
-                    interval,
-                    product.description || "",
-                    product.id,
-                    price.id,
-                    "signup_date", // Default for auto-sync
-                    null,
-                  ],
+              for (const product of products.data) {
+                const price = prices.data.find((p) => p.product === product.id);
+                if (!price) continue;
+
+                const existing = await query(
+                  "SELECT id FROM plans WHERE stripe_product_id = $1",
+                  [product.id],
                 );
+                if (existing.rows.length === 0) {
+                  const interval = price.recurring
+                    ? price.recurring.interval
+                    : "one_time";
+                  const amount = price.unit_amount / 100;
+
+                  // Using orgId as club_id based on schema
+                  await query(
+                    `INSERT INTO plans (
+                      club_id, name, price, interval, description, 
+                      stripe_product_id, stripe_price_id, active, 
+                      billing_anchor_type, billing_anchor_day,
+                      created_at, updated_at
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, true, $8, $9, NOW(), NOW())`,
+                    [
+                      orgId,
+                      product.name,
+                      amount,
+                      interval,
+                      product.description || "",
+                      product.id,
+                      price.id,
+                      "signup_date", // Default for auto-sync
+                      null,
+                    ],
+                  );
+                }
               }
+              console.log("✅ Auto-sync completed");
             }
-            console.log("✅ Auto-sync completed");
+          } catch (syncErr) {
+            console.warn("⚠️ Background auto-sync failed:", syncErr.message);
           }
-        } catch (syncErr) {
-          console.warn("⚠️ Auto-sync failed:", syncErr.message);
-          // Don't fail the status request though
-        }
+        })();
       }
     }
 
