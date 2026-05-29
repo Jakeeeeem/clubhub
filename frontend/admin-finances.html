@@ -678,6 +678,44 @@
             }
         }
 
+        async function handleCreatePlan(e) {
+            e.preventDefault();
+            const form = e.target;
+            const formData = new FormData(form);
+            const submitBtn = form.querySelector('button[type="submit"]') || document.querySelector('button[form="createPlanForm"]');
+            const originalText = submitBtn ? submitBtn.textContent : 'Create & Sync Plan';
+
+            try {
+                if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Creating...'; }
+
+                const name = formData.get('planName');
+                const amount = parseFloat(formData.get('amount'));
+                const interval = formData.get('interval');
+                const description = formData.get('description') || '';
+
+                if (!name || isNaN(amount) || amount <= 0) {
+                    showNotification('Please fill in all required fields correctly.', 'error');
+                    return;
+                }
+
+                const result = await apiService.createPaymentPlan({ name, amount, interval, description });
+
+                showNotification(`Plan "${name}" created & synced to Stripe! ✅`, 'success');
+                closeModal('createPlanModal');
+                form.reset();
+
+                // Refresh plans table
+                loadPaymentPlans();
+
+            } catch (err) {
+                console.error('Plan creation failed:', err);
+                const msg = err?.message || err?.error || 'Unknown error';
+                showNotification('Failed to create plan: ' + msg, 'error');
+            } finally {
+                if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = originalText; }
+            }
+        }
+
         async function syncPlansFromStripe() {
             const btn = document.getElementById('sync-plans-btn');
             const originalContent = btn.innerHTML;
@@ -817,19 +855,19 @@
                 <div class="modal-close" onclick="closeModal('createPlanModal')">&times;</div>
             </div>
             <div class="modal-body">
-                <form id="createPlanForm" onsubmit="event.preventDefault(); showNotification('Plan Created & Synced to Stripe', 'success'); closeModal('createPlanModal');">
+                <form id="createPlanForm" onsubmit="handleCreatePlan(event)">
                     <div class="form-group">
                         <label>Plan Name</label>
-                        <input type="text" placeholder="e.g. Monthly Academy Fee" required>
+                        <input type="text" name="planName" id="planName" placeholder="e.g. Monthly Academy Fee" required>
                     </div>
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-top:1.5rem;">
                         <div class="form-group">
                             <label>Price (GBP £)</label>
-                            <input type="number" step="0.01" placeholder="45.00" required>
+                            <input type="number" name="amount" id="planAmount" step="0.01" min="0.01" placeholder="45.00" required>
                         </div>
                         <div class="form-group">
                             <label>Interval</label>
-                            <select required>
+                            <select name="interval" id="planInterval" required>
                                 <option value="month">Monthly</option>
                                 <option value="year">Annually</option>
                                 <option value="week">Weekly</option>
@@ -838,7 +876,7 @@
                     </div>
                     <div class="form-group" style="margin-top:1.5rem;">
                         <label>Description</label>
-                        <textarea placeholder="What's included in this plan?" rows="3" style="resize:none;"></textarea>
+                        <textarea name="description" id="planDescription" placeholder="What's included in this plan?" rows="3" style="resize:none;"></textarea>
                     </div>
                 </form>
             </div>

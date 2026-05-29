@@ -484,52 +484,64 @@ router.post(
 
     try {
       await withTransaction(async (client) => {
-        // 1. Get or Create Stage
-        let stageId;
-        const existingStage = await client.query(
-          "SELECT id FROM tournament_stages WHERE event_id = $1 AND name = $2",
-          [eventId, stageName],
+        // 0. DELETE existing fixtures for this event to prevent duplicates
+        await client.query(
+          "DELETE FROM tournament_match_events WHERE match_id IN (SELECT id FROM tournament_matches WHERE event_id = $1)",
+          [eventId],
+        );
+        await client.query(
+          "DELETE FROM tournament_matches WHERE event_id = $1",
+          [eventId],
+        );
+        await client.query(
+          "DELETE FROM tournament_stages WHERE event_id = $1",
+          [eventId],
         );
 
-        if (existingStage.rows.length > 0) {
-          stageId = existingStage.rows[0].id;
-        } else {
-          const stageRes = await client.query(
-            `
-                    INSERT INTO tournament_stages (event_id, name, type, sequence)
-                    VALUES ($1, $2, $3, 1) RETURNING id
-                `,
-            [eventId, stageName || "Main Stage", type],
-          );
-          stageId = stageRes.rows[0].id;
-        }
+        // 1. Create Stage
+        const stageRes = await client.query(
+          `
+            INSERT INTO tournament_stages (event_id, name, type, sequence)
+            VALUES ($1, $2, $3, 1) RETURNING id
+          `,
+          [eventId, stageName || "Main Stage", type],
+        );
+        const stageId = stageRes.rows[0].id;
 
-        // 2. Fetch Teams (Filtered by group if provided)
+        // 2. Fetch Teams - for knockout, use ALL teams (any status) so pending teams also appear as ghost slots.
+        //    For league, use only approved teams since round-robin needs confirmed participants.
         let teamsQuery =
-          "SELECT * FROM tournament_teams WHERE event_id = $1 AND status = 'approved'";
+          "SELECT * FROM tournament_teams WHERE event_id = $1";
         let teamsParams = [eventId];
+        if (type !== "knockout") {
+          teamsQuery += " AND status = 'approved'";
+        }
         if (groupId) {
           teamsQuery += " AND current_group_id = $2";
           teamsParams.push(groupId);
         }
 
-        // Fetch Teams (Filtered by group if provided)
         const teamsRes = await client.query(teamsQuery, teamsParams);
         const teams = teamsRes.rows;
 
-        if (teams.length < 2) throw new Error("Not enough teams");
-
         if (type === "knockout") {
+          // Even with 0 teams, we create a full bracket with ghost/placeholder slots.
+          // Ghost slots (null team_id) display as "TBD" and admins can assign teams later.
           // 1. Shuffle teams for initial pairing
           for (let i = teams.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [teams[i], teams[j]] = [teams[j], teams[i]];
           }
 
-          // 2. Determine power-of-2 bracket size
-          const numTeams = teams.length;
-          const numRounds = computeNumRounds(numTeams);
+          // 2. Determine power-of-2 bracket size (minimum 4 teams for a bracket)
+          const numTeams = Math.max(teams.length, 0);
+          let numRounds = numTeams >= 2 ? computeNumRounds(numTeams) : 2; // At least 2 rounds (4 slots) for any knockout
           const bracketSize = Math.pow(2, numRounds);
+
+          // Ensure at least 4 match slots so ghost/placeholder slots exist
+          if (bracketSize < 4) {
+            numRounds = 2;
+          }
 
           // 3. Create all matches for all rounds (backwards from Final)
           const matchesByRound = {};
@@ -567,7 +579,7 @@ router.post(
             }
           }
 
-          // 5. Fill Round 1 with teams
+          // 5. Fill Round 1 with teams (ghost slots remain as NULL = "TBD")
           const round1MatchIds = matchesByRound[1];
           for (let i = 0; i < round1MatchIds.length; i++) {
             const matchId = round1MatchIds[i];
@@ -1323,6 +1335,122 @@ router.delete(
       res.json({ message: "Pitch deleted" });
     } catch (err) {
       res.status(500).json({ error: "Failed to delete pitch" });
+    }
+  },
+);
+
+/**
+ * @route   GET /api/tournaments/matches/:id
+ * @desc    Get match detail with events (goals, cards)
+ */
+router.get(
+  "/matches/:id",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const matchRes = await query(
+        `SELECT m.*,
+                ht.team_name AS home_team_name,
+                at.team_name AS away_team_name,
+                p.name AS pitch_name
+         FROM tournament_matches m
+         LEFT JOIN tournament_teams ht ON m.home_team_id = ht.id
+         LEFT JOIN tournament_teams at ON m.away_team_id = at.id
+         LEFT JOIN tournament_pitches p ON m.pitch_id = p.id
+         WHERE m.id = $1`,
+        [req.params.id],
+      );
+
+      if (matchRes.rows.length === 0) {
+        return res.status(404).json({ error: "Match not found" });
+      }
+
+      const match = matchRes.rows[0];
+
+      // Fetch events (goals, cards)
+      const eventsRes = await query(
+        `SELECT tme.*, 
+                COALESCE(p.first_name || ' ' || p.last_name, 'Unknown') AS player_name,
+                tt.team_name
+         FROM tournament_match_events tme
+         LEFT JOIN players p ON tme.player_id = p.id
+         LEFT JOIN tournament_teams tt ON tme.team_id = tt.id
+         WHERE tme.match_id = $1
+         ORDER BY tme.minute ASC NULLS LAST, tme.created_at ASC`,
+        [req.params.id],
+      );
+
+      match.events = eventsRes.rows;
+
+      res.json(match);
+    } catch (err) {
+      console.error("Get match error:", err);
+      res.status(500).json({ error: "Failed to fetch match" });
+    }
+  },
+);
+
+/**
+ * @route   PUT /api/tournaments/matches/:id/admin-update
+ * @desc    Admin update match: score, status, schedule, events (goals/cards w/ minutes), plan type
+ */
+router.put(
+  "/matches/:id/admin-update",
+  authenticateToken,
+  requireOrganization,
+  async (req, res) => {
+    const { homeScore, awayScore, status, startTime, pitch, planType, events } = req.body;
+    try {
+      // Ensure columns exist (safe migrations)
+      await query("ALTER TABLE tournament_match_events ADD COLUMN IF NOT EXISTS minute INTEGER DEFAULT 0");
+      await query("ALTER TABLE tournament_matches ADD COLUMN IF NOT EXISTS plan_type VARCHAR(50) DEFAULT 'none'");
+      await query("ALTER TABLE tournament_matches ADD COLUMN IF NOT EXISTS note TEXT");
+
+      await withTransaction(async (client) => {
+        // 1. Update match core fields
+        const updates = [];
+        const params = [];
+        let idx = 1;
+
+        if (homeScore !== undefined) { updates.push(`home_score = $${idx++}`); params.push(homeScore); }
+        if (awayScore !== undefined) { updates.push(`away_score = $${idx++}`); params.push(awayScore); }
+        if (status !== undefined) { updates.push(`status = $${idx++}`); params.push(status); }
+        if (startTime !== undefined) { updates.push(`start_time = $${idx++}`); params.push(startTime || null); }
+        if (pitch !== undefined) { updates.push(`note = $${idx++}`); params.push(pitch); }
+        if (planType !== undefined) { updates.push(`plan_type = $${idx++}`); params.push(planType); }
+
+        if (updates.length > 0) {
+          params.push(req.params.id);
+          await client.query(
+            `UPDATE tournament_matches SET ${updates.join(", ")}, updated_at = NOW() WHERE id = $${idx}`,
+            params,
+          );
+        }
+
+        // 2. Replace events (delete old, insert new)
+        if (events !== undefined) {
+          await client.query(
+            "DELETE FROM tournament_match_events WHERE match_id = $1",
+            [req.params.id],
+          );
+
+          if (Array.isArray(events) && events.length > 0) {
+            for (const evt of events) {
+              if (!evt.playerId || !evt.type) continue;
+              await client.query(
+                `INSERT INTO tournament_match_events (match_id, team_id, player_id, event_type, minute)
+                 VALUES ($1, $2, $3, $4, $5)`,
+                [req.params.id, evt.teamId || null, evt.playerId, evt.type, evt.minute || 0],
+              );
+            }
+          }
+        }
+      });
+
+      res.json({ message: "Match updated successfully" });
+    } catch (err) {
+      console.error("Admin update match error:", err);
+      res.status(500).json({ error: "Failed to update match: " + err.message });
     }
   },
 );
@@ -2095,6 +2223,203 @@ router.post(
     } catch (err) {
       console.error("Live update failed", err);
       res.status(500).json({ error: "Failed to apply live update" });
+    }
+  },
+);
+
+/**
+ * @route   GET /api/tournaments/:id
+ * @desc    Get tournament detail (lightweight)
+ */
+router.get("/:id", authenticateToken, async (req, res) => {
+  try {
+    const eventRes = await query(
+      "SELECT * FROM events WHERE id = $1",
+      [req.params.id]
+    );
+    if (eventRes.rows.length === 0) {
+      return res.status(404).json({ error: "Tournament not found" });
+    }
+    const event = eventRes.rows[0];
+
+    const teamsRes = await query(
+      "SELECT tt.*, t.name as internal_team_name FROM tournament_teams tt LEFT JOIN teams t ON tt.internal_team_id = t.id WHERE tt.event_id = $1 ORDER BY tt.team_name",
+      [req.params.id]
+    );
+
+    const matchesRes = await query(
+      `SELECT m.*,
+              ht.team_name AS home_team_name,
+              at.team_name AS away_team_name,
+              p.name AS pitch_name
+       FROM tournament_matches m
+       LEFT JOIN tournament_teams ht ON m.home_team_id = ht.id
+       LEFT JOIN tournament_teams at ON m.away_team_id = at.id
+       LEFT JOIN tournament_pitches p ON m.pitch_id = p.id
+       WHERE m.event_id = $1
+       ORDER BY m.round_number NULLS LAST, m.start_time NULLS LAST, m.match_number`,
+      [req.params.id]
+    );
+
+    const stagesRes = await query(
+      "SELECT * FROM tournament_stages WHERE event_id = $1 ORDER BY sequence",
+      [req.params.id]
+    );
+
+    res.json({
+      tournament: event,
+      teams: teamsRes.rows,
+      matches: matchesRes.rows,
+      stages: stagesRes.rows,
+    });
+  } catch (err) {
+    console.error("Get tournament detail error:", err);
+    res.status(500).json({ error: "Failed to fetch tournament" });
+  }
+});
+
+/**
+ * @route   PUT /api/tournaments/:id
+ * @desc    Update tournament settings
+ */
+router.put("/:id", authenticateToken, requireOrganization, async (req, res) => {
+  const { name, status, type, description, tournament_settings } = req.body;
+  try {
+    const updates = [];
+    const params = [];
+    let idx = 1;
+
+    if (name) { updates.push(`title = $${idx++}`); params.push(name); }
+    if (status) { updates.push(`status = $${idx++}`); params.push(status); }
+    if (description) { updates.push(`description = $${idx++}`); params.push(description); }
+    if (type || tournament_settings) {
+      const existing = await query("SELECT tournament_settings FROM events WHERE id = $1", [req.params.id]);
+      const settings = existing.rows[0]?.tournament_settings || {};
+      if (type) settings.type = type;
+      if (tournament_settings) Object.assign(settings, tournament_settings);
+      updates.push(`tournament_settings = $${idx++}`);
+      params.push(JSON.stringify(settings));
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({ error: "No fields to update" });
+    }
+
+    params.push(req.params.id);
+    await query(
+      `UPDATE events SET ${updates.join(", ")}, updated_at = NOW() WHERE id = $${idx}`,
+      params
+    );
+
+    res.json({ message: "Tournament updated" });
+  } catch (err) {
+    console.error("Update tournament error:", err);
+    res.status(500).json({ error: "Failed to update tournament" });
+  }
+});
+
+/**
+ * @route   POST /api/tournaments/:id/teams
+ * @desc    Add a team to tournament
+ */
+router.post("/:id/teams", authenticateToken, requireOrganization, async (req, res) => {
+  const { teamId, teamName } = req.body;
+  if (!teamId && !teamName) {
+    return res.status(400).json({ error: "teamId or teamName required" });
+  }
+  try {
+    let name = teamName;
+    let internalTeamId = teamId || null;
+
+    // If teamId provided but no name, fetch it
+    if (teamId && !name) {
+      const tRes = await query("SELECT name FROM teams WHERE id = $1", [teamId]);
+      name = tRes.rows[0]?.name || "Team";
+    }
+
+    const result = await query(
+      `INSERT INTO tournament_teams (event_id, team_name, internal_team_id, status)
+       VALUES ($1, $2, $3, 'approved') RETURNING *`,
+      [req.params.id, name || "Team", internalTeamId]
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    if (err.code === '23505') {
+      return res.status(409).json({ error: "Team already registered" });
+    }
+    console.error("Add team to tournament error:", err);
+    res.status(500).json({ error: "Failed to add team" });
+  }
+});
+
+/**
+ * @route   DELETE /api/tournaments/:id/teams/:teamId
+ * @desc    Remove a team from tournament
+ */
+router.delete("/:id/teams/:teamId", authenticateToken, requireOrganization, async (req, res) => {
+  try {
+    const result = await query(
+      "DELETE FROM tournament_teams WHERE id = $1 AND event_id = $2 RETURNING id",
+      [req.params.teamId, req.params.id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Team not found in tournament" });
+    }
+    res.json({ message: "Team removed from tournament" });
+  } catch (err) {
+    console.error("Remove team error:", err);
+    res.status(500).json({ error: "Failed to remove team" });
+  }
+});
+
+/**
+ * @route   POST /api/tournaments/:id/image
+ * @desc    Upload tournament banner image
+ */
+router.post("/:id/image", authenticateToken, requireOrganization, upload.single("image"), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No image file provided" });
+    }
+    const imageUrl = `/uploads/videos/matches/${req.file.filename}`;
+    await query("UPDATE events SET image_url = $1, updated_at = NOW() WHERE id = $2", [imageUrl, req.params.id]);
+    res.json({ imageUrl, message: "Image uploaded" });
+  } catch (err) {
+    console.error("Image upload error:", err);
+    res.status(500).json({ error: "Failed to upload image" });
+  }
+});
+
+/**
+ * @route   DELETE /api/tournaments/matches/:id
+ * @desc    Delete a single match
+ */
+router.delete(
+  "/matches/:id",
+  authenticateToken,
+  requireOrganization,
+  async (req, res) => {
+    try {
+      await withTransaction(async (client) => {
+        // Delete match events first
+        await client.query(
+          "DELETE FROM tournament_match_events WHERE match_id = $1",
+          [req.params.id],
+        );
+        // Delete the match
+        const result = await client.query(
+          "DELETE FROM tournament_matches WHERE id = $1 RETURNING id",
+          [req.params.id],
+        );
+        if (result.rows.length === 0) {
+          return res.status(404).json({ error: "Match not found" });
+        }
+      });
+      res.json({ message: "Match deleted successfully" });
+    } catch (err) {
+      console.error("Delete match error:", err);
+      res.status(500).json({ error: "Failed to delete match" });
     }
   },
 );
