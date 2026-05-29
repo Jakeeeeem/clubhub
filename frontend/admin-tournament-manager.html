@@ -1060,19 +1060,16 @@ window.removeMatchEvent = function(index) {
 
 async function fetchTeamPlayers(teamName){
     try {
-        // Try to get players from the actual team
-        const teams = window._cachedTeams;
-        const matchedTeam = teams.find(t => t.name === teamName);
-        if(matchedTeam) {
-            try {
-                const d = await apiService.get('/teams/'+matchedTeam.id+'/players');
-                if(d && d.players) return d.players.map(p => ({id:p.id, name:p.first_name+' '+p.last_name}));
-            } catch(e) {}
-        }
-        // Fallback: try from dashboard
-        const d=await apiService.getAdminDashboardData(),p=d.players||[],f=p.filter(p=>p.team_name===teamName);
-        return f.length?f.map(p=>({id:p.id, name:p.first_name+' '+p.last_name})):p.map(p=>({id:p.id, name:p.first_name+' '+p.last_name}));
-    } catch(e){return [];}
+        // players might have been fetched already from the tournament teams list
+        // First try dashboard data with team name matching
+        const d=await apiService.getAdminDashboardData(),p=d.players||[];
+        // Try to find players matching this team name from dashboard
+        const f=p.filter(p=>p.team_name && p.team_name.toLowerCase()===teamName.toLowerCase());
+        if(f.length) return f.map(p=>({id:p.id, name:p.first_name+' '+p.last_name}));
+        // Fallback: return all players but no more than a reasonable set
+        if(p.length) return p.slice(0,30).map(p=>({id:p.id, name:(p.first_name||'')+' '+(p.last_name||'')}));
+    } catch(e){}
+    return [];
 }
 
 window.handleSaveMatch=async function(e){
@@ -1095,19 +1092,23 @@ window.handleSaveMatch=async function(e){
         let startTime=null;
         if(matchDate){startTime=matchDate+(matchTime?'T'+matchTime+':00':'T00:00:00');}
         
-        // Submit full match data
+        // Filter events to only include ones with valid teamIds (non-empty UUIDs)
+        const validEvents = window._matchEvents.filter(e => e.teamId && e.teamId !== '' && e.teamId !== 'home' && e.teamId !== 'away');
+        
+        // Submit full match data (only include valid events to avoid UUID errors)
         await apiService.put('/tournaments/matches/'+id+'/admin-update', {
             homeScore: hScore,
             awayScore: aScore,
             status: status,
             startTime: startTime,
             pitch: pitch,
-            events: window._matchEvents
+            events: validEvents
         });
+        
         
         // If completed, also submit result (for bracket progression, player stats)
         if(status==='completed'){
-            const scorers = window._matchEvents
+            const scorers = validEvents
                 .filter(e => e.type === 'goal')
                 .map(e => ({playerId: e.playerId, teamId: e.teamId, type: 'goal'}));
             await apiService.post('/tournaments/matches/'+id+'/result', {

@@ -86,9 +86,9 @@ router.get("/", authenticateToken, injectOrgContext, async (req, res) => {
  */
 router.post("/", authenticateToken, injectOrgContext, async (req, res) => {
   try {
-    const { receiverId, content: rawContent, type = "direct" } = req.body;
+    const { receiverId, content: rawContent, type = "direct", orgId: bodyOrgId } = req.body;
     const senderId = req.user.id;
-    const orgId = req.orgContext?.organization_id || req.user.organization_id || req.user.currentOrganizationId || req.user.currentGroupId || req.user.clubId || req.user.groupId;
+    const orgId = req.orgContext?.organization_id || req.user.organization_id || req.user.currentOrganizationId || req.user.currentGroupId || req.user.clubId || req.user.groupId || bodyOrgId || req.headers['x-organization-id'] || req.headers['x-club-id'];
     const content = (rawContent || "").trim();
     const validTypes = ["direct", "announcement", "team"];
     const messageType = validTypes.includes(type) ? type : "direct";

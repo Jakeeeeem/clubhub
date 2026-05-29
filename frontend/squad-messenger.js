@@ -617,13 +617,17 @@ const SquadMessenger = {
       const isMine = msg.sender_id == myId;
       const time   = new Date(msg.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
       const senderInitial = (msg.sender_name || '?').charAt(0).toUpperCase();
-      const bubbleMaxWidth = window.innerWidth <= 991 ? '90%' : '74%';
+      const bubbleMaxWidth = window.innerWidth <= 991 ? '88%' : '68%';
+      const bubbleMinWidth = '120px';
       return `
-        <div class="sq-message-row ${isMine ? 'sent' : 'received'}" style="display:flex; justify-content:${isMine ? 'flex-end' : 'flex-start'}; gap:0.4rem; align-items:flex-end;">
-          ${!isMine ? `<div class="sq-message-avatar" style="width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;flex-shrink:0;">${senderInitial}</div>` : ''}
-          <div class="sq-chat-bubble ${isMine ? 'sent' : 'received'}" style="width:auto; min-width:0; max-width:${bubbleMaxWidth}; padding:0.6rem 0.85rem; border-radius:${isMine ? '16px 16px 3px 16px' : '16px 16px 16px 3px'}; background:${isMine ? 'linear-gradient(135deg, rgba(216, 61, 61, 0.95), rgba(221, 73, 73, 0.95))' : 'rgba(255,255,255,0.08)'}; color:${isMine ? '#fff' : '#f4f4f8'}; font-size:0.8rem; line-height:1.4; white-space:pre-wrap; word-break:break-word;">
-            <div class="sq-chat-content" style="margin-bottom:0.35rem;">${msg.content}</div>
-            <div class="sq-chat-time" style="font-size:0.62rem; color:rgba(255,255,255,0.5); text-align:${isMine ? 'right' : 'left'};">${time}</div>
+        <div class="sq-message-row ${isMine ? 'sent' : 'received'}" style="display:flex; justify-content:${isMine ? 'flex-end' : 'flex-start'}; gap:0.4rem; align-items:flex-end; padding:0 0.25rem;">
+          ${!isMine ? `<div class="sq-message-avatar" style="width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;flex-shrink:0;margin-bottom:2px;">${senderInitial}</div>` : ''}
+          <div class="sq-chat-bubble ${isMine ? 'sent' : 'received'} ${msg.__failed ? 'failed' : ''}" style="min-width:${bubbleMinWidth}; max-width:${bubbleMaxWidth}; padding:0.55rem 0.9rem; border-radius:${isMine ? '18px 18px 4px 18px' : '18px 18px 18px 4px'}; background:${isMine ? (msg.__failed ? 'linear-gradient(135deg, #991b1b, #7f1d1d)' : 'linear-gradient(135deg, #dc2626, #b91c1c)') : 'rgba(255,255,255,0.09)'}; color:${isMine ? '#fff' : '#f4f4f8'}; font-size:0.8rem; line-height:1.45; white-space:pre-wrap; word-break:break-word; box-shadow:${isMine ? '0 1px 4px rgba(220,38,38,0.25)' : '0 1px 3px rgba(0,0,0,0.15)'};">
+            <div class="sq-chat-content" style="margin-bottom:0.25rem;">${msg.content}</div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div class="sq-chat-time" style="font-size:0.6rem; color:${isMine ? 'rgba(255,255,255,0.65)' : 'rgba(255,255,255,0.4)'}; text-align:${isMine ? 'right' : 'left'};">${time}</div>
+              ${msg.__failed ? '<span style="font-size:0.55rem;color:rgba(255,255,255,0.5);margin-left:4px;">⚠ Failed</span>' : (msg.__local && !msg.__failed ? '<span style="font-size:0.55rem;color:rgba(255,255,255,0.4);margin-left:4px;">⏳</span>' : '')}
+            </div>
           </div>
         </div>`;
     }).join('');
