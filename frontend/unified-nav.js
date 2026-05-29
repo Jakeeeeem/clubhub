@@ -3268,6 +3268,36 @@ const UnifiedNav = {
       console.warn('unified-nav: failed to route to team edit modal', e);
     }
 
+    // Check if this table is a competition fixtures or standings table -> route to the existing Manage Match button
+    try {
+      const table = row.closest('table');
+      if (table) {
+        const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.textContent.trim());
+        const headerStr = headers.join('|');
+        // Fixtures table has "Home", "Score", "Away" headers
+        if ((headerStr.includes('Home') && headerStr.includes('Score') && headerStr.includes('Away')) ||
+            // Standings table has "#", "P", "W", "D", "L" headers
+            (headerStr.includes('#') && headerStr.includes('P') && headerStr.includes('W') && headerStr.includes('D') && headerStr.includes('L'))) {
+          // Check if we're inside a competition detail view
+          const inCompDetail = row.closest('#admin-comp-detail');
+          if (inCompDetail) {
+            // For fixture tables: try to find and click the existing Manage Match button
+            if (headerStr.includes('Home') && headerStr.includes('Score') && headerStr.includes('Away')) {
+              const manageBtn = row.querySelector('button[onclick*="viewMatchDetails"]');
+              if (manageBtn) { manageBtn.click(); return; }
+            }
+            // For standings tables with recent results: try to find the Edit button
+            if (headerStr.includes('#') && headerStr.includes('P')) {
+              // This is the standings table itself (no direct match reference), skip generic modal
+              return;
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('unified-nav: failed to route competition table edit', e);
+    }
+
     // Check for specialized handler
     if (typeof window.openEditMemberModal === 'function') {
       const memberId = row.dataset.id;

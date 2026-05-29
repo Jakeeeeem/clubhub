@@ -74,12 +74,6 @@
         .status-badge-completed { background:rgba(74,222,128,0.15); color:#4ade80; border:1px solid rgba(74,222,128,0.25); padding:0.15rem 0.5rem; border-radius:4px; font-size:0.65rem; font-weight:800; }
         .status-badge-scheduled { background:rgba(148,163,184,0.15); color:#94a3b8; border:1px solid rgba(148,163,184,0.25); padding:0.15rem 0.5rem; border-radius:4px; font-size:0.65rem; font-weight:800; }
         @keyframes pulseLive { 0%,100% { opacity:1; } 50% { opacity:0.6; } }
-        .plan-assign-grid { display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; }
-        .plan-card { background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); border-radius:10px; padding:0.75rem; cursor:pointer; transition:all 0.15s; text-align:center; }
-        .plan-card:hover { background:rgba(59,130,246,0.06); border-color:rgba(59,130,246,0.2); }
-        .plan-card.selected { background:rgba(59,130,246,0.1); border-color:#3b82f6; }
-        .plan-card .plan-icon { font-size:1.5rem; margin-bottom:0.25rem; }
-        .plan-card .plan-name { font-size:0.75rem; font-weight:600; color:#f1f5f9; }
 
         .standings-actions-bar { display:flex; gap:0.75rem; flex-wrap:wrap; margin-bottom:1.5rem; padding:1rem; background:rgba(255,255,255,0.02); border-radius:12px; border:1px solid rgba(255,255,255,0.06); }
 
@@ -118,7 +112,6 @@
             .match-modal-scoreboard .vs-container { flex-direction:column; gap:1rem; }
             .match-modal-scoreboard .team-score-block .score-input-big { width:60px; height:60px; font-size:2rem; }
             .match-modal-scoreboard .vs-divider { font-size:1.2rem; }
-            .plan-assign-grid { grid-template-columns:1fr; }
             .add-event-row { flex-wrap:wrap; }
             .add-event-row select { min-width:100%; }
         }
@@ -375,32 +368,7 @@
 </div>
 </div>
 
-<!-- Assign Plans Section -->
-<div style="background:rgba(255,255,255,0.02);padding:1rem;border-radius:12px;border:1px solid rgba(255,255,255,0.06);margin-bottom:1rem;">
-<h4 style="margin:0 0 0.75rem;font-size:0.85rem;color:#fff;display:flex;align-items:center;gap:0.5rem;">
-📋 Post-Match Plan</h4>
-<div class="plan-assign-grid">
-<div class="plan-card selected" data-plan="none" onclick="togglePlan(this,'none')">
-<div class="plan-icon">➖</div>
-<div class="plan-name">No Plan</div>
-</div>
-<div class="plan-card" data-plan="review" onclick="togglePlan(this,'review')">
-<div class="plan-icon">📊</div>
-<div class="plan-name">Match Review</div>
-</div>
-<div class="plan-card" data-plan="training" onclick="togglePlan(this,'training')">
-<div class="plan-icon">🏋️</div>
-<div class="plan-name">Training Session</div>
-</div>
-<div class="plan-card" data-plan="tactical" onclick="togglePlan(this,'tactical')">
-<div class="plan-icon">📋</div>
-<div class="plan-name">Tactical Analysis</div>
-</div>
-</div>
-<input type="hidden" id="matchPlanType" value="none">
-</div>
-
-</div>
+        </div>
 
 </div>
 <div class="modal-footer">
@@ -591,7 +559,7 @@ async function loadFixtureManagement(){
     try{
         const d=await apiService.getTournamentDetails(window.currentCompId),matches=d.matches||[];
         c.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;"><h3 style="margin:0;">Fixtures & Match Management</h3><button class="btn btn-primary btn-small" onclick="generateFixtures()">+ Generate Fixtures</button></div>'+
-            '<div style="margin-bottom:1rem;font-size:0.85rem;color:var(--text-muted);background:rgba(255,255,255,0.02);padding:0.75rem 1rem;border-radius:8px;">Click "Manage Match" to set teams, date, scores, goals (with minute), cards, and assign plans.</div>';
+            '<div style="margin-bottom:1rem;font-size:0.85rem;color:var(--text-muted);background:rgba(255,255,255,0.02);padding:0.75rem 1rem;border-radius:8px;">Click "Manage Match" to set teams, date, scores, goals (with minute), and cards.</div>';
         if(!matches||!matches.length){c.innerHTML+=renderEmptyState('No fixtures generated yet. Click "Generate Fixtures" to start.','⚽');return;}
         
         // Get team names for dropdowns
@@ -683,7 +651,6 @@ async function loadStandingsResults(){
                         html += '<span style="font-weight:600;'+(awayWon?'color:#4ade80;':'')+'">'+(m.away_team_name||'Away')+'</span>';
                         html += '<span style="margin-left:auto;display:flex;gap:0.3rem;padding-left:0.75rem;">' +
                             '<button type="button" class="btn btn-text btn-small" style="background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.4);color:rgb(96,165,250);border-radius:8px;padding:0.3rem 0.65rem;font-size:0.75rem;font-weight:700;cursor:pointer;" onclick="event.stopPropagation();window.viewMatchDetails(\''+m.id+'\',\''+homeName+'\',\''+awayName+'\',\''+dateStr+'\','+(m.round_number||1)+')">✏️ Edit</button>' +
-                            '<button type="button" class="btn btn-text btn-small" style="background:rgba(168,85,247,0.15);border:1px solid rgba(168,85,247,0.4);color:rgb(192,132,252);border-radius:8px;padding:0.3rem 0.65rem;font-size:0.75rem;font-weight:700;cursor:pointer;" onclick="event.stopPropagation();if(confirm(\'Assign plan to match '+homeName+' vs '+awayName+'?\')){window.viewMatchDetails(\''+m.id+'\',\''+homeName+'\',\''+awayName+'\',\''+dateStr+'\','+(m.round_number||1)+');setTimeout(function(){document.getElementById(\'matchStatusSelect\').value=\'completed\';toggleMatchResultSections();},300);}">💳 Assign Plan</button>' +
                             '<button type="button" class="btn btn-text btn-small" style="background:rgba(220,38,38,0.12);border:1px solid rgba(220,38,38,0.35);color:rgb(248,113,113);border-radius:8px;padding:0.3rem 0.65rem;font-size:0.75rem;font-weight:700;cursor:pointer;" onclick="event.stopPropagation();window.deleteMatch(\''+m.id+'\',\''+homeName+'\',\''+awayName+'\')">🗑️ Delete</button>' +
                             '</span>';
                         html += '</div>';
@@ -821,13 +788,19 @@ window.assignBracketTeam=async function(matchId,position,teamId,teamName){
 // ---------- FIXTURE GENERATION ----------
 window.generateFixtures=async function(){
     if(!window.currentCompId){window.showNotification("No competition selected","error");return;}
+    const d=window._currentTournamentData||await apiService.getTournamentDetails(window.currentCompId);
+    // Check if fixtures already exist
+    if(d.matches && d.matches.length > 0){
+        window.showConfirmModal('Fixtures already exist for this competition. <strong>Generate again?</strong><br><span style="font-size:0.8rem;color:var(--text-muted);">This will replace all existing fixtures.</span>', async function() {
+            await doGenerateFixtures(d);
+        });
+        return;
+    }
+    await doGenerateFixtures(d);
+};
+
+async function doGenerateFixtures(d){
     try{
-        const d=window._currentTournamentData||await apiService.getTournamentDetails(window.currentCompId);
-        // Check if fixtures already exist
-        if(d.matches && d.matches.length > 0){
-            const confirmed = confirm('Fixtures already exist for this competition. Generate again? This will replace all existing fixtures.');
-            if(!confirmed) return;
-        }
         const s=d.tournament?.tournament_settings||d.tournament_settings||{},type=s.type||'knockout';
         await apiService.post('/tournaments/'+window.currentCompId+'/generate-fixtures',{type,stageName:type==='knockout'?'Main Bracket':'League Stage'});
         window.showNotification('Fixtures generated ('+type+')',"success");
@@ -854,12 +827,6 @@ window.viewMatchDetails=async function(matchId,home,away,dateStr,round){
     // Reset timelines
     document.getElementById('goalsTimeline').innerHTML = '<p style="color:var(--text-muted);font-size:0.8rem;text-align:center;padding:0.5rem;">No goals recorded yet. Add events below.</p>';
     document.getElementById('cardsTimeline').innerHTML = '<p style="color:var(--text-muted);font-size:0.8rem;text-align:center;padding:0.5rem;">No cards recorded yet. Add events below.</p>';
-    
-    // Reset plan
-    document.getElementById('matchPlanType').value = 'none';
-    document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
-    const noneCard = document.querySelector('.plan-card[data-plan="none"]');
-    if(noneCard) noneCard.classList.add('selected');
     
     // Parse date/time if exists
     if(dateStr&&dateStr!=='""'&&dateStr!==''){try{const d=new Date(dateStr);if(!isNaN(d.getTime())){document.getElementById('matchDate').value=d.toISOString().split('T')[0];document.getElementById('matchTime').value=d.toTimeString().slice(0,5);}}catch(e){}}
@@ -901,14 +868,6 @@ window.viewMatchDetails=async function(matchId,home,away,dateStr,round){
                 updateScoreFromInputs();
             }
             
-            // Load plan
-            if(matchData.plan_type && matchData.plan_type !== 'none') {
-                document.getElementById('matchPlanType').value = matchData.plan_type;
-                document.querySelectorAll('.plan-card').forEach(c => {
-                    if(c.dataset.plan === matchData.plan_type) c.classList.add('selected');
-                    else c.classList.remove('selected');
-                });
-            }
         }
     } catch(e) { /* No existing data, use defaults */ }
     
@@ -1094,12 +1053,6 @@ window.removeMatchEvent = function(index) {
     renderMatchEvents();
 };
 
-function togglePlan(el, plan) {
-    document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
-    if(plan !== 'none') el.classList.add('selected');
-    document.getElementById('matchPlanType').value = plan;
-}
-
 async function fetchTeamPlayers(teamName){
     try {
         // Try to get players from the actual team
@@ -1128,7 +1081,6 @@ window.handleSaveMatch=async function(e){
     const matchDate=document.getElementById('matchDate').value;
     const matchTime=document.getElementById('matchTime').value;
     const pitch=document.getElementById('matchPitch').value;
-    const planType=document.getElementById('matchPlanType').value;
     
     const btn = document.getElementById('saveMatchBtn');
     btn.disabled = true; btn.textContent = 'Saving...';
@@ -1138,14 +1090,13 @@ window.handleSaveMatch=async function(e){
         let startTime=null;
         if(matchDate){startTime=matchDate+(matchTime?'T'+matchTime+':00':'T00:00:00');}
         
-        // Submit full match data including plan
+        // Submit full match data
         await apiService.put('/tournaments/matches/'+id+'/admin-update', {
             homeScore: hScore,
             awayScore: aScore,
             status: status,
             startTime: startTime,
             pitch: pitch,
-            planType: planType,
             events: window._matchEvents
         });
         
@@ -1174,16 +1125,37 @@ window.handleSaveMatch=async function(e){
     }
 };
 
+// ---------- STYLED CONFIRM MODAL ----------
+window.showConfirmModal = function(message, onConfirm) {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);';
+    overlay.innerHTML = `
+        <div style="background:#1e1e2e;border:1px solid rgba(255,255,255,0.1);border-radius:24px;padding:2rem;max-width:420px;width:90%;box-shadow:0 25px 60px rgba(0,0,0,0.5);animation:fadeIn 0.15s ease;">
+            <div style="font-size:2rem;text-align:center;margin-bottom:1rem;">⚠️</div>
+            <p style="color:#f1f5f9;font-size:0.95rem;text-align:center;line-height:1.5;margin:0 0 1.5rem;">${message}</p>
+            <div style="display:flex;gap:0.75rem;">
+                <button onclick="this.closest('.match-popover-overlay').remove()" style="flex:1;padding:0.75rem;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:12px;color:#fff;font-weight:600;cursor:pointer;font-size:0.85rem;">Cancel</button>
+                <button id="confirmDeleteBtn" style="flex:1;padding:0.75rem;background:linear-gradient(135deg,#dc2626 0%,#991b1b 100%);border:none;border-radius:12px;color:#fff;font-weight:700;cursor:pointer;font-size:0.85rem;box-shadow:0 8px 20px rgba(220,38,38,0.25);">Confirm</button>
+            </div>
+        </div>`;
+    overlay.className = 'match-popover-overlay';
+    overlay.onclick = function(e) { if(e.target === this) this.remove(); };
+    document.body.appendChild(overlay);
+    overlay.querySelector('#confirmDeleteBtn').onclick = function() { overlay.remove(); if(onConfirm) onConfirm(); };
+    overlay.querySelector('button:first-child').onclick = function() { overlay.remove(); };
+};
+
 // ---------- DELETE MATCH ----------
 window.deleteMatch = async function(matchId, homeName, awayName) {
-    if(!confirm('Delete match: ' + homeName + ' vs ' + awayName + '? This cannot be undone.')) return;
-    try {
-        await apiService.delete('/tournaments/matches/' + matchId);
-        window.showNotification('Match deleted successfully', 'success');
-        if(window.currentCompId) window.viewAdminCompDetail(window.currentCompId);
-    } catch(err) {
-        window.showNotification('Failed to delete match: ' + (err.message || 'Unknown'), 'error');
-    }
+    window.showConfirmModal('Delete match: <strong>' + homeName + '</strong> vs <strong>' + awayName + '</strong>?<br><span style="font-size:0.8rem;color:var(--text-muted);">This cannot be undone.</span>', async function() {
+        try {
+            await apiService.delete('/tournaments/matches/' + matchId);
+            window.showNotification('Match deleted successfully', 'success');
+            if(window.currentCompId) window.viewAdminCompDetail(window.currentCompId);
+        } catch(err) {
+            window.showNotification('Failed to delete match: ' + (err.message || 'Unknown'), 'error');
+        }
+    });
 };
 
 // ---------- QUICK ASSIGN TEAM ----------
