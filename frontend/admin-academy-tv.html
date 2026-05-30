@@ -11,6 +11,22 @@
   <link rel="stylesheet" href="quick-fixes.css?v=20260502">
   <link rel="stylesheet" href="unified-nav.css?v=20260429_v18">
   <link rel="stylesheet" href="group-switcher.css?v=20260429_v18">
+  <style>
+    .academy-card { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:20px; overflow:hidden; transition:all 0.3s cubic-bezier(0.4,0,0.2,1); position:relative; }
+    .academy-card:hover { transform:translateY(-5px); border-color:var(--primary); box-shadow:0 15px 35px rgba(0,0,0,0.4); }
+    .academy-card .thumb { aspect-ratio:16/9; background:#0a0a0f; position:relative; cursor:pointer; }
+    .academy-card .thumb .play-overlay { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.45); opacity:0; transition:opacity 0.25s; }
+    .academy-card .thumb:hover .play-overlay { opacity:1; }
+    .academy-card .thumb .play-btn { width:52px; height:52px; border-radius:50%; background:var(--primary); display:flex; align-items:center; justify-content:center; box-shadow:0 8px 25px rgba(220,38,38,0.35); font-size:1.3rem; color:#fff; transition:transform 0.2s; }
+    .academy-card .thumb:hover .play-btn { transform:scale(1.1); }
+    .cat-badge { position:absolute; top:0.75rem; left:0.75rem; background:rgba(0,0,0,0.65); backdrop-filter:blur(8px); padding:0.2rem 0.7rem; border-radius:100px; font-size:0.6rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; color:var(--primary); border:1px solid rgba(220,38,38,0.15); }
+    .modal-modern { background:linear-gradient(160deg,#1e1e2e,#2a2a3e); border:1px solid rgba(255,255,255,0.08); border-radius:24px; padding:2rem; max-width:580px; width:90vw; box-shadow:0 30px 70px rgba(0,0,0,0.6); animation:fadeSlideIn 0.2s ease; }
+    @keyframes fadeSlideIn { from { opacity:0; transform:translateY(10px) scale(0.97); } to { opacity:1; transform:translateY(0) scale(1); } }
+    .modal-modern .modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; padding-bottom:1rem; border-bottom:1px solid rgba(255,255,255,0.06); }
+    .modal-modern .modal-header h2 { font-size:1.3rem; margin:0; }
+    .modal-modern .modal-close { background:rgba(255,255,255,0.06); border:none; border-radius:10px; width:34px; height:34px; display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,0.5); font-size:1.3rem; cursor:pointer; transition:all 0.15s; }
+    .modal-modern .modal-close:hover { background:rgba(255,255,255,0.1); color:#fff; }
+  </style>
 </head>
 
 <body class="clubhub-unified dashboard-page">
@@ -20,97 +36,111 @@
   <main class="main dashboard-main">
     <div id="overview" class="dashboard-section active" style="display: block;">
       <div class="container dashboard-container">
-        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem;">
+        <div class="admin-comp-header" style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:2rem;">
           <div>
-            <h1 class="neon-text" style="font-size: 2rem; margin: 0;">📺 Academy TV</h1>
-            <p style="color: var(--text-muted); margin-top: 0.5rem;">Manage your club's training video library and drill assignments.</p>
+            <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.5rem;">
+              <h1 class="neon-text" style="margin:0;">📺 Academy TV</h1>
+            </div>
+            <p style="color:var(--text-muted); margin:0;">Manage your club's training video library and drill assignments.</p>
           </div>
-          <button class="btn btn-primary" onclick="openModal('addVideoModal')">+ Upload / Add Video</button>
+          <div style="display:flex; gap:0.75rem;">
+            <button class="btn btn-secondary" onclick="openModal('addVideoModal')">+ Upload / Add Video</button>
+          </div>
         </div>
 
-        <!-- Filters & Tabs -->
-        <div class="glass-panel" style="padding: 1rem; margin-bottom: 2rem; display: flex; gap: 1rem; align-items: center; justify-content: space-between;">
-          <div class="tabs" style="border: none; margin: 0;">
+        <!-- Filters -->
+        <div class="glass-panel" style="padding:1rem 1.25rem; margin-bottom:2rem; display:flex; gap:1rem; align-items:center; justify-content:space-between; border-radius:16px;">
+          <div class="tabs" style="border:none; margin:0;">
             <button class="tab-btn active" onclick="filterVideos('All')">All Videos</button>
             <button class="tab-btn" onclick="filterVideos('Tactics')">Tactics</button>
             <button class="tab-btn" onclick="filterVideos('Drills')">Technical Drills</button>
             <button class="tab-btn" onclick="filterVideos('Fitness')">Fitness & Strength</button>
           </div>
-          <div style="display: flex; gap: 0.5rem;">
-            <input type="text" id="videoSearch" placeholder="Search videos..." 
-              style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 0.6rem 1rem; border-radius: 10px; color: #fff; width: 250px;"
-              oninput="handleVideoSearch()">
-          </div>
+          <input type="text" id="videoSearch" placeholder="🔍 Search videos..." 
+            style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); padding:0.5rem 1rem; border-radius:10px; color:#fff; width:220px; font-size:0.85rem;"
+            oninput="handleVideoSearch()">
         </div>
 
         <!-- Video Grid -->
-        <div id="academyTVGrid" class="dashboard-grid" style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem;">
-          <!-- Videos will be loaded here -->
-          <div style="grid-column: 1/-1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 4rem; gap: 1rem;">
+        <div id="academyTVGrid" class="dashboard-grid" style="grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:1.5rem;">
+          <div style="grid-column:1/-1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:4rem; gap:1rem;">
             <div class="loader"></div>
-            <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem;">Initialising Library...</p>
+            <p style="margin:0; color:var(--text-muted); font-size:0.9rem;">Initialising Library...</p>
           </div>
         </div>
       </div>
     </div>
   </main>
 
-  <!-- Add Video Modal -->
+  <!-- MODERN ADD/EDIT VIDEO MODAL -->
   <div id="addVideoModal" class="modal" style="display:none;">
-    <div class="modal-content glass-card" style="max-width: 550px;">
+    <div class="modal-content modal-modern">
       <div class="modal-header">
-        <h2 class="neon-text">Add Training Video</h2>
-        <span class="close" onclick="closeModal('addVideoModal')">&times;</span>
+        <h2 id="addVideoModalTitle">Add Training Video</h2>
+        <button class="modal-close" onclick="closeModal('addVideoModal')">&times;</button>
       </div>
-      <div class="modal-body">
-        <form id="addVideoForm" onsubmit="handleAddVideo(event)">
+      <form id="addVideoForm" onsubmit="handleAddVideo(event)">
+        <input type="hidden" id="editDrillId" value="">
+        
+        <div class="form-group">
+          <label>Video Title</label>
+          <input type="text" id="vTitle" placeholder="e.g. Mastering the Cruyff Turn" required
+            style="width:100%; padding:0.7rem 0.9rem; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:12px; color:#fff; font-size:0.9rem;">
+        </div>
+        
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
           <div class="form-group">
-            <label>Video Title</label>
-            <input type="text" id="vTitle" placeholder="e.g. Mastering the Cruyff Turn" required>
+            <label>Category</label>
+            <select id="vCategory" required
+              style="width:100%; padding:0.7rem 0.9rem; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:12px; color:#fff; font-size:0.9rem;">
+              <option value="Drills">Technical Drills</option>
+              <option value="Tactics">Tactics</option>
+              <option value="Fitness">Fitness & Strength</option>
+              <option value="Match Review">Match Review</option>
+            </select>
           </div>
-          
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-            <div class="form-group">
-              <label>Category</label>
-              <select id="vCategory" required>
-                <option value="Drills">Technical Drills</option>
-                <option value="Tactics">Tactics</option>
-                <option value="Fitness">Fitness & Strength</option>
-                <option value="Match Review">Match Review</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Difficulty</label>
-              <select id="vDifficulty" required>
-                <option value="Beginner">Beginner</option>
-                <option value="Intermediate" selected>Intermediate</option>
-                <option value="Advanced">Advanced</option>
-              </select>
-            </div>
-          </div>
-
           <div class="form-group">
-            <label>Video URL (YouTube, Vimeo, or Direct Link)</label>
-            <input type="url" id="vUrl" placeholder="https://www.youtube.com/watch?v=..." required>
-            <p style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.4rem;">Paste the public link to the video file or YouTube page.</p>
+            <label>Difficulty</label>
+            <select id="vDifficulty" required
+              style="width:100%; padding:0.7rem 0.9rem; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:12px; color:#fff; font-size:0.9rem;">
+              <option value="Beginner">Beginner</option>
+              <option value="Intermediate" selected>Intermediate</option>
+              <option value="Advanced">Advanced</option>
+            </select>
           </div>
+        </div>
 
+        <div class="form-group">
+          <label>Video URL (YouTube, Vimeo, or Direct Link)</label>
+          <input type="url" id="vUrl" placeholder="https://www.youtube.com/watch?v=..." required
+            style="width:100%; padding:0.7rem 0.9rem; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:12px; color:#fff; font-size:0.9rem;">
+          <p style="font-size:0.7rem; color:var(--text-muted); margin-top:0.4rem;">Paste the public link to the video file or YouTube page.</p>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
           <div class="form-group">
             <label>Duration (Minutes)</label>
-            <input type="number" id="vDuration" value="15" min="1">
+            <input type="number" id="vDuration" value="15" min="1"
+              style="width:100%; padding:0.7rem 0.9rem; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:12px; color:#fff; font-size:0.9rem;">
           </div>
-
           <div class="form-group">
-            <label>Description / Coaching Points</label>
-            <textarea id="vDescription" rows="4" placeholder="What should the players focus on?"></textarea>
+            <label>Required Equipment</label>
+            <input type="text" id="vEquipment" placeholder="e.g. Cones, Balls"
+              style="width:100%; padding:0.7rem 0.9rem; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:12px; color:#fff; font-size:0.9rem;">
           </div>
+        </div>
 
-          <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-            <button type="button" class="btn btn-secondary" onclick="closeModal('addVideoModal')" style="flex: 1;">Cancel</button>
-            <button type="submit" class="btn btn-primary" style="flex: 1;">Add to Library</button>
-          </div>
-        </form>
-      </div>
+        <div class="form-group">
+          <label>Description / Coaching Points</label>
+          <textarea id="vDescription" rows="3" placeholder="What should the players focus on?"
+            style="width:100%; padding:0.7rem 0.9rem; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:12px; color:#fff; font-size:0.9rem; resize:vertical;"></textarea>
+        </div>
+
+        <div style="display:flex; gap:1rem; margin-top:1.5rem; padding-top:1.5rem; border-top:1px solid rgba(255,255,255,0.06);">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('addVideoModal')" style="flex:1; padding:0.75rem; border-radius:12px; font-size:0.9rem;">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="addVideoSubmitBtn" style="flex:1; padding:0.75rem; border-radius:12px; font-size:0.9rem;">Add to Library →</button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -136,13 +166,12 @@
         renderLibrary();
       } catch (err) {
         console.error("Library load fail:", err);
-        // Fallback demo data if API fails or empty
         if (allDrills.length === 0) {
-            allDrills = [
-                { id: 'd1', title: 'Positioning & Spacing', category: 'Tactics', difficulty: 'Intermediate', duration_minutes: 20, description: 'Understanding the 4-3-3 defensive shape.', demo_video_url: 'https://www.youtube.com/watch?v=SAn_209YFvA' },
-                { id: 'd2', title: '1v1 Finishing Drills', category: 'Drills', difficulty: 'Advanced', duration_minutes: 15, description: 'Clinical finishing in high-pressure situations.', demo_video_url: 'https://www.youtube.com/watch?v=K3H5mK14jX0' },
-                { id: 'd3', title: 'Agility Ladder Routine', category: 'Fitness', difficulty: 'Beginner', duration_minutes: 10, description: 'Improving footwork and reaction speed.', demo_video_url: 'https://www.youtube.com/watch?v=vVjH96MhSps' }
-            ];
+          allDrills = [
+            { id: 'd1', title: 'Positioning & Spacing', category: 'Tactics', difficulty: 'Intermediate', duration_minutes: 20, description: 'Understanding the 4-3-3 defensive shape.', demo_video_url: 'https://www.youtube.com/watch?v=SAn_209YFvA' },
+            { id: 'd2', title: '1v1 Finishing Drills', category: 'Drills', difficulty: 'Advanced', duration_minutes: 15, description: 'Clinical finishing in high-pressure situations.', demo_video_url: 'https://www.youtube.com/watch?v=K3H5mK14jX0' },
+            { id: 'd3', title: 'Agility Ladder Routine', category: 'Fitness', difficulty: 'Beginner', duration_minutes: 10, description: 'Improving footwork and reaction speed.', demo_video_url: 'https://www.youtube.com/watch?v=vVjH96MhSps' }
+          ];
         }
         renderLibrary();
       }
@@ -153,7 +182,7 @@
       const filtered = allDrills.filter(d => {
         const matchesTab = currentFilter === 'All' || d.category === currentFilter;
         const search = document.getElementById('videoSearch').value.toLowerCase();
-        const matchesSearch = d.title.toLowerCase().includes(search) || d.category.toLowerCase().includes(search);
+        const matchesSearch = (d.title || '').toLowerCase().includes(search) || (d.category || '').toLowerCase().includes(search);
         return matchesTab && matchesSearch;
       });
 
@@ -162,70 +191,103 @@
         return;
       }
 
-      container.innerHTML = filtered.map(drill => `
-        <div class="glass-card" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
-          <div style="aspect-ratio: 16/9; background: #000; position: relative;">
-            <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.4);">
-              <span style="font-size: 3rem; color: #fff; cursor: pointer;" onclick="previewVideo('${drill.demo_video_url}', '${drill.title}')">▶</span>
+      container.innerHTML = filtered.map(drill => {
+        const diffColors = { Beginner: '#4ade80', Intermediate: '#facc15', Advanced: '#f87171' };
+        return `
+        <div class="academy-card">
+          <div class="thumb" onclick="previewVideo('${(drill.demo_video_url||'').replace(/'/g,"\\'")}', '${drill.title.replace(/'/g,"\\'")}')">
+            <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center;">
+              <span style="font-size:2.8rem; color:rgba(255,255,255,0.2);">🎬</span>
             </div>
-            <div style="position: absolute; top: 1rem; left: 1rem; background: rgba(0,0,0,0.6); padding: 4px 10px; border-radius: 20px; font-size: 0.65rem; font-weight: 800; color: var(--primary); text-transform: uppercase;">
-              ${drill.category}
+            <div class="play-overlay"><div class="play-btn">▶</div></div>
+            <div class="cat-badge">${drill.category}</div>
+          </div>
+          <div style="padding:1.25rem 1.5rem 1.5rem;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.5rem;">
+              <h3 style="margin:0; font-size:1rem; color:#f1f5f9; flex:1; padding-right:0.5rem;">${drill.title}</h3>
+              <span style="font-size:0.7rem; color:rgba(255,255,255,0.35); white-space:nowrap; font-weight:700;">⏱ ${drill.duration_minutes || '-'}m</span>
+            </div>
+            <p style="font-size:0.82rem; color:var(--text-muted); line-height:1.5; margin-bottom:1rem; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">${drill.description || 'No description.'}</p>
+            <div style="display:flex; align-items:center; gap:0.4rem; margin-bottom:1.2rem;">
+              <span style="font-size:0.7rem; color:${diffColors[drill.difficulty] || '#9ca3af'}; font-weight:700;">● ${drill.difficulty}</span>
+              ${drill.coach_name ? `<span style="font-size:0.7rem; color:var(--text-muted);">👤 ${drill.coach_name}</span>` : ''}
+            </div>
+            <div style="display:flex; gap:0.5rem;">
+              <button class="btn btn-secondary btn-small" style="flex:1; border-radius:10px;" onclick="openAssignModal('${drill.id}')">📋 Assign</button>
+              <button class="btn btn-primary btn-small" style="border-radius:10px;" onclick="openEditModal('${drill.id}')">✏️</button>
+              <button class="btn btn-text btn-small" onclick="deleteVideo('${drill.id}')" style="color:var(--accent-red);">🗑️</button>
             </div>
           </div>
-          <div style="padding: 1.5rem; flex: 1; display: flex; flex-direction: column;">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
-              <h3 style="margin: 0; font-size: 1.1rem; color: #fff;">${drill.title}</h3>
-              <span style="font-size: 0.75rem; color: rgba(255,255,255,0.4); font-weight: 700;">⏱ ${drill.duration_minutes}m</span>
-            </div>
-            <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 1.5rem; flex: 1;">${drill.description}</p>
-            <div style="display: flex; gap: 0.5rem; margin-top: auto;">
-              <button class="btn btn-secondary btn-small" style="flex: 1;" onclick="openAssignModal('${drill.id}')">Assign to Team</button>
-              <button class="btn btn-text btn-small" onclick="deleteVideo('${drill.id}')">🗑️</button>
-            </div>
-          </div>
-        </div>
-      `).join('');
+        </div>`;
+      }).join('');
     }
 
     function filterVideos(tab) {
       currentFilter = tab;
       document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.textContent === (tab === 'Drills' ? 'Technical Drills' : tab === 'Fitness' ? 'Fitness & Strength' : tab === 'All' ? 'All Videos' : tab));
+        const label = btn.textContent;
+        const match = tab === 'All' ? label === 'All Videos' : label.includes(tab);
+        btn.classList.toggle('active', match);
       });
       renderLibrary();
     }
 
-    function handleVideoSearch() {
-      renderLibrary();
+    function handleVideoSearch() { renderLibrary(); }
+
+    // ── ADD / EDIT Video ─────────────────────────────────────
+    function openEditModal(drillId) {
+      const drill = allDrills.find(d => d.id === drillId);
+      if (!drill) return;
+      document.getElementById('editDrillId').value = drillId;
+      document.getElementById('vTitle').value = drill.title || '';
+      document.getElementById('vCategory').value = drill.category || 'Drills';
+      document.getElementById('vDifficulty').value = drill.difficulty || 'Intermediate';
+      document.getElementById('vUrl').value = drill.demo_video_url || '';
+      document.getElementById('vDuration').value = drill.duration_minutes || 15;
+      document.getElementById('vEquipment').value = drill.required_equipment || '';
+      document.getElementById('vDescription').value = drill.description || '';
+      document.getElementById('addVideoModalTitle').textContent = '✏️ Edit Video';
+      document.getElementById('addVideoSubmitBtn').textContent = '💾 Save Changes';
+      document.getElementById('addVideoModal').style.display = 'block';
     }
 
     async function handleAddVideo(e) {
       e.preventDefault();
-      const btn = e.target.querySelector('button[type="submit"]');
+      const btn = document.getElementById('addVideoSubmitBtn');
       const originalText = btn.textContent;
-      
+      const editId = document.getElementById('editDrillId').value;
+
       const payload = {
         title: document.getElementById('vTitle').value,
         category: document.getElementById('vCategory').value,
         difficulty: document.getElementById('vDifficulty').value,
         demo_video_url: document.getElementById('vUrl').value,
         duration_minutes: parseInt(document.getElementById('vDuration').value),
-        description: document.getElementById('vDescription').value
+        description: document.getElementById('vDescription').value,
+        required_equipment: document.getElementById('vEquipment').value
       };
 
       try {
         btn.disabled = true;
-        btn.textContent = 'Adding...';
-        
-        await TrainingService.createDrill(payload);
-        
-        if (typeof showNotification === 'function') showNotification('Video added to library!', 'success');
+        btn.textContent = editId ? 'Saving...' : 'Adding...';
+
+        if (editId) {
+          await TrainingService.updateDrill(editId, payload);
+          if (typeof showNotification === 'function') showNotification('Video updated!', 'success');
+        } else {
+          await TrainingService.createDrill(payload);
+          if (typeof showNotification === 'function') showNotification('Video added to library!', 'success');
+        }
+
         closeModal('addVideoModal');
-        e.target.reset();
+        document.getElementById('addVideoForm').reset();
+        document.getElementById('editDrillId').value = '';
+        document.getElementById('addVideoModalTitle').textContent = 'Add Training Video';
+        document.getElementById('addVideoSubmitBtn').textContent = 'Add to Library →';
         await loadAcademyLibrary();
       } catch (err) {
-        console.error("Add video fail:", err);
-        alert("Action failed: " + err.message);
+        console.error("Video save fail:", err);
+        if (typeof showNotification === 'function') showNotification('Action failed: ' + (err.message || err.error || 'Unknown error'), 'error');
       } finally {
         btn.disabled = false;
         btn.textContent = originalText;
@@ -233,33 +295,56 @@
     }
 
     async function deleteVideo(id) {
-       if (!confirm("Are you sure you want to remove this video from the library?")) return;
-       try {
-         await TrainingService.deleteDrill(id);
-         await loadAcademyLibrary();
-       } catch (err) {
-         alert("Delete failed: " + err.message);
-       }
+      if (!confirm("Are you sure you want to remove this video from the library?")) return;
+      try {
+        await TrainingService.deleteDrill(id);
+        await loadAcademyLibrary();
+        if (typeof showNotification === 'function') showNotification('Video removed', 'info');
+      } catch (err) {
+        if (typeof showNotification === 'function') showNotification('Delete failed: ' + err.message, 'error');
+      }
     }
 
-    function previewVideo(url, title = "Video Preview") {
+    function previewVideo(url, title) {
       if (window.UnifiedNav && typeof window.UnifiedNav.openVideoModal === 'function') {
-          window.UnifiedNav.openVideoModal(title, url);
+        window.UnifiedNav.openVideoModal(title, url);
       } else {
-          // Fallback if modal system fails
-          let embedUrl = url;
-          if (url.includes('youtube.com/watch?v=')) {
-              const id = url.split('v=')[1].split('&')[0];
-              embedUrl = `https://www.youtube.com/embed/${id}`;
-          }
-          window.open(embedUrl, '_blank');
+        let embedUrl = url;
+        if (url.includes('youtube.com/watch?v=')) {
+          const id = url.split('v=')[1].split('&')[0];
+          embedUrl = `https://www.youtube.com/embed/${id}`;
+        }
+        window.open(embedUrl, '_blank');
       }
     }
 
     function openAssignModal(drillId) {
-      alert("Assignment feature coming in the next update! You will be able to target specific squads or individual players for mandatory review.");
+      if (typeof showNotification === 'function') showNotification('Assignment feature coming soon!', 'info');
+      else alert("Assignment feature coming in the next update!");
     }
+
+    function openModal(id) {
+      const m = document.getElementById(id);
+      if (m) {
+        // Reset to add mode
+        document.getElementById('editDrillId').value = '';
+        document.getElementById('addVideoForm').reset();
+        document.getElementById('addVideoModalTitle').textContent = 'Add Training Video';
+        document.getElementById('addVideoSubmitBtn').textContent = 'Add to Library →';
+        m.style.display = 'block';
+      }
+    }
+
+    function closeModal(id) {
+      const m = document.getElementById(id);
+      if (m) m.style.display = 'none';
+    }
+
+    document.addEventListener('click', function(e) {
+      if (e.target.classList.contains('modal')) {
+        e.target.style.display = 'none';
+      }
+    });
   </script>
 </body>
-
 </html>
