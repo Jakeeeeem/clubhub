@@ -26,7 +26,7 @@ const { authenticateToken } = require("../middleware/auth");
 router.get("/drills", authenticateToken, async (req, res) => {
   try {
     const { category, difficulty } = req.query;
-    const orgId = req.user.currentOrgId || req.user.org_id;
+    const orgId = req.user.currentOrgId || req.user.org_id || (req.orgContext && req.orgContext.organization_id) || req.headers['x-organization-id'] || req.headers['x-club-id'];
 
     let whereClauses = ["d.org_id = $1", "d.is_active = true"];
     let params = [orgId];
@@ -77,7 +77,7 @@ router.post("/drills", authenticateToken, async (req, res) => {
       required_equipment,
     } = req.body;
 
-    const orgId = req.user.currentOrgId || req.user.org_id;
+    const orgId = req.user.currentOrgId || req.user.org_id || (req.orgContext && req.orgContext.organization_id) || req.headers['x-organization-id'] || req.headers['x-club-id'] || req.body.orgId;
     const coachId = req.user.id;
 
     if (!title)
