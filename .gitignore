@@ -3,10 +3,8 @@ node_modules/
 **/node_modules/
 
 # Environments
-.env
 backend/.env
 frontend/.env
-.env.*
 
 # OS files
 .DS_Store
@@ -22,7 +20,6 @@ clubhub_utf8.sql
 playground/
 
 # IDE files
-.vscode/
 .idea/
 backend/clubhub-dev.env
 
@@ -35,3 +32,4 @@ review_screenshots/
 
 # Operational utility scripts (contain env refs, not for version control)
 take_screenshots.js
+config.bat
